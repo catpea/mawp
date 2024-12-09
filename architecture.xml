@@ -6,6 +6,10 @@
     </importmap>
   </boot>
 
+  <server>
+
+  </server>
+
   <display>
     <screen name="1">
       <application components="simply-actors">

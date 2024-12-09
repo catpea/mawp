@@ -1,0 +1,16 @@
+{
+  "name": "blank",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "env": "env",
+    "build": "esbuild index.js --bundle --outfile=./$npm_package_name.js --format=esm"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+  }
+}
