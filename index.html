@@ -3,12 +3,27 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MAWP &middot; Signal and Web Component Enhanced Web Apps</title>
+    <title>Signal and Web Component Enhanced Web Apps</title>
+    <script type="importmap">
+    {
+      "imports": {
+        "config": "./src/config.js",
+        "vpl-server": "./modules/vpl-server/VplServer.js",
+
+        "dom-actor": "./modules/dom-actor/DomActor.js",
+        "dom-pipe": "./modules/dom-pipe/DomPipe.js",
+        "dom-port": "./modules/dom-port/DomPort.js",
+        "dom-zoom": "./modules/dom-zoom/DomZoom.js",
+
+        "xml-parser": "./modules/xml-parser/XmlParser.js"
+      }
+    }
+    </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>">
     <style>
     body { background-color: #212529; }
     </style>
-    <script type="module" src="main.js"></script>
+    <script type="module" src="browser.js"></script>
   </head>
   <body>
   </body>
