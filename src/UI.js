@@ -1,4 +1,4 @@
-import config from '../config.js';
+import config from 'vpl-configuration';
 
 import DomActor from 'dom-actor';
 import DomPipe from 'dom-pipe';
@@ -17,7 +17,7 @@ export default class UI {
   async start(){
     const app = document.createElement('div');
     const zoom = document.createElement('dom-zoom');
-    app.body.appendChild(zoom);
+    app.appendChild(zoom);
     document.body.appendChild(app)
     console.warn('TODO: reconcile selected service!!!!!')
     this.watch();
@@ -28,7 +28,7 @@ export default class UI {
 
   // =^o.O^= //
   watch(){
-    this.reconcile(...)
+    //this.reconcile(...)
   }
 
   reconcile(){

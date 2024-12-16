@@ -1,4 +1,6 @@
 import DomPort from 'dom-port';
+import config from 'vpl-configuration';
+
 customElements.define(`${config.prefix}-port`, DomPort);
 
 export default class DomActor extends HTMLElement {
