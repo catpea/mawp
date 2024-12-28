@@ -1,8 +1,30 @@
 #!/usr/bin/env node
 
-import Services from './src/Services.js';
-const services = new Services();
+import fs from 'fs';
+import Node from './src/Services.js';
+
+const services = new Node('services');
+
+const main = new Node('main');
+main.onStart = async () => console.log('ASYNC START GRRR')
+main.once('stop', ()=>console.log('Main scene node got stoppppp...'))
+
+services.watch('create', '/services/main/*', (x)=>console.info('[CREATE] new node in main scene', x))
+
+const uppercase = new Node('uppercase');
+const tee = new Node('tee');
+
+services.create(main);
+services.create(uppercase);
+services.create(tee);
+
+const mainInput = new Node('mainInput');
+main.create(mainInput)
+
+await services.load();
 await services.start();
+
+setTimeout(() => { },3_000) // TEST CTRL-C
 
 // Example of cleanup task
 const cleanup = () => {
