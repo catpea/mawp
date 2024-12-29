@@ -1,10 +1,15 @@
+import SysDataset from 'sys-dataset';
+import guid from 'sys-guid';
+
 export default class Services {
   id;
   parent;
   children = [];
 
-  constructor(id) {
-    this.id = id;
+  constructor(id, title) {
+    this.id = id||guid();
+    this.dataset = new SysDataset();
+    if(title) this.dataset.set('title', title);
   }
 
   // TREE BUILDING //
@@ -174,6 +179,17 @@ export default class Services {
   async stop(){
     await Promise.all(this.all.filter(o=>o.onStop).map(o=>o.onStop()))
     this.all.map(node => node.emit('stop'));
+  }
+
+
+  // GARBAGE COLLECTION
+
+  #garbage = [];
+  collectGarbage(){
+    this.#garbage.map(s=>s.subscription())
+  }
+  set gc(subscription){ // shorthand for component level garbage collection
+    this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
   }
 
 }
