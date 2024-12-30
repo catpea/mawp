@@ -1,30 +1,43 @@
-import Node from './src/Services.js';
+import Branch from 'branch';
 
-const services = new Node('services');
+const services = new Branch('services');
 
 import UI from './src/UI.js';
 const ui = new UI(services);
 await ui.start();
 
-const main = new Node('main');
+const main = new Branch('main');
 main.onStart = async () => console.log('ASYNC START GRRR')
-main.once('stop', ()=>console.log('Main scene node got stoppppp...'))
+main.once('stop', ()=>console.log('Main scene Branch got stoppppp...'))
 
-const uppercase = new Node('uppercase');
-const tee = new Node('tee');
+const uppercase = new Branch('uppercase');
+const tee = new Branch('tee');
 
 services.create(main);
 services.create(uppercase);
 services.create(tee);
 
-const mainInput = new Node('mainInput', 'Main Input');
+const mainInput = new Branch('mainInput', 'window');
+mainInput.dataset.set('title', 'Main Input');
 main.create(mainInput)
 
-const uppercaseInput = new Node('uppercaseInput', 'Transducer');
+const uppercaseInput = new Branch('uppercaseInput', 'window');
+uppercaseInput.dataset.set('title', 'Transducer');
 main.create(uppercaseInput)
 
-const uppercaseOutput = new Node('uppercaseOutput', 'Output Node');
+const uppercaseOutput = new Branch('uppercaseOutput', 'window');
+uppercaseOutput.dataset.set('title', 'Output Branch');
 main.create(uppercaseOutput)
+
+const pipe1 = new Branch('pipe1', 'pipe');
+pipe1.dataset.set('from', 'mainInput:out');
+pipe1.dataset.set('to', 'uppercaseInput:in');
+main.create(pipe1);
+
+const pipe2 = new Branch('pipe2', 'pipe');
+pipe2.dataset.set('from', 'uppercaseInput:out');
+pipe2.dataset.set('to', 'uppercaseOutput:in');
+main.create(pipe2);
 
 setInterval(() => {
   mainInput.dataset.set('date', (new Date()).toISOString());

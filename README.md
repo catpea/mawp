@@ -1,6 +1,12 @@
 MAWP
 ---
 
+## Server
+- server.js
+
+## Browser
+- browser.js
+
 
 ## Two Tier Architecture
 

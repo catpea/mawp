@@ -1,0 +1,83 @@
+import Dataset from 'dataset';
+
+export default class Port extends HTMLElement {
+    constructor() {
+      // establish prototype chain
+      super();
+
+      this.dataset2 = new Dataset();
+
+      const shadow = this.attachShadow({ mode: 'open' });
+      shadow.adoptedStyleSheets = document.adoptedStyleSheets;
+
+      const portNode = document.createElement('div');
+
+      portNode.innerHTML = `
+        <span></span>
+        <span class="position-absolute top-50 translate-middle badge rounded-pill bg-success p-1"><i class="bi"></i></span>
+      `;
+
+      shadow.appendChild(portNode);
+
+      const portComponents = shadow.querySelectorAll('span');
+      const portLabel = portComponents[0];
+      const portSticker = portComponents[1];
+      const portIcon = shadow.querySelector('.bi');
+
+      // UPDATE PORT ID
+      this.dataset2.get('name').subscribe(v => portSticker.id = `port-${v}`);
+      this.dataset2.get('title').subscribe(v => portLabel.textContent = v);
+
+      // UPDATE START/END POSITION
+      this.dataset2.get('side').subscribe(v => {
+        if (v === 'start') {
+          portLabel.classList.remove('float-end');
+          portLabel.classList.add('float-start');
+          portSticker.classList.remove('start-100')
+          portSticker.classList.add('start-0')
+        } else {
+          portLabel.classList.remove('float-start');
+          portLabel.classList.add('float-end');
+          portSticker.classList.remove('start-0')
+          portSticker.classList.add('start-100')
+        }
+      });
+
+      // UPDATE ICON
+      this.dataset2.get('icon').subscribe(v => {
+        portIcon.classList.remove(...Array.from(portIcon.classList).filter(className => className.startsWith('bi-')) )
+        portIcon.classList.add(`bi-${v}`);
+      });
+
+    }
+
+    // fires after the element has been attached to the DOM
+    connectedCallback() {
+
+      const handleMutations = (mutationsList) => {
+         for (let mutation of mutationsList) {
+           if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
+             const attributeName = mutation.attributeName;
+             const newValue = mutation.target.getAttribute(attributeName);
+             this.dataset2.set(attributeName.split('-')[1], newValue);
+           }
+         }
+       }
+      this.observer = new MutationObserver(handleMutations);
+      this.observer.observe(this, { attributes: true });
+      this.gc = ()=> observer.disconnect();
+
+      for (const {name, value} of this.attributes) {
+        if (name.startsWith('data-')) {
+          this.dataset2.set(name.split('-')[1], this.getAttribute(name));
+        }
+      }
+
+    }
+
+  getDecal() {
+    const response = this.shadowRoot.querySelector('.bi');
+    return response;
+  }
+
+  }

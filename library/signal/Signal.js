@@ -21,7 +21,10 @@ export default class Signal {
     this.#subscribers.push(callback);
 
     // Instantly return current value
-    if(this.#value !== undefined) callback(this.#value);
+    if (this.#value !== undefined) {
+      const dependencyValues = Array.from(this.#dependencies.keys()).map(o => o.value);
+      callback(this.#value, ...dependencyValues);
+    }
 
     // Return an unsubscribe function for convenience
     return () => this.unsubscribe(callback);
@@ -39,7 +42,7 @@ export default class Signal {
   notify() {
     this.#subscribers.forEach(callback => {
       try {
-        const dependencyValues = Array.from(this.#dependencies.keys()).map(o => o.get());
+        const dependencyValues = Array.from(this.#dependencies.keys()).map(o => o.value);
         callback(this.#value, ...dependencyValues);
       } catch (error) {
         console.error('Error executing subscriber callback:', error);

@@ -1,4 +1,4 @@
-import config from 'vpl-configuration';
+import config from 'system-configuration';
 
 // CSS
 const cssUrls = ['./static/css/style.css', './static/css/bootstrap.min.css','./static/css/bootstrap-icons.min.css'];
@@ -6,13 +6,16 @@ const cssFiles = (await Promise.all(cssUrls.map(url => fetch(url).then(res => re
 document.adoptedStyleSheets = cssFiles.map(str => { const css = new CSSStyleSheet(); css.replaceSync(str); return css;})
 
 // COMPONENTS
-import DomWindow from 'dom-window';
-import DomPipe from 'dom-pipe';
-import DomZoom from 'dom-zoom';
+import Pipe from 'pipe';
+import Port from 'port';
+import Window from 'window';
+import Scene from 'scene';
 
-customElements.define(`${config.prefix}-window`, DomWindow);
-customElements.define(`${config.prefix}-pipe`, DomPipe);
-customElements.define(`${config.prefix}-zoom`, DomZoom);
+// REGISTRATION
+customElements.define(`${config.prefix}-pipe`, Pipe);
+customElements.define(`${config.prefix}-port`, Port);
+customElements.define(`${config.prefix}-window`, Window);
+customElements.define(`${config.prefix}-scene`, Scene);
 
 export default class UI {
   services;
@@ -23,7 +26,7 @@ export default class UI {
   async start(){
 
     this.app = document.createElement('div');
-    this.scene = document.createElement('dom-zoom');
+    this.scene = document.createElement(`${config.prefix}-scene`);
     this.app.appendChild(this.scene);
     document.body.appendChild(this.app)
 
@@ -35,13 +38,16 @@ export default class UI {
 
   // =^o.O^= //
   watch(){
+
     this.gc = this.services.watch('create', '/services/main/*', ({target})=>{
-      const win = document.createElement(`${config.prefix}-window`);
+
+      const win = document.createElement(`${config.prefix}-${target.type}`);
       win.id = target.id;
       // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
       this.gc = target.dataset.subscribe((k, v) => win.setAttribute('data-'+k, v));
       this.scene.appendChild(win);
     })
+
   }
 
   #garbage = [];

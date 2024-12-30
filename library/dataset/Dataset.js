@@ -26,7 +26,7 @@ class ValueSignal {
   }
 }
 
-export default class SysDataset {
+export default class Dataset {
   data;
   constructor(data = {}) {
      this.data = data;

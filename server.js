@@ -1,24 +1,24 @@
 #!/usr/bin/env node
 
 import fs from 'fs';
-import Node from './src/Services.js';
+import Branch from 'branch';
 
-const services = new Node('services');
+const services = new Branch('services');
 
-const main = new Node('main');
+const main = new Branch('main');
 main.onStart = async () => console.log('ASYNC START GRRR')
 main.once('stop', ()=>console.log('Main scene node got stoppppp...'))
 
 services.watch('create', '/services/main/*', (x)=>console.info('[CREATE] new node in main scene', x))
 
-const uppercase = new Node('uppercase');
-const tee = new Node('tee');
+const uppercase = new Branch('uppercase');
+const tee = new Branch('tee');
 
 services.create(main);
 services.create(uppercase);
 services.create(tee);
 
-const mainInput = new Node('mainInput');
+const mainInput = new Branch('mainInput');
 main.create(mainInput)
 
 await services.load();
