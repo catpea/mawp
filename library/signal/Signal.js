@@ -20,11 +20,17 @@ export default class Signal {
 
     this.#subscribers.push(callback);
 
-    // Instantly return current value
-    if (this.#value !== undefined) {
-      const dependencyValues = Array.from(this.#dependencies.keys()).map(o => o.value);
-      callback(this.#value, ...dependencyValues);
+    // IMMEDIATE CALLBACK ONLY IF NON UNDEFIED EXIST
+    if (this.#dependencies.size) {
+      const allValues = [this.#value, ...Array.from(this.#dependencies.keys()).map(o => o.value)];
+      const allUndefined = allValues.every(v => v === undefined);
+      if (!allUndefined) callback(...allValues);
+    } else {
+      // if no other dependencites at this time
+      if (this.#value !== undefined) callback(this.#value);
     }
+
+
 
     // Return an unsubscribe function for convenience
     return () => this.unsubscribe(callback);

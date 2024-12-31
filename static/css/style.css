@@ -1,3 +1,12 @@
+.cursor-default {
+    cursor: default;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+.user-select-none {
+    user-select: none;
+}
 .flip-horizontal::before {
   transform: scaleX(-1); /* Flips the icon horizontally */
 }

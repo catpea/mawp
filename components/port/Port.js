@@ -1,3 +1,6 @@
+import config from 'system-configuration';
+
+// import Signal from 'signal';
 import Dataset from 'dataset';
 
 export default class Port extends HTMLElement {
@@ -73,11 +76,22 @@ export default class Port extends HTMLElement {
         }
       }
 
+
+
+
     }
 
-  getDecal() {
-    const response = this.shadowRoot.querySelector('.bi');
-    return response;
-  }
+
+
+
+
+
+
+
+
+
+    getDecal() {
+      return this.shadowRoot.querySelector('.bi');
+    }
 
   }

@@ -9,6 +9,8 @@ export default class Window extends HTMLElement {
       super();
       this.status = new Signal('loading');
 
+      this.sizeSignal = new Signal([0,0]);
+
       this.dataset2 = new Dataset();
 
       // attaches shadow tree and returns shadow root reference
@@ -25,11 +27,11 @@ export default class Window extends HTMLElement {
       const listItems = this.items;
 
       // adding a class to our container for the sake of clarity
-      cardNode.classList.add('card', 'text-center', 'm-4', 'shadow');
+      cardNode.classList.add('card', 'text-center', 'm-4', 'shadow', 'position-absolute');
 
       // creating the inner HTML of the editable list element
       cardNode.innerHTML = `
-          <div class="card-header">
+          <div class="card-header cursor-default user-select-none">
           </div>
 
           <ul class="list-group list-group-flush">
@@ -65,30 +67,17 @@ export default class Window extends HTMLElement {
       this.dataset2.get('date').subscribe(v => cardFooter.textContent = v);
       this.dataset2.get('title').subscribe(v => cardHeader.textContent = v);
 
+      this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');
+      this.dataset2.get('top').subscribe(v => cardNode.style.top = v + 'px');
+      this.dataset2.get('width').subscribe(v => cardNode.style.width = v + 'px');
+      this.dataset2.get('height').subscribe(v => cardNode.style.height = v + 'px');
+
       // const cardIO = shadow.querySelector('.list-group-item:first');
-
-
-
-
-
-
-
     }
 
-
-
     connectedCallback() {
-      const handleMutations = (mutationsList) => {
-         for (let mutation of mutationsList) {
-           if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
-             const attributeName = mutation.attributeName;
-             const newValue = mutation.target.getAttribute(attributeName);
-             // console.log('SET ATTRIBUTE', attributeName, newValue);
-             this.dataset2.set(attributeName.split('-')[1], newValue);
-           }
-         }
-       }
-      this.observer = new MutationObserver(handleMutations);
+
+      this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
       this.observer.observe(this, { attributes: true });
       this.gc = ()=> observer.disconnect();
 
@@ -98,7 +87,46 @@ export default class Window extends HTMLElement {
           this.dataset2.set(name.split('-')[1], this.getAttribute(name));
         }
       }
+
+
+
+
+      // SIZE SIGNAL
+      // Create a ResizeObserver instance
+      const resizeObserver = new ResizeObserver(this.#handleResizeMutation.bind(this));
+      // Start observing the target element
+      const card = this.shadowRoot.querySelector(`.card`);
+      //
+      resizeObserver.observe(card);
+      this.gc = ()=> resizeObserver.disconnect();
+
+
+
+
+
+
+
       this.status.value = 'ready';
+    }
+
+    #handleAttributeMutations(mutationsList) {
+      for (let mutation of mutationsList) {
+        if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
+          const attributeName = mutation.attributeName;
+          const newValue = mutation.target.getAttribute(attributeName);
+          // console.log('SET ATTRIBUTE', attributeName, newValue);
+          this.dataset2.set(attributeName.split('-')[1], newValue);
+        }
+      }
+    }
+
+    #handleResizeMutation(entries) {
+      for (let entry of entries) {
+        const width = entry.contentRect.width;
+        const height = entry.contentRect.height;
+        // console.log(`Element resized:`, [width, height]);
+        this.sizeSignal.value = [width, height];
+      }
     }
 
   getPortElement(id) {

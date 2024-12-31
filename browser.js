@@ -23,10 +23,50 @@ main.create(mainInput)
 
 const uppercaseInput = new Branch('uppercaseInput', 'window');
 uppercaseInput.dataset.set('title', 'Transducer');
+uppercaseInput.dataset.set('left', 300);
+uppercaseInput.dataset.set('top', 300);
 main.create(uppercaseInput)
+
+
+
+function getMinuteHandCoordinates(angleDegrees) {
+
+
+  // Convert the angle to radians
+  const angleRadians = angleDegrees * (Math.PI / 180);
+
+  // Calculate the x and y coordinates
+  const x = Math.cos(angleRadians);
+  const y = Math.sin(angleRadians);
+
+  return [ x, y ];
+}
 
 const uppercaseOutput = new Branch('uppercaseOutput', 'window');
 uppercaseOutput.dataset.set('title', 'Output Branch');
+uppercaseOutput.dataset.set('left', 600);
+uppercaseOutput.dataset.set('top', 600);
+
+let angleDegrees = 0;
+setInterval(() => {
+
+
+
+  mainInput.dataset.set('left', 100 + (55 * getMinuteHandCoordinates(angleDegrees)[1]));
+  uppercaseInput.dataset.set('left', 333 + (11 * getMinuteHandCoordinates(angleDegrees)[1]));
+
+  uppercaseOutput.dataset.set('left', 666 + (22 * getMinuteHandCoordinates(angleDegrees)[0]));
+
+
+  mainInput.dataset.set('width', 320 + (55 * getMinuteHandCoordinates(angleDegrees)[0]));
+  uppercaseInput.dataset.set('width', 420 + (22 * getMinuteHandCoordinates(angleDegrees)[1]));
+  uppercaseOutput.dataset.set('width', 300 + (11 * getMinuteHandCoordinates(angleDegrees)[0]));
+
+
+  angleDegrees += 10;
+  if (angleDegrees > 360) angleDegrees = 0;
+}, 1_000/32)
+
 main.create(uppercaseOutput)
 
 const pipe1 = new Branch('pipe1', 'pipe');

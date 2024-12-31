@@ -41,7 +41,9 @@ export default class Scene extends HTMLElement {
           <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
         </svg>
 
-        <slot></slot>
+        <div class="position-relative">
+          <slot></slot>
+        </div>
 
         <svg id="foreground" style="opacity: .1;">
         </svg>
@@ -59,6 +61,12 @@ export default class Scene extends HTMLElement {
       this.status.value = 'ready';
     }
 
+
+
+
+  // QUESTIONABLE BUT USEFUL UTILITY FUNCTIONS
+
+
   get drawingSurfaces() {
     return this.shadowRoot.querySelectorAll('svg')
   }
@@ -67,5 +75,93 @@ export default class Scene extends HTMLElement {
     const response = this.querySelector(`[id=${id}]`);
     return response;
   }
+
+  getWindow(colonAddress) {
+    const [elementId, portId] = colonAddress.split(/\W/, 2);
+    const element = this.getElementById(elementId);
+    return element;
+  }
+
+  getPort(colonAddress) {
+    const [elementId, portId] = colonAddress.split(/\W/, 2);
+    const element = this.getElementById(elementId);
+    const port = element.getPortElement(portId);
+    return port;
+  }
+
+  getDecal(colonAddress) {
+    const [elementId, portId] = colonAddress.split(/\W/, 2);
+    const element = this.getElementById(elementId);
+    const port = element.getPortElement(portId);
+    const decal = port.getDecal();
+    return decal;
+  }
+
+  // foo() {
+  //   const windowGeometryMonitor = new Signal();
+  //   windowGeometryMonitor.addDependency(this.getWindowDimensionsSignal( colonAddress ));
+
+  //   const decalCoordinatesMonitor = new Signal();
+  //   decalCoordinatesMonitor.addDependency(this.getPortCoordinateSignal( colonAddress ));
+
+
+
+  // }
+
+  // getPortCoordinateSignal(colonAddress) {
+
+
+  //   const port = this.getPort(colonAddress);
+  //   const decal = port.getDecal();
+  //   const coordinateSignal = new Signal();
+  //   coordinateSignal.value = this.calculateCentralCoordinates(decal);
+
+
+  //   coordinateSignal.addDependency( this.getWindow( colonAddress ).sizeSignal );
+  //   // x.addDependency( this.getWindow( colonAddress ).sizeSignal );
+
+  //   // this.getWindow(colonAddress).sizeSignal.subscribe(v => {
+
+  //   //    coordinateSignal.value = this.calculateCentralCoordinates(decal);
+
+  //   // })
+
+  //   return coordinateSignal;
+  // }
+
+
+
+  calculateCentralCoordinates(el) {
+        let {x:elementX,y:elementY, width:elementW, height:elementH} = el.getBoundingClientRect();
+
+        const scrollLeft = window.scrollX || window.pageXOffset;
+        const scrollTop = window.scrollY || window.pageYOffset;
+        elementX = elementX + scrollLeft;
+        elementY = elementY + scrollTop;
+
+        let {x:panX,y:panY} = this.pan;
+        let zoom = this.zoom;
+
+        elementX = elementX / zoom;
+        elementY = elementY / zoom;
+
+        elementW = elementW / zoom;
+        elementH = elementH / zoom;
+
+        const centerW = elementW/2;
+        const centerH = elementH/2;
+
+        panX = panX / zoom;
+        panY = panY / zoom;
+
+        const positionedX = elementX-panX;
+        const positionedY = elementY-panY;
+
+        const centeredX = positionedX+centerW;
+        const centeredY = positionedY+centerH;
+
+        return [ centeredX, centeredY ];
+      }
+
 
   }

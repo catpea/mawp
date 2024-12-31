@@ -10,38 +10,29 @@ export default class Pipe extends HTMLElement {
   #y1 = new Signal(0);
   #x2 = new Signal(0);
   #y2 = new Signal(0);
-  #stroke = 'teal';
-  #strokeWidth = '2';
+  #stroke = '#20c997'; // bs teal
+  #strokeWidth = 4;
+  #strokeWidthDelta = .5;
   #strokeWidthClickOverlay = '8';
 
     constructor() {
       super();
       this.dataset2 = new Dataset();
       this.status = new Signal('loading');
-
       this.status.subscribe(v => console.log('PIPE STATUS: ', v) );
-
-
-
     }
 
+
+
     connectedCallback() {
+
       const scene = this.closest(`${config.prefix}-scene`);
 
-      const handleMutations = (mutationsList) => {
-         for (let mutation of mutationsList) {
-           if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
-             const attributeName = mutation.attributeName;
-             const newValue = mutation.target.getAttribute(attributeName);
-             // console.log('SET ATTRIBUTE', attributeName, newValue);
-             this.dataset2.set(attributeName.split('-')[1], newValue);
-           }
-         }
-       }
-      this.observer = new MutationObserver(handleMutations);
+      this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
       this.observer.observe(this, { attributes: true });
       this.gc = ()=> observer.disconnect();
 
+      // SEED DATASET2
       for (const {name, value} of this.attributes) {
         if (name.startsWith('data-')) {
           this.dataset2.set(name.split('-')[1], this.getAttribute(name));
@@ -53,43 +44,112 @@ export default class Pipe extends HTMLElement {
       const toDecoder = new Series(this.dataset2.get('to'), attribute => scene.getElementById(attribute.split(/\W/, 1)[0]).status);
 
       // MONITOR FROM/TO ELEMENTS AND
-      const dependencies = new Signal(1);
+      const dependencies = new Signal();
       dependencies.addDependency(fromDecoder);
       dependencies.addDependency(toDecoder);
       this.gc = dependencies.subscribe((_, a, b) => { if (a === 'ready' && a === b) this.status.value = 'ready' });
 
       // CREATE AND SUBSCRIBE LINES
+      let actualStroke = this.#strokeWidth;
       for (const svgSurface of scene.drawingSurfaces) {
-        console.error('LINES CANNOT BE SHARED, there are multiple line surfaces now')
-        this.#line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        this.#line.setAttribute('stroke', this.#stroke);
-        this.#line.setAttribute('stroke-width', this.#strokeWidth);
-        svgSurface.appendChild(this.#line);
-        this.gc = this.#x1.subscribe(v=>this.#line.setAttribute('x1', v));
-        this.gc = this.#y1.subscribe(v=>this.#line.setAttribute('y1', v));
-        this.gc = this.#x2.subscribe(v=>this.#line.setAttribute('x2', v));
-        this.gc = this.#y2.subscribe(v=>this.#line.setAttribute('y2', v));
+        const svgLline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        svgLline.setAttribute('stroke', this.#stroke);
+        svgLline.setAttribute('stroke-width', actualStroke);
+        svgSurface.appendChild(svgLline);
+        this.gc = this.#x1.subscribe(v=>svgLline.setAttribute('x1', v));
+        this.gc = this.#y1.subscribe(v=>svgLline.setAttribute('y1', v));
+        this.gc = this.#x2.subscribe(v=>svgLline.setAttribute('x2', v));
+        this.gc = this.#y2.subscribe(v=>svgLline.setAttribute('y2', v));
+        this.gc = () => svgLline.remove();
+        actualStroke = this.#strokeWidth * this.#strokeWidthDelta;
       }
 
-      this.gc = this.status.subscribe(v => {
-        if (v === 'ready') {
+      this.gc = this.status.subscribe(v => { if (v === 'ready') {
+        // getSticker
+          // const fromElement = scene.getElementById(this.dataset2.get('from').value.split(/\W/, 1)[0]);
+          // const fromPort = fromElement.getPortElement(this.dataset2.get('from').value.split(/\W/, 2)[1]);
+          // const fromPortSticker = fromPort.getDecal();
 
-          const fromElement = scene.getElementById(this.dataset2.get('from').value.split(/\W/, 1)[0]);
-          const toElement = scene.getElementById(this.dataset2.get('to').value.split(/\W/, 1)[0]);
-          const fromPort = fromElement.getPortElement(this.dataset2.get('from').value.split(/\W/, 2)[1]);
-          const toPort = toElement.getPortElement(this.dataset2.get('to').value.split(/\W/, 2)[1]);
-          const fromPortSticker = fromPort.getDecal();
-          const toPortSticker = toPort.getDecal();
+          // const toElement = scene.getElementById(this.dataset2.get('to').value.split(/\W/, 1)[0]);
+          // const toPort = toElement.getPortElement(this.dataset2.get('to').value.split(/\W/, 2)[1]);
+          // const toPortSticker = toPort.getDecal();
 
-          setInterval(()=>{
-            const [x1, y1] = this.calculatePortCoordinates(fromPortSticker);
-            const [x2, y2] = this.calculatePortCoordinates(toPortSticker);
+          // const fromDecal = scene.getSticker(this.dataset2.get('from').value).coordinates;
+          // const toDecal = scene.getSticker(this.dataset2.get('to').value).coordinates;
 
-            this.#x1.value = x1;
-            this.#y1.value = y1;
-            this.#x2.value = x2;
-            this.#y2.value = y2;
-          },1000)
+          // setInterval(()=>{
+          //   const [x1, y1] = this.calculatePortCoordinates(fromPortSticker);
+          //   const [x2, y2] = this.calculatePortCoordinates(toPortSticker);
+          //   this.#x1.value = x1;
+          //   this.#y1.value = y1;
+          //   this.#x2.value = x2;
+          //   this.#y2.value = y2;
+          // },1000)
+
+          // const dependencies = new Signal();
+
+          // dependencies.addDependency(scene.getPortCoordinateSignal( this.dataset2.get('from').value ));
+          // dependencies.addDependency(scene.getPortCoordinateSignal( this.dataset2.get('to').value ));
+
+
+
+          // this.gc = dependencies.subscribe((_, a,b) => {
+
+          // });
+
+          // this.gc = dependencies.subscribe((_, [x1, y1], [x2, y2] ) => {
+          //   console.log(`Line update!`, arguments);
+
+          //   this.#x1.value = x1;
+          //   this.#y1.value = y1;
+          //   this.#x2.value = x2;
+          //   this.#y2.value = y2;
+
+          // });
+
+        // this.gc = scene.getWindow(this.dataset2.get('from').value).sizeSignal.subscribe(() => {
+        //   console.log('Heard resize from');
+        //   const [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
+        //   const [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
+        //   this.#x1.value = x1;
+        //   this.#y1.value = y1;
+        //   this.#x2.value = x2;
+        //   this.#y2.value = y2;
+        // });
+
+        // this.gc = scene.getWindow(this.dataset2.get('to').value).sizeSignal.subscribe(() => {
+        //   console.log('Heard resize to');
+        //   const [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
+        //   const [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
+        //   this.#x1.value = x1;
+        //   this.#y1.value = y1;
+        //   this.#x2.value = x2;
+        //   this.#y2.value = y2;
+        // });
+
+
+        // WHENEVER FROM OR TO WINDOW CHANGES SIZE, RECALCULATE LINE POSISTION
+        // NOTE: Not interested in window size
+        const dependencies = new Signal();
+        dependencies.addDependency(scene.getWindow(this.dataset2.get('from').value).sizeSignal);
+        dependencies.addDependency(scene.getWindow(this.dataset2.get('to').value).sizeSignal);
+        this.gc = dependencies.subscribe(() => {
+          const [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
+          const [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
+          this.#x1.value = x1;
+          this.#y1.value = y1;
+          this.#x2.value = x2;
+          this.#y2.value = y2;
+        });
+
+
+
+
+
+
+
+
+
 
 
 
@@ -97,41 +157,18 @@ export default class Pipe extends HTMLElement {
 
     }
 
-    calculatePortCoordinates(el) {
-      const scene = this.closest(`${config.prefix}-scene`);
-
-      let {x:elementX,y:elementY, width:elementW, height:elementH} = el.getBoundingClientRect();
-
-      const scrollLeft = window.scrollX || window.pageXOffset;
-      const scrollTop = window.scrollY || window.pageYOffset;
-      elementX = elementX + scrollLeft;
-      elementY = elementY + scrollTop;
-
-      const panZoom = scene;
-      if(!panZoom) return; // component destroyed
-      let {x:panX,y:panY} = panZoom.pan;
-      let zoom = panZoom.zoom;
-
-      elementX = elementX / zoom;
-      elementY = elementY / zoom;
-
-      elementW = elementW / zoom;
-      elementH = elementH / zoom;
-
-      const centerW = elementW/2;
-      const centerH = elementH/2;
-
-      panX = panX / zoom;
-      panY = panY / zoom;
-
-      const positionedX = elementX-panX;
-      const positionedY = elementY-panY;
-
-      const centeredX = positionedX+centerW;
-      const centeredY = positionedY+centerH;
-
-      return [centeredX, centeredY ];
+    #handleAttributeMutations(mutationsList) {
+      for (let mutation of mutationsList) {
+        if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
+          const attributeName = mutation.attributeName;
+          const newValue = mutation.target.getAttribute(attributeName);
+          // console.log('SET ATTRIBUTE', attributeName, newValue);
+          this.dataset2.set(attributeName.split('-')[1], newValue);
+        }
+      }
     }
+
+
 
     // GARBAGE COLLECTION
 
