@@ -97,40 +97,6 @@ export default class Scene extends HTMLElement {
     return decal;
   }
 
-  // foo() {
-  //   const windowGeometryMonitor = new Signal();
-  //   windowGeometryMonitor.addDependency(this.getWindowDimensionsSignal( colonAddress ));
-
-  //   const decalCoordinatesMonitor = new Signal();
-  //   decalCoordinatesMonitor.addDependency(this.getPortCoordinateSignal( colonAddress ));
-
-
-
-  // }
-
-  // getPortCoordinateSignal(colonAddress) {
-
-
-  //   const port = this.getPort(colonAddress);
-  //   const decal = port.getDecal();
-  //   const coordinateSignal = new Signal();
-  //   coordinateSignal.value = this.calculateCentralCoordinates(decal);
-
-
-  //   coordinateSignal.addDependency( this.getWindow( colonAddress ).sizeSignal );
-  //   // x.addDependency( this.getWindow( colonAddress ).sizeSignal );
-
-  //   // this.getWindow(colonAddress).sizeSignal.subscribe(v => {
-
-  //   //    coordinateSignal.value = this.calculateCentralCoordinates(decal);
-
-  //   // })
-
-  //   return coordinateSignal;
-  // }
-
-
-
   calculateCentralCoordinates(el) {
         let {x:elementX,y:elementY, width:elementW, height:elementH} = el.getBoundingClientRect();
 
