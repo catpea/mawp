@@ -63,9 +63,9 @@ setInterval(() => {
   uppercaseOutput.dataset.set('width', 300 + (11 * getMinuteHandCoordinates(angleDegrees)[0]));
 
 
-  angleDegrees += 10;
+  angleDegrees += 1;
   if (angleDegrees > 360) angleDegrees = 0;
-}, 1_000/32)
+}, 1_000/60)
 
 main.create(uppercaseOutput)
 
