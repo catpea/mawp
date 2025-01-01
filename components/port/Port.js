@@ -94,4 +94,15 @@ export default class Port extends HTMLElement {
       return this.shadowRoot.querySelector('.bi');
     }
 
+    // GARBAGE COLLECTION
+
+    #garbage = [];
+    collectGarbage(){
+      this.#garbage.map(s=>s.subscription())
+    }
+
+    set gc(subscription){ // shorthand for component level garbage collection
+      this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
+    }
+
   }

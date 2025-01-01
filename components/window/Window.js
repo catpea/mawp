@@ -1,9 +1,14 @@
 import config from 'system-configuration';
 import Signal from 'signal';
 
+import Movable from 'mouse/Movable.js';
+
 import Dataset from 'dataset';
 
 export default class Window extends HTMLElement {
+
+    // #el = {};
+
     constructor() {
       // establish prototype chain
       super();
@@ -12,6 +17,21 @@ export default class Window extends HTMLElement {
       this.sizeSignal = new Signal([0,0]);
 
       this.dataset2 = new Dataset();
+
+
+
+      // events: {
+      //   "dblclick"                : "open",
+      //   "click .icon.doc"         : "select",
+      //   "contextmenu .icon.doc"   : "showMenu",
+      //   "click .show_notes"       : "toggleNotes",
+      //   "click .title .lock"      : "editAccessLevel",
+      //   "mouseover .title .date"  : "showTooltip"
+      // },
+
+
+
+
 
       // attaches shadow tree and returns shadow root reference
       // https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow
@@ -73,9 +93,14 @@ export default class Window extends HTMLElement {
       this.dataset2.get('height').subscribe(v => cardNode.style.height = v + 'px');
 
       // const cardIO = shadow.querySelector('.list-group-item:first');
+
     }
 
     connectedCallback() {
+
+
+      const movable = new Movable(this.shadowRoot.querySelector('.card'), this);
+      this.gc = movable.start();
 
       this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
       this.observer.observe(this, { attributes: true });
@@ -133,5 +158,14 @@ export default class Window extends HTMLElement {
     return this.shadowRoot.querySelector(`#port-${id}`);
   }
 
+  // GARBAGE COLLECTION
 
+  #garbage = [];
+  collectGarbage(){
+    this.#garbage.map(s=>s.subscription())
+  }
+
+  set gc(subscription){ // shorthand for component level garbage collection
+    this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
+  }
   }

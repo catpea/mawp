@@ -28,11 +28,13 @@ class ValueSignal {
 
 export default class Dataset {
   data;
+  readOnly = false;
   constructor(data = {}) {
      this.data = data;
      this.listeners = [];
    }
    set(key, value) {
+     if(this.readOnly) throw new Error('Dataset is read only.')
      if (key in this.data) {
        if (this.data[key].value == value) return;
        this.data[key].value = value;

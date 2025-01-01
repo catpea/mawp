@@ -12,12 +12,15 @@ export default class Scene extends HTMLElement {
 
       const shadow = this.attachShadow({ mode: 'open' });
       const container = document.createElement('div');
+      container.classList.add('position-relative');
 
       container.innerHTML = `
 
         <style>
 
           svg {
+            border-radius: 16px 0 0 0;
+            background-color: #212529;
             pointer-events: none;
             width: 100%;
             height: 100%;
@@ -41,9 +44,9 @@ export default class Scene extends HTMLElement {
           <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
         </svg>
 
-        <div class="position-relative">
-          <slot></slot>
-        </div>
+
+        <slot></slot>
+
 
         <svg id="foreground" style="opacity: .1;">
         </svg>
@@ -98,10 +101,17 @@ export default class Scene extends HTMLElement {
   }
 
   calculateCentralCoordinates(el) {
+
+        // let {x:sceneX,y:sceneY, width:sceneW, height:sceneH} = this.getBoundingClientRect();
+
+
         let {x:elementX,y:elementY, width:elementW, height:elementH} = el.getBoundingClientRect();
 
-        const scrollLeft = window.scrollX || window.pageXOffset;
-        const scrollTop = window.scrollY || window.pageYOffset;
+        const scrollLeft = window.scrollX;
+        const scrollTop = window.scrollY;
+
+
+
         elementX = elementX + scrollLeft;
         elementY = elementY + scrollTop;
 
@@ -129,5 +139,14 @@ export default class Scene extends HTMLElement {
         return [ centeredX, centeredY ];
       }
 
+      // GARBAGE COLLECTION
 
+      #garbage = [];
+      collectGarbage(){
+        this.#garbage.map(s=>s.subscription())
+      }
+
+      set gc(subscription){ // shorthand for component level garbage collection
+        this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
+      }
   }

@@ -25,10 +25,10 @@ export default class UI {
 
   async start(){
 
-    this.app = document.createElement('div');
+    this.app = document.querySelector('.app');
     this.scene = document.createElement(`${config.prefix}-scene`);
     this.app.appendChild(this.scene);
-    document.body.appendChild(this.app)
+
 
     this.watch();
   }
@@ -45,6 +45,7 @@ export default class UI {
       win.id = target.id;
       // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
       this.gc = target.dataset.subscribe((k, v) => win.setAttribute('data-'+k, v));
+      win.source = target;
       this.scene.appendChild(win);
     })
 

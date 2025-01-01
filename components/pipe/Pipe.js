@@ -68,6 +68,12 @@ export default class Pipe extends HTMLElement {
       const dependencies = new Signal();
       dependencies.addDependency(scene.getWindow(this.dataset2.get('from').value).sizeSignal);
       dependencies.addDependency(scene.getWindow(this.dataset2.get('to').value).sizeSignal);
+
+      dependencies.addDependency(scene.getWindow(this.dataset2.get('from').value).dataset2.get('left'));
+      dependencies.addDependency(scene.getWindow(this.dataset2.get('from').value).dataset2.get('top'));
+      dependencies.addDependency(scene.getWindow(this.dataset2.get('to').value).dataset2.get('left'));
+      dependencies.addDependency(scene.getWindow(this.dataset2.get('to').value).dataset2.get('top'));
+
       this.gc = dependencies.subscribe(() => {
         const [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
         const [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
