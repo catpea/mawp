@@ -71,7 +71,10 @@ uppercaseOutput.dataset.set('top', 600);
 
 let angleDegrees = 0;
 setInterval(() => {
-  if (!isIdle) return;
+  if (!isIdle) {
+
+  return;
+  }
   mainInput.dataset.set('left', 100 + (55 * getMinuteHandCoordinates(angleDegrees)[1]));
   uppercaseInput.dataset.set('left', 333 + (11 * getMinuteHandCoordinates(angleDegrees)[1]));
   uppercaseOutput.dataset.set('left', 666 + (22 * getMinuteHandCoordinates(angleDegrees)[0]));

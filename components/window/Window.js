@@ -85,7 +85,7 @@ export default class Window extends HTMLElement {
       const cardFooter = shadow.querySelector('.card-footer');
 
       this.dataset2.get('date').subscribe(v => cardFooter.textContent = v);
-      this.dataset2.get('title').subscribe(v => cardHeader.textContent = v);
+      this.dataset2.get('title').subscribe(v => cardHeader.innerHTML = `${v} <i class="bi bi-menu-up cursor-pointer"></i>`);
 
       this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');
       this.dataset2.get('top').subscribe(v => cardNode.style.top = v + 'px');
