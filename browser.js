@@ -1,31 +1,62 @@
+import Signal from 'signal';
 import Branch from 'branch';
+import Commander from 'commander';
 
-const services = new Branch('services');
+class Project extends Branch {
+  commander;
+
+  active = new Signal('main');
+
+  constructor(...a) {
+    super(...a)
+    this.commander = new Commander(this);
+  }
+  get activeScene() {
+    return this.get( this.active.value);
+  }
+}
+
+class Scene extends Branch {
+  getWindow(id) {
+    return this.get(id);
+  }
+}
+
+const project = new Project('project');
 
 import UI from './src/UI.js';
-const ui = new UI(services);
+const ui = new UI(project);
 await ui.start();
 
-const main = new Branch('main');
-main.onStart = async () => console.log('ASYNC START GRRR')
-main.once('stop', ()=>console.log('Main scene Branch got stoppppp...'))
+const mainScene = new Scene('main');
+mainScene.onStart = async () => console.log('ASYNC START GRRR')
+mainScene.once('stop', ()=>console.log('Main scene Branch got stoppppp...'))
 
-const uppercase = new Branch('uppercase');
-const tee = new Branch('tee');
+const uppercaseScene = new Scene('uppercase');
+const teeScene = new Scene('tee');
 
-services.create(main);
-services.create(uppercase);
-services.create(tee);
+project.create(mainScene);
+project.create(uppercaseScene);
+project.create(teeScene);
+
+
+
+
+
+
+
+
+
 
 const mainInput = new Branch('mainInput', 'window');
 mainInput.dataset.set('title', 'Main Input');
-main.create(mainInput)
+mainScene.create(mainInput)
 
 const uppercaseInput = new Branch('uppercaseInput', 'window');
 uppercaseInput.dataset.set('title', 'Transducer');
 uppercaseInput.dataset.set('left', 300);
 uppercaseInput.dataset.set('top', 300);
-main.create(uppercaseInput)
+mainScene.create(uppercaseInput)
 
 let isIdle = true;
 let lastMoveTime = Date.now() -10000;
@@ -85,28 +116,28 @@ setInterval(() => {
   if (angleDegrees > 360) angleDegrees = 0;
 }, 1_000/60)
 
-main.create(uppercaseOutput)
+mainScene.create(uppercaseOutput)
 
 const pipe1 = new Branch('pipe1', 'pipe');
 pipe1.dataset.set('from', 'mainInput:out');
 pipe1.dataset.set('to', 'uppercaseInput:in');
-main.create(pipe1);
+mainScene.create(pipe1);
 
 const pipe2 = new Branch('pipe2', 'pipe');
 pipe2.dataset.set('from', 'uppercaseInput:out');
 pipe2.dataset.set('to', 'uppercaseOutput:in');
-main.create(pipe2);
+mainScene.create(pipe2);
 
 setInterval(() => {
   mainInput.dataset.set('date', (new Date()).toISOString());
 }, 1_000);
 
-await services.load();
-await services.start();
+await project.load();
+await project.start();
 
 console.log(`Startup at ${new Date().toISOString()}`);
 
 window.addEventListener('beforeunload', function(event) {
   ui.stop();
-  services.stop();
+  project.stop();
 });

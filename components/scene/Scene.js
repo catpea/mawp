@@ -1,4 +1,5 @@
 import Signal from 'signal';
+import lol from 'lol';
 
 export default class Scene extends HTMLElement {
 
@@ -23,44 +24,6 @@ export default class Scene extends HTMLElement {
           }
           .illustration-dot {
             fill: siver;
-          }
-        }
-        .toolbar {
-         	position: absolute;
-          top: 1rem;
-          left: 1rem;
-
-        }
-        .cli {
-          background-color: #343a40;
-          border-radius: 32px;
-         	position: absolute;
-         	bottom: 1rem;
-         	left: 1rem;
-         	right: 1rem;
-          padding: .1rem;
-
-          .cli-send {
-            position: absolute;
-            right: 1rem;
-            top: .69rem;
-          }
-
-          .cli-control {
-           border-radius: 32px;
-            border: none;
-            background-color: transparent;
-            width: 100%;
-            padding: .5rem 1rem;
-            caret-color: rgb(15, 203, 140);
-
-            font-family: Manrope, Arial, sans-serif;
-            font-size: 16px;
-            font-weight: 400;
-
-            &:focus-visible {
-              outline: none;
-            }
           }
         }
       `;
@@ -90,44 +53,14 @@ export default class Scene extends HTMLElement {
 
         <svg class="illustration illustration-foreground"></svg>
 
-        <div class="toolbar">
-          <div class="btn-toolbar vertical" role="toolbar" aria-label="Toolbar with button groups" style="left: 0px; top: 0px; z-index: 10;">
-            <div class="btn-group-vertical mb-2" role="group" aria-label="First group">
-              <button type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-play"></i></button>
-              <button type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-pause"></i></button>
-              <button type="button" class="btn btn-outline-secondary" title="Send Stop"><i class="bi bi-stop"></i></button>
-              <button type="button" class="btn btn-outline-secondary" title="Send Kill"><i class="bi bi-capsule"></i></button>
-
-              <button type="button" class="btn btn-outline-secondary" title="Clear Stage"  data-bs-content="Clear the stage of all actors and begin a new project."><i class="bi bi-eraser"></i></button>
-              <button type="button" class="btn btn-outline-secondary" title="Open File"  data-bs-content="Load data from your computer."><i class="bi bi-folder2-open"></i></button>
-              <button type="button" class="btn btn-outline-secondary"><i class="bi bi-save"></i></button>
-              <button type="button" class="btn btn-outline-secondary" title="New Block"  data-bs-content="Add a new function to your program."><i class="bi bi-tools"></i></button>
-
-              <button type="button" class="btn btn-outline-secondary" title="Generate Code"  data-bs-content="Generate a standalone program that does not require sweetpea to run."><i class="bi bi-box-seam"></i></button>
-              <button type="button" class="btn btn-outline-secondary" title="Save Program"  data-bs-content="Save project to your computer."><i class="bi bi-floppy"></i></button>
-              <button type="button" class="btn btn-outline-secondary" title="Function Creator"  data-bs-content="Add a new function to your program."><i class="bi bi-puzzle"></i></button>
-
-              <button type="button" class="btn btn-outline-secondary"><i class="bi bi-zoom-in"></i></button>
-              <button type="button" class="btn btn-outline-secondary"><i class="bi bi-zoom-out"></i></button>
-              <button type="button" class="btn btn-outline-secondary"><i class="bi bi-aspect-ratio"></i></button>
-
-            </div>
-          </div>
-        </div>
-
-        <div class="cli">
-          <i class="cli-send bi bi-send-fill"></i>
-          <input type="text" class="cli-control" placeholder=": (buttons/menus are not yet connected but you can drag a window)">
-        </div>
-
-
-
+        <x-toolbar></x-toolbar>
+        <x-prompt></x-prompt>
+        <x-console></x-console>
 
       `;
 
       shadow.appendChild(container);
     }
-
 
 
     // fires after the element has been attached to the DOM

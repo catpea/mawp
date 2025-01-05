@@ -8,10 +8,13 @@ export default class Branch {
   children = [];
 
   constructor(id, type) {
+    this.initialize();
     this.id = id||guid();
     this.type = type||'node';
     this.dataset = new Dataset();
   }
+  // Second constructor
+  initialize() { }
 
   // TREE BUILDING //
 
@@ -62,6 +65,16 @@ export default class Branch {
       }
     }
     return nodes;
+  }
+
+
+  get(...path) {
+    if (this.children.length === 0) return null;
+    const [currentId, ...remainingPath] = path;
+    const node = this.children.find(child => child.id === currentId);
+    if (!node) return null;
+    if (remainingPath.length === 0) return node;
+    return node.getNode(remainingPath);
   }
 
   // PROPAGATING EMITTER SYSTEM //

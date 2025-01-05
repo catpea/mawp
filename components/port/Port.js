@@ -1,6 +1,3 @@
-import config from 'system-configuration';
-
-// import Signal from 'signal';
 import Dataset from 'dataset';
 
 export default class Port extends HTMLElement {

@@ -1,4 +1,3 @@
-import config from 'system-configuration';
 import Dataset from 'dataset';
 import Signal from 'signal';
 import Series from 'series';
@@ -24,7 +23,7 @@ export default class Pipe extends HTMLElement {
 
   connectedCallback() {
 
-    const scene = this.closest(`${config.prefix}-scene`);
+    const scene = this.closest(`x-scene`);
 
     this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
     this.observer.observe(this, { attributes: true });

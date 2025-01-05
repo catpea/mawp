@@ -80,6 +80,9 @@ export default class Movable {
       this.system.source.dataset.set('left', x);
       this.system.source.dataset.set('top', y);
 
+      console.warn('TODO: this requires command support projectCommand.moveWindow({ left: x, top: y });')
+
+
       // Update previousN - get ready for next update
       this.#previousX = event.clientX;
       this.#previousY = event.clientY;

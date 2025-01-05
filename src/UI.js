@@ -1,5 +1,3 @@
-import config from 'system-configuration';
-
 // CSS
 const cssUrls = ['./static/css/style.css', './static/css/bootstrap.min.css','./static/css/bootstrap-icons.min.css'];
 const cssFiles = (await Promise.all(cssUrls.map(url => fetch(url).then(res => res.text()))));
@@ -10,27 +8,49 @@ import Pipe from 'pipe';
 import Port from 'port';
 import Window from 'window';
 import Scene from 'scene';
+import Application from 'application';
+import Prompt from 'prompt';
+import Console from 'console';
+import Toolbar from 'toolbar';
 
 // REGISTRATION
-customElements.define(`${config.prefix}-pipe`, Pipe);
-customElements.define(`${config.prefix}-port`, Port);
-customElements.define(`${config.prefix}-window`, Window);
-customElements.define(`${config.prefix}-scene`, Scene);
+
+// Structural
+customElements.define(`x-applicaion`, Application);
+
+// Critical
+customElements.define(`x-port`, Port);
+customElements.define(`x-window`, Window);
+customElements.define(`x-pipe`, Pipe);
+customElements.define(`x-scene`, Scene);
+
+// Helpers
+customElements.define(`x-toolbar`, Toolbar);
+customElements.define(`x-prompt`, Prompt);
+customElements.define(`x-console`, Console);
+
+
+
+
+
 
 export default class UI {
-  services;
-  constructor(services){
-    this.services = services;
+  project;
+  constructor(project){
+    this.project = project;
   }
 
   async start(){
 
-    this.app = document.querySelector('.app');
-    this.scene = document.createElement(`${config.prefix}-scene`);
-    this.app.appendChild(this.scene);
-
+    this.mountPoint = document.querySelector('.app');
+    this.application = document.createElement(`x-application`);
+    this.application.project = this.project;
+    this.scene = document.createElement(`x-scene`);
+    this.application.appendChild(this.scene);
+    this.mountPoint.appendChild(this.application);
 
     this.watch();
+
   }
   async stop(){
 
@@ -39,14 +59,15 @@ export default class UI {
   // =^o.O^= //
   watch(){
 
-    this.gc = this.services.watch('create', '/services/main/*', ({target})=>{
+    this.gc = this.project.watch('create', '/project/main/*', ({target})=>{
 
-      const win = document.createElement(`${config.prefix}-${target.type}`);
+      const win = document.createElement(`x-${target.type}`);
+      win.project = this.project;
+      win.source = target;
       win.id = target.id;
       // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
       this.gc = target.dataset.subscribe((k, v) => win.setAttribute('data-'+k, v));
-      win.source = target;
-      this.scene.appendChild(win);
+      this.application.querySelector('x-scene').appendChild(win);
     })
 
   }

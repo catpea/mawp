@@ -1,9 +1,8 @@
-import config from 'system-configuration';
 import Signal from 'signal';
-
-import Movable from 'mouse/Movable.js';
-
 import Dataset from 'dataset';
+
+import Movable from './Movable.js';
+
 
 export default class Window extends HTMLElement {
 
@@ -56,8 +55,8 @@ export default class Window extends HTMLElement {
 
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
-              <${config.prefix}-port id="port-in" data-title="In" data-side="start" data-icon="circle"></${config.prefix}-port>
-              <${config.prefix}-port id="port-out" data-title="Out" data-side="end" data-icon="circle"></${config.prefix}-port>
+              <x-port id="port-in" data-title="In" data-side="start" data-icon="circle"></x-port>
+              <x-port id="port-out" data-title="Out" data-side="end" data-icon="circle"></x-port>
             </li>
             <li class="list-group-item">A second item</li>
           </ul>
@@ -99,7 +98,7 @@ export default class Window extends HTMLElement {
     connectedCallback() {
 
 
-      const movable = new Movable(this.shadowRoot.querySelector('.card'), this);
+      const movable = new Movable(this);
       this.gc = movable.start();
 
       this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
