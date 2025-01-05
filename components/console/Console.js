@@ -2,6 +2,7 @@ import Signal from 'signal';
 import Forms from 'forms';
 
 import lol from 'lol';
+import transcend from 'transcend';
 
 export default class Console extends HTMLElement {
 
@@ -42,7 +43,7 @@ export default class Console extends HTMLElement {
     connectedCallback() {
 
       // const application = this.parentNode.parentNode.host.closest(`x-application`);
-      const application = this.transcend(`x-application`);
+      const application = transcend(this, `x-application`);
       if(!application) throw new Error('Unable to locate applicaion!')
 
 
@@ -68,6 +69,8 @@ export default class Console extends HTMLElement {
 
 
     publishExecutedCommand(executedCommandEvent){
+      const application = transcend(this, `x-application`);
+      if(!application) throw new Error('Unable to locate applicaion!')
 
       const forms = new Forms({gc: this.gc});
 
@@ -102,7 +105,7 @@ export default class Console extends HTMLElement {
 
       commandForm.appendChild(lol.button({class:'btn btn-outline-secondary btn-sm float-end'}, 'Adjust'))
 
-      const progressBar = lol.div({ class: 'progress-bar', style: {width: '100%'} },)
+      const progressBar = lol.div({ class: 'progress-bar opacity-25', style: {width: '100%'} },)
       let progressBarWidth = 100;
       const progressBarWidthIntervalId = setInterval(() => {
         progressBarWidth = progressBarWidth - 1;
@@ -118,7 +121,7 @@ export default class Console extends HTMLElement {
         progressBar.style.display = 'none';
       });
 
-      commandContainer.appendChild(lol.div({ class: 'progress position-absolute top-100 start-50 translate-middle', style: {marginTop: '-1px', height:'1px', width: '98%', background:'transparent'} }, progressBar) )
+      commandContainer.appendChild(lol.div({ class: 'progress position-absolute top-100 start-50 translate-middle', style: {  marginTop: '-6px', height:'1px', width: '98%', background:'transparent'} }, progressBar) )
 
       const consoleContainer = this.shadowRoot.querySelector('.console');
       consoleContainer.insertBefore(commandContainer, consoleContainer.firstChild);
@@ -133,19 +136,5 @@ export default class Console extends HTMLElement {
 
 
 
-    transcend(selector, element = this) {
-        // Check if the element exists and is not the document or window
-        if (element && element !== document && element !== window) {
-            // Try to find the closest element matching the selector
-            const closestElement = element.closest(selector);
 
-            if (closestElement) {
-                return closestElement;
-            }
-
-        }
-
-        // If not found, traverse into the shadow DOM host and search there
-        return this.transcend(selector, element.getRootNode().host);
-    }
   }

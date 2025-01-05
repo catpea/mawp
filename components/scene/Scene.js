@@ -99,6 +99,11 @@ export default class Scene extends HTMLElement {
   getDecal(colonAddress) {
     const [elementId, portId] = colonAddress.split(/\W/, 2);
     const element = this.getElementById(elementId);
+    if (!element) {
+
+      throw new Error(`Element ${elementId} not found`)
+    }
+
     const port = element.getPortElement(portId);
     const decal = port.getDecal();
     return decal;

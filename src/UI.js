@@ -49,29 +49,64 @@ export default class UI {
     this.application.appendChild(this.scene);
     this.mountPoint.appendChild(this.application);
 
-    this.watch();
+    this.project.activeScene.subscribe(v=>this.watch(v))
+    // this.watch(this.project.activeScene.value);
 
   }
+
+  addComponent(branch){
+      const component = document.createElement(`x-${branch.type}`);
+      component.id = branch.id;
+      component.project = this.project;
+      // component.source = branch;
+
+      // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
+      this.sceneGarbage = branch.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
+      this.application.querySelector('x-scene').appendChild(component);
+      this.sceneGarbage = () => component.remove();
+  }
+
+
   async stop(){
-
+    // this.clearSceneGarbage();
+    // this.collectGarbage();
   }
+
+
+
 
   // =^o.O^= //
-  watch(){
+  #watching = false;
+  watch(sceneName){
+    console.log(`Watching sceneName ${sceneName}`);
 
-    this.gc = this.project.watch('create', '/project/main/*', ({target})=>{
+    // this.project.activeScene
+    this.clearSceneGarbage()
 
-      const win = document.createElement(`x-${target.type}`);
-      win.project = this.project;
-      win.source = target;
-      win.id = target.id;
-      // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
-      this.gc = target.dataset.subscribe((k, v) => win.setAttribute('data-'+k, v));
-      this.application.querySelector('x-scene').appendChild(win);
+    const watchPath = `/project/${sceneName}/*`;
+    this.sceneGarbage = this.project.watch('create', watchPath, ({target})=>{
+      this.addComponent(target)
     })
+
+    const scenePath = `${sceneName}`;
+    const scene = this.project.get(scenePath);
+    for(const child of scene.children){
+      this.addComponent(child)
+    }
 
   }
 
+  // PER SCENE GARBAGE
+  #sceneGarbage = [];
+  clearSceneGarbage(){
+    this.#sceneGarbage.map(s=>s.subscription())
+    this.#sceneGarbage = [];
+  }
+  set sceneGarbage(subscription){ // shorthand for component level garbage collection
+    this.#sceneGarbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
+  }
+
+  // MAIN GARBAGE
   #garbage = [];
   collectGarbage(){
     this.#garbage.map(s=>s.subscription())

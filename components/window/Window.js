@@ -133,6 +133,14 @@ export default class Window extends HTMLElement {
       this.status.value = 'ready';
     }
 
+
+    disconnectedCallback() {
+      this.status.value = 'unloaded';
+    }
+
+
+
+
     #handleAttributeMutations(mutationsList) {
       for (let mutation of mutationsList) {
         if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {

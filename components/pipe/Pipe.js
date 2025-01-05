@@ -19,7 +19,14 @@ export default class Pipe extends HTMLElement {
     this.dataset2 = new Dataset();
     this.status = new Signal('loading');
     this.status.subscribe(v => console.log('PIPE STATUS: ', v) );
+    this.status.subscribe(v => {
+      if (v == 'unloaded') {
+        console.log('Removing Pipe Component', this);
+        this.remove();
+      }
+    });
   }
+
 
   connectedCallback() {
 
@@ -27,7 +34,7 @@ export default class Pipe extends HTMLElement {
 
     this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
     this.observer.observe(this, { attributes: true });
-    this.gc = ()=> observer.disconnect();
+    this.gc = ()=> this.observer.disconnect();
 
     // SEED DATASET2
     for (const {name, value} of this.attributes) {
@@ -44,7 +51,16 @@ export default class Pipe extends HTMLElement {
     const dependencies = new Signal();
     dependencies.addDependency(fromDecoder);
     dependencies.addDependency(toDecoder);
-    this.gc = dependencies.subscribe((_, a, b) => { if (a === 'ready' && a === b) this.status.value = 'ready' });
+    this.gc = dependencies.subscribe((_, a, b) => {
+      console.log('STATUS', a,b)
+      if (a === 'ready' && a === b) {
+        this.status.value = 'ready'
+
+      }else if(a === 'unloaded' && a === b){
+        this.status.value = 'unloaded'
+      }
+
+    });
 
     // CREATE AND SUBSCRIBE LINES
     let actualStroke = this.#strokeWidth;
@@ -62,9 +78,17 @@ export default class Pipe extends HTMLElement {
     }
 
       // WHENEVER FROM OR TO WINDOW CHANGES SIZE, RECALCULATE LINE POSISTION
+
     this.gc = this.status.subscribe(v => { if (v === 'ready') {
-      // NOTE: Not interested in window size
+
+      scene.getWindow(this.dataset2.get('from').value)
+      scene.getWindow(this.dataset2.get('to').value)
+
       const dependencies = new Signal();
+
+      dependencies.addDependency(fromDecoder);
+      dependencies.addDependency(toDecoder);
+
       dependencies.addDependency(scene.getWindow(this.dataset2.get('from').value).sizeSignal);
       dependencies.addDependency(scene.getWindow(this.dataset2.get('to').value).sizeSignal);
 
@@ -73,16 +97,25 @@ export default class Pipe extends HTMLElement {
       dependencies.addDependency(scene.getWindow(this.dataset2.get('to').value).dataset2.get('left'));
       dependencies.addDependency(scene.getWindow(this.dataset2.get('to').value).dataset2.get('top'));
 
-      this.gc = dependencies.subscribe(() => {
-        const [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
-        const [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
-        this.#x1.value = x1;
-        this.#y1.value = y1;
-        this.#x2.value = x2;
-        this.#y2.value = y2;
+      this.gc = dependencies.subscribe((_, a, b) => {
+        if (a === 'ready' && a === b) {
+          const [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
+          const [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
+          this.#x1.value = x1;
+          this.#y1.value = y1;
+          this.#x2.value = x2;
+          this.#y2.value = y2;
+        } else {
+          // component exited
+        }
+
       });
     }});
 
+  }
+
+  disconnectedCallback() {
+    this.collectGarbage();
   }
 
   #handleAttributeMutations(mutationsList) {
