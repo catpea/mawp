@@ -46,24 +46,28 @@ project.create(teeScene);
 
 
 {
-  const mainInput = new Branch('mainInput', 'window');
-  mainInput.dataset.set('title', 'Main Input');
-  mainScene.create(mainInput)
+  const windowPostMessage = new Branch('windowPostMessage', 'window');
+  windowPostMessage.dataset.set('title', 'Window API: postMessage');
+  windowPostMessage.dataset.set('left', 100);
+  windowPostMessage.dataset.set('top', 300);
+  mainScene.create(windowPostMessage)
 
   const uppercaseInput = new Branch('uppercaseInput', 'window');
   uppercaseInput.dataset.set('title', 'Transducer');
-  uppercaseInput.dataset.set('left', 300);
+  uppercaseInput.dataset.set('reference', 'upper');
+  uppercaseInput.dataset.set('left', 400);
   uppercaseInput.dataset.set('top', 300);
+  uppercaseInput.dataset.set('note', 'Edit me! click the yellow icon ^');
   mainScene.create(uppercaseInput)
 
   const uppercaseOutput = new Branch('uppercaseOutput', 'window');
   uppercaseOutput.dataset.set('title', 'Output Branch');
-  uppercaseOutput.dataset.set('left', 600);
-  uppercaseOutput.dataset.set('top', 600);
+  uppercaseOutput.dataset.set('left', 700);
+  uppercaseOutput.dataset.set('top', 300);
   mainScene.create(uppercaseOutput)
 
   const pipe1 = new Branch('pipe1', 'pipe');
-  pipe1.dataset.set('from', 'mainInput:out');
+  pipe1.dataset.set('from', 'windowPostMessage:out');
   pipe1.dataset.set('to', 'uppercaseInput:in');
   mainScene.create(pipe1);
 
@@ -76,39 +80,44 @@ project.create(teeScene);
 
 
 {
-  const mainInput = new Branch('mainInput', 'window');
-  mainInput.dataset.set('title', 'Main Input 1');
-  mainInput.dataset.set('top', 100);
+  const secondaryStream = new Branch('secondaryStream', 'window');
+  secondaryStream.dataset.set('title', 'Secondary Stream');
+  secondaryStream.dataset.set('incoming', true);
+  secondaryStream.dataset.set('left', 150);
+  secondaryStream.dataset.set('top', 100);
+  upperScene.create(secondaryStream)
 
-  upperScene.create(mainInput)
-
-  const mainInput2 = new Branch('mainInput2', 'window');
-  mainInput2.dataset.set('title', 'Main Input 2');
-  mainInput2.dataset.set('top', 300);
-
-  upperScene.create(mainInput2)
+  const auxiliaryStream = new Branch('auxiliaryStream', 'window');
+  auxiliaryStream.dataset.set('title', 'Auxiliary Stream');
+  auxiliaryStream.dataset.set('incoming', true);
+  auxiliaryStream.dataset.set('left', 150);
+  auxiliaryStream.dataset.set('top', 500);
+  upperScene.create(auxiliaryStream)
 
   const uppercaseInput1 = new Branch('uppercaseInput', 'window');
   uppercaseInput1.dataset.set('title', 'Transducer2');
-  uppercaseInput1.dataset.set('left', 300);
+  uppercaseInput1.dataset.set('reference', 'tee');
+  uppercaseInput1.dataset.set('left', 400);
   uppercaseInput1.dataset.set('top', 300);
+  uppercaseInput1.dataset.set('note', 'Edit me too!!!');
+
   upperScene.create(uppercaseInput1)
 
 
 
   const uppercaseOutput = new Branch('uppercaseOutput', 'window');
-  uppercaseOutput.dataset.set('title', 'Output Branch2');
-  uppercaseOutput.dataset.set('left', 600);
-  uppercaseOutput.dataset.set('top', 600);
+  uppercaseOutput.dataset.set('title', 'Output');
+  uppercaseOutput.dataset.set('left', 700);
+  uppercaseOutput.dataset.set('top', 300);
   upperScene.create(uppercaseOutput)
 
   const pipe0 = new Branch('pipe0', 'pipe');
-  pipe0.dataset.set('from', 'mainInput2:out');
+  pipe0.dataset.set('from', 'secondaryStream:out');
   pipe0.dataset.set('to', 'uppercaseInput:in');
   upperScene.create(pipe0);
 
   const pipe1 = new Branch('pipe1', 'pipe');
-  pipe1.dataset.set('from', 'mainInput:out');
+  pipe1.dataset.set('from', 'auxiliaryStream:out');
   pipe1.dataset.set('to', 'uppercaseInput:in');
   upperScene.create(pipe1);
 
@@ -121,6 +130,27 @@ project.create(teeScene);
 
 
 
+
+{
+  const secondaryStream = new Branch('secondaryStream', 'window');
+  secondaryStream.dataset.set('title', 'Secondary Stream');
+  secondaryStream.dataset.set('incoming', true);
+  secondaryStream.dataset.set('left', 150);
+  secondaryStream.dataset.set('top', 300);
+  teeScene.create(secondaryStream)
+
+  const uppercaseOutput = new Branch('uppercaseOutput', 'window');
+  uppercaseOutput.dataset.set('title', 'Output');
+  uppercaseOutput.dataset.set('left', 700);
+  uppercaseOutput.dataset.set('top', 300);
+  teeScene.create(uppercaseOutput)
+
+  const pipe0 = new Branch('pipe0', 'pipe');
+  pipe0.dataset.set('from', 'secondaryStream:out');
+  pipe0.dataset.set('to', 'uppercaseOutput:in');
+  teeScene.create(pipe0);
+
+}
 
 
 

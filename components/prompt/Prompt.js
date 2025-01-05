@@ -51,7 +51,7 @@ export default class Prompt extends HTMLElement {
 
       const container = lol.div({ class: 'prompt' });
       container.innerHTML = `
-        <input type="text" class="prompt-control" placeholder=": (buttons/menus are not yet connected but you can drag a window)">
+        <input type="text" class="prompt-control" placeholder="">
         <i class="prompt-send bi bi-send-fill"></i>
       `;
       this.appendChild(container);
