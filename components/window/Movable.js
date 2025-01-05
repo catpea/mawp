@@ -94,11 +94,8 @@ export default class Movable {
 
       this.finalCoordinate = { id: this.windowComponent.id, left: x, top: y };
 
-      console.log('this.windowComponent.project', this.windowComponent.project);
-      console.log('this.windowComponent.project.commander', this.windowComponent.project.commander);
-      console.log('this.windowComponent.project.commander.moveWindow', this.windowComponent.project.commander.moveWindow);
-      this.windowComponent.project.commander.moveWindow(
-        { id: this.windowComponent.id, left: x, top: y }
+      this.windowComponent.project.commander.windowMove(
+        { id: this.windowComponent.id, left: parseInt(x), top: parseInt(y) }
       );
 
       // Update previousN - get ready for next update

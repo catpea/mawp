@@ -5,10 +5,7 @@ export default class Command {
   }
 
   getWindow(id) {
-    console.log('this.project.activeScene', this.project.activeScene);
-
     return this.project.activeScene.getWindow(id);
-
   }
 
 }
