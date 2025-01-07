@@ -1,5 +1,7 @@
 import Signal from 'signal';
+import commando from 'commando';
 import lol from 'lol';
+import transcend from 'transcend';
 
 export default class Prompt extends HTMLElement {
 
@@ -18,10 +20,16 @@ export default class Prompt extends HTMLElement {
          	right: 1rem;
           padding: .1rem;
 
-          .prompt-send {
+          i.prompt-send {
             position: absolute;
             right: 1rem;
             top: .69rem;
+          }
+
+          button.prompt-send {
+            position: absolute;
+            right: 1rem;
+            top: .32rem;
           }
 
           .prompt-control {
@@ -49,18 +57,51 @@ export default class Prompt extends HTMLElement {
       const shadow = this.attachShadow({ mode: 'open' });
       shadow.adoptedStyleSheets = [...document.adoptedStyleSheets, localCss];
 
-      const container = lol.div({ class: 'prompt' });
-      container.innerHTML = `
-        <input type="text" class="prompt-control" placeholder="">
-        <i class="prompt-send bi bi-send-fill"></i>
-      `;
-      this.appendChild(container);
-      shadow.appendChild(container);
+
 
     }
 
     connectedCallback() {
+
+
+      const application = transcend(this, `x-application`);
+      if(!application) throw new Error('Unable to locate applicaion!')
+
+
+      let commandForm;
+
+      const executeForm = ()=>{
+        const formData = new FormData(commandForm);
+        const commandLine = formData.get('commandLine');
+        for( const { commandName, commandArguments } of commando(commandLine)){
+          application.project.commander[commandName](commandArguments);
+        }
+      }
+      const commandProcessor = e => {
+        e.preventDefault();
+        executeForm()
+      };
+
+      const commandLine = lol.input({type:'text', class:'prompt-control', name:'commandLine', value:'windowMove -id windowPostMessage -left 100 -top 50 --note "Bork Bork"; windowMove -id uppercaseOutput -left 500 -top 700'});
+      const submitIcon = lol.i({class:'prompt-send bi bi-send-fill', on:{click:()=>executeForm()} })
+      commandForm = lol.form({on:{submit:commandProcessor}}, commandLine, submitIcon);
+      const container = lol.div({ class: 'prompt', }, commandForm);
+
+      this.shadowRoot.appendChild(container);
+
+      setTimeout(()=>{
+        const commandLine = `alert --type info --ttl 60 --title "Hello!" --text "Command line is working now. Just hit enter (when in there) to execute, or click send icon." --note "Click yellow edit-icons in window captions to move between scenes. You can move windows too." `;
+        for( const { commandName, commandArguments } of commando(commandLine)){
+          console.log(commandName, commandArguments);
+          application.project.commander[commandName](commandArguments);
+        }
+      }, 1_000)
+
       this.status.value = 'ready';
+
+
+
+
     }
 
   }

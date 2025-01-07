@@ -61,7 +61,7 @@ class CommandLoader {
 class CommandExecutor {
   static async execute(model, CommandClass, args) {
     const command = new CommandClass(model);
-    return await command.execute(...args);
+    return await command.execute(args);
   }
 }
 
@@ -154,10 +154,14 @@ export default class Commander extends CommandEmitter {
         }
 
         // Return command execution handler
-        return async (...args) => {
+        return async (args) => {
           return await CommandHandler.handle(this, model, commandName, args);
         };
       }
     });
+  }
+
+  alert(o){
+    this.emit('alert', o)
   }
 }

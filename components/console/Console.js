@@ -46,18 +46,25 @@ export default class Console extends HTMLElement {
       const application = transcend(this, `x-application`);
       if(!application) throw new Error('Unable to locate applicaion!')
 
+       this.gc = application.project.commander.on('alert', o => {
+            this.publishAlert(o);
+       });
 
        const debounceDelay = 300;
        const executedCommandTimeouts = new Map();
        this.gc = application.project.commander.on('executed', o => {
-         if (executedCommandTimeouts.has(o.commandName)) {
-           clearTimeout(executedCommandTimeouts.get(o.commandName));
+
+         let commandId = o.commandName;
+         if(o.commandArguments && o.commandArguments.id) commandId = o.commandName + o.commandArguments.id
+         console.info(commandId)
+         if (executedCommandTimeouts.has(commandId)) {
+           clearTimeout(executedCommandTimeouts.get(commandId));
          }
          const timeoutId = setTimeout(() => {
             this.publishExecutedCommand(o);
-            executedCommandTimeouts.delete(o.commandName);
+            executedCommandTimeouts.delete(commandId);
           }, debounceDelay);
-          executedCommandTimeouts.set(o.commandName, timeoutId);
+          executedCommandTimeouts.set(commandId, timeoutId);
        });
 
       this.status.value = 'ready';
@@ -66,7 +73,39 @@ export default class Console extends HTMLElement {
 
 
 
+    publishAlert(alert){
+      const application = transcend(this, `x-application`);
+      if(!application) throw new Error('Unable to locate applicaion!')
+      const selfDestruct = alert.ttl*1000 || 30_000;
+      const alertContainer = lol.div({ class: `alert alert-${alert.type||'primary'} mb-3` });
+      alertContainer.appendChild( lol.button({ class: `btn btn-link btn-sm position-absolute top-0 end-0`, on: {click: ()=>alertContainer.remove()} }, lol.i({class:'bi bi-x-lg'})))
 
+      if(alert.title) alertContainer.appendChild(lol.h4({},alert.title));
+      if(alert.text) alertContainer.appendChild(lol.p({},alert.text));
+      if(alert.note){
+       alertContainer.appendChild(lol.hr());
+       alertContainer.appendChild(lol.small({},alert.note));
+      }
+
+      const progressBar = lol.div({ class: 'progress-bar opacity-25', style: {width: '100%'} },)
+      let progressBarWidth = 100;
+      const progressBarWidthIntervalId = setInterval(() => {
+        progressBarWidth = progressBarWidth - 1;
+        progressBar.style.width = progressBarWidth + '%';
+        if (progressBarWidth < 0){
+          clearInterval(progressBarWidthIntervalId);
+          alertContainer.remove()
+        }
+      }, selfDestruct / 100);
+      alertContainer.addEventListener("mouseover", function (e) {
+        clearInterval(progressBarWidthIntervalId);
+        progressBar.style.display = 'none';
+      });
+      alertContainer.appendChild(lol.div({ class: 'progress position-absolute top-100 start-50 translate-middle', style: {  marginTop: '-6px', height:'1px', width: '98%', background:'transparent'} }, progressBar) )
+
+      const consoleContainer = this.shadowRoot.querySelector('.console');
+      consoleContainer.insertBefore(alertContainer, consoleContainer.firstChild);
+    }
 
     publishExecutedCommand(executedCommandEvent){
       const application = transcend(this, `x-application`);
@@ -99,7 +138,7 @@ export default class Console extends HTMLElement {
       commandForm.appendChild( lol.small({ class:'opacity-25 mb-3 d-block'}, executedCommandEvent.timestamp))
       commandForm.appendChild(forms.createHidden({name: 'commandName', value:executedCommandEvent.commandName}))
 
-      for (const [name, value] of Object.entries(executedCommandEvent.commandArguments[0])) {
+      for (const [name, value] of Object.entries(executedCommandEvent.commandArguments)) {
         commandForm.appendChild(forms.createCompactInput({name, value}))
       }
 
