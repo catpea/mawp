@@ -65,9 +65,7 @@ export default class Window extends HTMLElement {
           </div>
 
           <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-              <x-port id="port-in" data-title="In" data-side="start" data-icon="circle"></x-port>
-              <x-port id="port-out" data-title="Out" data-side="end" data-icon="circle"></x-port>
+            <li class="list-group-item bg-transparent">
             </li>
           </ul>
 
@@ -76,6 +74,8 @@ export default class Window extends HTMLElement {
           </div>
       `;
 
+      // <x-port id="port-in" data-title="In" data-side="start" data-icon="circle"></x-port>
+      // <x-port id="port-out" data-title="Out" data-side="end" data-icon="circle"></x-port>
 
       // appending the container to the shadow DOM
       this.shadowRoot.appendChild(cardNode);
@@ -92,7 +92,39 @@ export default class Window extends HTMLElement {
       this.dataset2.get('title').subscribe(v => cardTitle.textContent = v);
       this.dataset2.get('note').subscribe(v => cardFooter.textContent = v);
 
+      this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
+
+      console.log(`this.dataset2.get('port-in').value`, this.dataset2.get('port-in').value);
+
+      const iolistItem = lol.li({class:'list-group-item bg-transparent d-none'});
+      listGroup.appendChild(iolistItem);
+
+      // if(this.dataset2.get('port-in').value === true){
+      this.dataset2.get('port-in').subscribe(portEnabled => {
+        console.log('YYY', {portEnabled});
+
+        if(portEnabled == 'true'){
+          const portNode = lol['x-port']({ id: `port-in`, dataset:{title:'In', side: 'start', icon: 'circle'} });
+          iolistItem.classList.remove('d-none');
+          iolistItem.appendChild(portNode)
+        }
+      });
+
+      console.log(`XXX this.dataset2.get('port-out').value`, this.dataset2.get('id'), this.dataset2.get('port-out'));
+
+      // if(this.dataset2.get('port-out').value === true){
+      this.dataset2.get('port-out').subscribe(portEnabled => {
+        console.log('YYY', {portEnabled});
+
+        if(portEnabled == 'true'){
+          const portNode = lol['x-port']({ id: `port-out`, dataset:{title:'Out', side: 'end', icon: 'circle'} });
+          iolistItem.classList.remove('d-none');
+          iolistItem.appendChild(portNode)
+        }
+      });
+
       this.dataset2.get('reference').subscribe(reference => {
+        console.log('GOT REFERENCE', reference);
 
         // Create Button
         if(reference) cardHeader.appendChild(lol.i({ class:'bi bi-pencil-square text-warning float-end cursor-pointer', on:{ click:()=> application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
@@ -102,14 +134,19 @@ export default class Window extends HTMLElement {
           console.log(element);
 
           const portNode = lol['x-port']({ id: `port-${element.id}`, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
-          const listItem = lol.li({class:'list-group-item'}, portNode);
+          const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
           listGroup.appendChild(listItem)
         }
 
       });
 
+
+      // TODO: if a window is center/center put it in the center of the scene.
+      console.error('TODO: if a window is center/center put it in the center of the scene.')
       this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');
       this.dataset2.get('top').subscribe(v => cardNode.style.top = v + 'px');
+
+
       this.dataset2.get('width').subscribe(v => cardNode.style.width = v + 'px');
       this.dataset2.get('height').subscribe(v => cardNode.style.height = v + 'px');
 
@@ -124,9 +161,8 @@ export default class Window extends HTMLElement {
       this.gc = ()=> observer.disconnect();
 
       for (const {name, value} of this.attributes) {
-        // console.log('CCCCCX', name, value);
         if (name.startsWith('data-')) {
-          this.dataset2.set(name.split('-')[1], this.getAttribute(name));
+          this.dataset2.set(name.substr(5), this.getAttribute(name));
         }
       }
 
@@ -165,7 +201,7 @@ export default class Window extends HTMLElement {
           const attributeName = mutation.attributeName;
           const newValue = mutation.target.getAttribute(attributeName);
           // console.log('SET ATTRIBUTE', attributeName, newValue);
-          this.dataset2.set(attributeName.split('-')[1], newValue);
+          this.dataset2.set(attributeName.substr(5), newValue);
         }
       }
     }
@@ -183,6 +219,18 @@ export default class Window extends HTMLElement {
     return this.shadowRoot.querySelector(`#port-${id}`);
   }
 
+  #previousStyle = null;
+  changeCardStyle(cardNode, newStyle){
+    console.log('CCC changeCardStyle', cardNode, newStyle);
+    if(this.#previousStyle) CardStyles.remove(cardNode, this.#previousStyle);
+    CardStyles.add(cardNode, newStyle);
+    this.#previousStyle = newStyle;
+  }
+
+
+
+
+
   // GARBAGE COLLECTION
 
   #garbage = [];
@@ -193,4 +241,36 @@ export default class Window extends HTMLElement {
   set gc(subscription){ // shorthand for component level garbage collection
     this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
   }
+  }
+
+
+  class CardStyles {
+    static styles = {
+      'solid-primary': ['text-bg-primary'],
+      'solid-secondary': ['text-bg-secondary'],
+      'solid-success': ['text-bg-success'],
+      'solid-danger': ['text-bg-danger'],
+      'solid-warning': ['text-bg-warning'],
+      'solid-info': ['text-bg-info'],
+      'solid-light': ['text-bg-light'],
+      'solid-dark': ['text-bg-dark'],
+      'border-primary': ['border-primary'],
+      'border-secondary': ['border-secondary'],
+      'border-success': ['border-success'],
+      'border-danger': ['border-danger'],
+      'border-warning': ['border-warning'],
+      'border-info': ['border-info'],
+      'border-light': ['border-light'],
+      'border-dark': ['border-dark'],
+    }
+
+    static remove(element, styleName){
+      const styleClasses = this.styles[styleName];
+      styleClasses.forEach(o=>element.classList.remove(o));
+    }
+    static add(element, styleName){
+      const styleClasses = this.styles[styleName];
+      styleClasses.forEach(o=>element.classList.add(o));
+    }
+
   }

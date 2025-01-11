@@ -70,11 +70,14 @@ export default class Prompt extends HTMLElement {
 
       let commandForm;
 
-      const executeForm = ()=>{
+      const executeForm = async ()=>{
         const formData = new FormData(commandForm);
         const commandLine = formData.get('commandLine');
+
+        console.warn('commando(commandLine)', commando(commandLine));
+
         for( const { commandName, commandArguments } of commando(commandLine)){
-          application.project.commander[commandName](commandArguments);
+          await application.project.commander[commandName](commandArguments);
         }
       }
       const commandProcessor = e => {
@@ -82,7 +85,8 @@ export default class Prompt extends HTMLElement {
         executeForm()
       };
 
-      const commandLine = lol.input({type:'text', class:'prompt-control', name:'commandLine', value:'windowMove -id windowPostMessage -left 100 -top 50 --note "Bork Bork"; windowMove -id uppercaseOutput -left 500 -top 700'});
+      const testCommand = 'windowMove -id windowPostMessage -left 10 -top 70 --note "Bork Bork"; windowMove -id uppercaseOutput -left 500 -top 700; windowCreate -id hello -reference upper -left 300 -top 35; windowCreate -id world -left 600 -top 35 -style solid-success; pipeCreate -from hello:out -to world:in'
+      const commandLine = lol.input({type:'text', class:'prompt-control', name:'commandLine', value: testCommand});
       const submitIcon = lol.i({class:'prompt-send bi bi-send-fill', on:{click:()=>executeForm()} })
       commandForm = lol.form({on:{submit:commandProcessor}}, commandLine, submitIcon);
       const container = lol.div({ class: 'prompt', }, commandForm);

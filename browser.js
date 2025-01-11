@@ -5,6 +5,9 @@ import Commander from 'commander';
 console.log('------------------------------SYSTEM START!------------------------------')
 
 class Project extends Branch {
+  Scene = Scene;
+  Component = Component;
+  Connector = Connector;
   commander;
   activeScene = new Signal('main');
 
@@ -19,6 +22,16 @@ class Scene extends Branch {
   getWindow(id) {
     return this.get(id);
   }
+}
+
+class Component extends Branch {
+  constructor(...a) {
+    super(...a)
+    this.dataset.set('port-in', true);
+    this.dataset.set('port-out', true);
+  }
+}
+class Connector extends Branch {
 }
 
 const project = new Project('project');
@@ -46,13 +59,28 @@ project.create(teeScene);
 
 
 {
-  const windowPostMessage = new Branch('windowPostMessage', 'window');
+  const windowPostMessage = new Component('windowPostMessage', 'window');
   windowPostMessage.dataset.set('title', 'Window API: postMessage');
   windowPostMessage.dataset.set('left', 100);
-  windowPostMessage.dataset.set('top', 300);
+  windowPostMessage.dataset.set('top', 100);
+  windowPostMessage.dataset.set('port-in', false);
   mainScene.create(windowPostMessage)
 
-  const uppercaseInput = new Branch('uppercaseInput', 'window');
+  const httpRequest = new Component('httpRequest', 'window');
+  httpRequest.dataset.set('title', 'HTTP Server API: Request');
+  httpRequest.dataset.set('left', 100);
+  httpRequest.dataset.set('top', 300);
+  httpRequest.dataset.set('port-in', false);
+  mainScene.create(httpRequest)
+
+  const scraperResource = new Component('scraperResource', 'window');
+  scraperResource.dataset.set('title', 'Web Scraper API: Resource');
+  scraperResource.dataset.set('left', 100);
+  scraperResource.dataset.set('top', 500);
+  scraperResource.dataset.set('port-in', false);
+  mainScene.create(scraperResource)
+
+  const uppercaseInput = new Component('uppercaseInput', 'window');
   uppercaseInput.dataset.set('title', 'Transducer');
   uppercaseInput.dataset.set('reference', 'upper');
   uppercaseInput.dataset.set('left', 400);
@@ -60,18 +88,19 @@ project.create(teeScene);
   uppercaseInput.dataset.set('note', 'Edit me! click the yellow icon ^');
   mainScene.create(uppercaseInput)
 
-  const uppercaseOutput = new Branch('uppercaseOutput', 'window');
+  const uppercaseOutput = new Component('uppercaseOutput', 'window');
   uppercaseOutput.dataset.set('title', 'Output Branch');
   uppercaseOutput.dataset.set('left', 700);
   uppercaseOutput.dataset.set('top', 300);
+  uppercaseOutput.dataset.set('port-out', false);
   mainScene.create(uppercaseOutput)
 
-  const pipe1 = new Branch('pipe1', 'pipe');
+  const pipe1 = new Connector('pipe1', 'pipe');
   pipe1.dataset.set('from', 'windowPostMessage:out');
   pipe1.dataset.set('to', 'uppercaseInput:in');
   mainScene.create(pipe1);
 
-  const pipe2 = new Branch('pipe2', 'pipe');
+  const pipe2 = new Connector('pipe2', 'pipe');
   pipe2.dataset.set('from', 'uppercaseInput:out');
   pipe2.dataset.set('to', 'uppercaseOutput:in');
   mainScene.create(pipe2);
@@ -80,21 +109,23 @@ project.create(teeScene);
 
 
 {
-  const secondaryStream = new Branch('secondaryStream', 'window');
+  const secondaryStream = new Component('secondaryStream', 'window');
   secondaryStream.dataset.set('title', 'Secondary Stream');
   secondaryStream.dataset.set('incoming', true);
   secondaryStream.dataset.set('left', 150);
   secondaryStream.dataset.set('top', 100);
   upperScene.create(secondaryStream)
 
-  const auxiliaryStream = new Branch('auxiliaryStream', 'window');
+  const auxiliaryStream = new Component('auxiliaryStream', 'window');
   auxiliaryStream.dataset.set('title', 'Auxiliary Stream');
   auxiliaryStream.dataset.set('incoming', true);
   auxiliaryStream.dataset.set('left', 150);
   auxiliaryStream.dataset.set('top', 500);
+  auxiliaryStream.dataset.set('style', 'solid-warning');
+  setTimeout(()=>{ auxiliaryStream.dataset.set('style', 'solid-danger'); }, 3_000)
   upperScene.create(auxiliaryStream)
 
-  const uppercaseInput1 = new Branch('uppercaseInput', 'window');
+  const uppercaseInput1 = new Component('uppercaseInput', 'window');
   uppercaseInput1.dataset.set('title', 'Transducer2');
   uppercaseInput1.dataset.set('reference', 'tee');
   uppercaseInput1.dataset.set('left', 400);
@@ -105,23 +136,23 @@ project.create(teeScene);
 
 
 
-  const uppercaseOutput = new Branch('uppercaseOutput', 'window');
+  const uppercaseOutput = new Component('uppercaseOutput', 'window');
   uppercaseOutput.dataset.set('title', 'Output');
   uppercaseOutput.dataset.set('left', 700);
   uppercaseOutput.dataset.set('top', 300);
   upperScene.create(uppercaseOutput)
 
-  const pipe0 = new Branch('pipe0', 'pipe');
+  const pipe0 = new Connector('pipe0', 'pipe');
   pipe0.dataset.set('from', 'secondaryStream:out');
   pipe0.dataset.set('to', 'uppercaseInput:in');
   upperScene.create(pipe0);
 
-  const pipe1 = new Branch('pipe1', 'pipe');
+  const pipe1 = new Connector('pipe1', 'pipe');
   pipe1.dataset.set('from', 'auxiliaryStream:out');
   pipe1.dataset.set('to', 'uppercaseInput:in');
   upperScene.create(pipe1);
 
-  const pipe2 = new Branch('pipe2', 'pipe');
+  const pipe2 = new Connector('pipe2', 'pipe');
   pipe2.dataset.set('from', 'uppercaseInput:out');
   pipe2.dataset.set('to', 'uppercaseOutput:in');
   upperScene.create(pipe2);
@@ -132,20 +163,20 @@ project.create(teeScene);
 
 
 {
-  const secondaryStream = new Branch('secondaryStream', 'window');
+  const secondaryStream = new Component('secondaryStream', 'window');
   secondaryStream.dataset.set('title', 'Secondary Stream');
   secondaryStream.dataset.set('incoming', true);
   secondaryStream.dataset.set('left', 150);
   secondaryStream.dataset.set('top', 300);
   teeScene.create(secondaryStream)
 
-  const uppercaseOutput = new Branch('uppercaseOutput', 'window');
+  const uppercaseOutput = new Component('uppercaseOutput', 'window');
   uppercaseOutput.dataset.set('title', 'Output');
   uppercaseOutput.dataset.set('left', 700);
   uppercaseOutput.dataset.set('top', 300);
   teeScene.create(uppercaseOutput)
 
-  const pipe0 = new Branch('pipe0', 'pipe');
+  const pipe0 = new Connector('pipe0', 'pipe');
   pipe0.dataset.set('from', 'secondaryStream:out');
   pipe0.dataset.set('to', 'uppercaseOutput:in');
   teeScene.create(pipe0);

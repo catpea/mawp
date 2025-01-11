@@ -59,7 +59,7 @@ export default class Port extends HTMLElement {
            if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
              const attributeName = mutation.attributeName;
              const newValue = mutation.target.getAttribute(attributeName);
-             this.dataset2.set(attributeName.split('-')[1], newValue);
+             this.dataset2.set(attributeName.substr(5), newValue);
            }
          }
        }
@@ -69,7 +69,7 @@ export default class Port extends HTMLElement {
 
       for (const {name, value} of this.attributes) {
         if (name.startsWith('data-')) {
-          this.dataset2.set(name.split('-')[1], this.getAttribute(name));
+          this.dataset2.set(name.substr(5), this.getAttribute(name));
         }
       }
 

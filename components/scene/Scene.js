@@ -105,6 +105,7 @@ export default class Scene extends HTMLElement {
     }
 
     const port = element.getPortElement(portId);
+    if(!port) throw new Error(`Failed to locate port (${portId})`)
     const decal = port.getDecal();
     return decal;
   }
