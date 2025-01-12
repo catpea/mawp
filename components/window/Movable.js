@@ -14,7 +14,7 @@ export default class Movable {
     this.windowComponent = windowComponent;
 
     this.cardElement = this.windowComponent.shadowRoot.querySelector(".card");
-    this.dragHandle = this.cardElement.querySelectorAll(".card-header");
+    this.dragHandle = this.cardElement.querySelector(".card-header");
 
     this.mouseDownHandler = this.mouseDownHandler.bind(this);
     this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
@@ -25,9 +25,8 @@ export default class Movable {
     const position = window.getComputedStyle(this.cardElement).position;
     if (!position === "absolute") this.cardElement.style.position = "absolute"; // Ensure the element is absolutely positioned
 
-    this.dragHandle.forEach((el) =>
-      el.addEventListener("mousedown", this.mouseDownHandler),
-    );
+    this.dragHandle.addEventListener("mousedown", this.mouseDownHandler),
+
     document.addEventListener("mouseup", this.mouseUpHandler);
     return () => this.stop();
   }
@@ -41,7 +40,7 @@ export default class Movable {
   }
 
   mouseDownHandler(event) {
-    event.stopPropagation(); // Prevents the event from bubbling up the DOM tree, preventing any parent handlers from being notified of the event.
+    // event.stopPropagation(); // Prevents the event from bubbling up the DOM tree, preventing any parent handlers from being notified of the event.
     event.preventDefault(); // Prevent prevent the default behavior - default action should not be taken as it normally would be.
 
     this.#dragging = true;

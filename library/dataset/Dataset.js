@@ -29,10 +29,12 @@ class ValueSignal {
 export default class Dataset {
   data;
   readOnly = false;
+
   constructor(data = {}) {
      this.data = data;
      this.listeners = [];
    }
+
    set(key, value) {
      if(this.readOnly) throw new Error('Dataset is read only.')
      if (key in this.data) {
@@ -44,6 +46,7 @@ export default class Dataset {
      this.notify(key, value)
      return this.data[key];
    }
+
    get(key) {
      if (key in this.data) {
        return this.data[key];
@@ -52,6 +55,7 @@ export default class Dataset {
        return this.data[key];
      }
    }
+
    subscribe(listener) {
      this.listeners.push(listener);
      for (const [key, value] of Object.entries(this.data)) {
@@ -65,4 +69,5 @@ export default class Dataset {
    notify(key, value) { //NOTE: notify sends in its own value which is not a signal
      this.listeners.forEach((listener) => listener(key, value));
    }
+
 }

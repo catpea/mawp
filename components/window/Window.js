@@ -5,6 +5,7 @@ import lol from 'lol';
 import transcend from 'transcend';
 
 import Movable from './Movable.js';
+import Focusable from './Focusable.js';
 
 export default class Window extends HTMLElement {
 
@@ -39,10 +40,16 @@ export default class Window extends HTMLElement {
 
 
 
-      // attaches shadow tree and returns shadow root reference
-      // https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow
+      const localStyle = `
+        .card.active {
+          border-color: var(--bs-primary);
+        }
+      `;
+      const localCss = new CSSStyleSheet();
+      localCss.replaceSync(localStyle.trim());
+
       const shadow = this.attachShadow({ mode: 'open' });
-      shadow.adoptedStyleSheets = document.adoptedStyleSheets;
+      shadow.adoptedStyleSheets = [...document.adoptedStyleSheets, localCss];
 
 
     }
@@ -90,6 +97,10 @@ export default class Window extends HTMLElement {
       this.dataset2.get('date').subscribe(v => cardFooter.textContent = v);
       this.dataset2.get('title').subscribe(v => cardTitle.textContent = v);
       this.dataset2.get('note').subscribe(v => cardFooter.textContent = v);
+
+
+      this.dataset2.get('zindex').subscribe(v => cardNode.style.zIndex = v);
+      this.dataset2.get('active').subscribe(v => v=='true'?cardNode.classList.add('active'):cardNode.classList.remove('active'));
 
       this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
 
@@ -141,9 +152,13 @@ export default class Window extends HTMLElement {
 
       // const cardIO = shadow.querySelector('.list-group-item:first');
 
+      const focusable = new Focusable(this);
+      this.gc = focusable.start();
 
       const movable = new Movable(this);
       this.gc = movable.start();
+
+
 
       this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
       this.observer.observe(this, { attributes: true });
@@ -216,7 +231,9 @@ export default class Window extends HTMLElement {
     this.#previousStyle = newStyle;
   }
 
-
+    get scene(){
+      return transcend(this, `x-scene`);
+    }
 
 
 
