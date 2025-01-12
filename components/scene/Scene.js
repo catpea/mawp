@@ -12,19 +12,22 @@ export default class Scene extends HTMLElement {
 
         .illustration {
           // border-radius: 16px 0 0 0;
-          background-color: #212529;
+          background-color: var(--bs-body-bg);
           pointer-events: none;
           width: 100%;
           height: 100%;
           position: absolute;
           top: 0;
           left: 0;
+
           &.illustration-foreground {
-            opacity: .1;
+            background-color: transparent;
           }
+
           .illustration-dot {
-            fill: siver;
+            fill: var(--bs-border-color)
           }
+
         }
       `;
       const localCss = new CSSStyleSheet();

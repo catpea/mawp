@@ -9,9 +9,10 @@ export default class Pipe extends HTMLElement {
   #y1 = new Signal(0);
   #x2 = new Signal(0);
   #y2 = new Signal(0);
-  #stroke = '#20c997'; // bs teal
-  #strokeWidth = 4;
-  #strokeWidthDelta = .5;
+
+  #lineStrokes = ['var(--bs-success)', 'rgba(var(--bs-success-rgb), .3)'];
+  #lineWidths = [4,2];
+
   #strokeWidthClickOverlay = '8';
 
   constructor() {
@@ -67,18 +68,16 @@ export default class Pipe extends HTMLElement {
     });
 
     // CREATE AND SUBSCRIBE LINES
-    let actualStroke = this.#strokeWidth;
-    for (const svgSurface of scene.drawingSurfaces) {
+    for (const [sceneIndex, svgSurface] of Object.entries(scene.drawingSurfaces)) {
       const svgLline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      svgLline.setAttribute('stroke', this.#stroke);
-      svgLline.setAttribute('stroke-width', actualStroke);
+      svgLline.setAttribute('stroke',  this.#lineStrokes[sceneIndex]);
+      svgLline.setAttribute('stroke-width', this.#lineWidths[sceneIndex]);
       svgSurface.appendChild(svgLline);
       this.gc = this.#x1.subscribe(v=>svgLline.setAttribute('x1', v));
       this.gc = this.#y1.subscribe(v=>svgLline.setAttribute('y1', v));
       this.gc = this.#x2.subscribe(v=>svgLline.setAttribute('x2', v));
       this.gc = this.#y2.subscribe(v=>svgLline.setAttribute('y2', v));
       this.gc = () => svgLline.remove();
-      actualStroke = this.#strokeWidth * this.#strokeWidthDelta;
     }
 
       // WHENEVER FROM OR TO WINDOW CHANGES SIZE, RECALCULATE LINE POSISTION

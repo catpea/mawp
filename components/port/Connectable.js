@@ -5,10 +5,11 @@ export default class Connectable {
   portComponent;
 
   #dragging = false;
-  #svg;
-  #line;
-  #stroke = 'olive';
-  #strokeWidth = 3;
+
+  #lines = [];
+  #lineStrokes = ['var(--bs-primary)', 'var(--bs-info)'];
+  #lineWidths = [5,3];
+
   #previousX = 0;
   #previousY = 0;
 
@@ -99,19 +100,17 @@ export default class Connectable {
 
     let [x1, y1] = this.getIconCoordinates();
 
-
-    this.#svg = this.portComponent.scene.drawingSurfaces[0];
-    this.#line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    this.#line.setAttribute('x1', x1);
-    this.#line.setAttribute('y1', y1);
-    this.#line.setAttribute('x2', x1); //NOTE: set to x1 as it is initially a point
-    this.#line.setAttribute('y2', y1); //NOTE: set to y1 as it is initially a point
-
-    this.#line.setAttribute('stroke', this.#stroke);
-    this.#line.setAttribute('stroke-width', this.#strokeWidth);
-    this.#svg.appendChild(this.#line);
-
-
+    for (const [sceneIndex, svgSurface] of Object.entries(this.portComponent.scene.drawingSurfaces)) {
+      const svgLline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      svgLline.setAttribute('stroke',  this.#lineStrokes[sceneIndex]);
+      svgLline.setAttribute('stroke-width', this.#lineWidths[sceneIndex]);
+      svgLline.setAttribute('x1', x1);
+      svgLline.setAttribute('y1', y1);
+      svgLline.setAttribute('x2', x1); // set to zero point, to prevent a "flash of white"
+      svgLline.setAttribute('y2', y1); // set to zero point, to prevent a "flash of white"
+      svgSurface.appendChild(svgLline);
+      this.#lines.push(svgLline); // for removal after operation is done
+    }
 
     // Initialize previousN
     // NOTE: a sister call must be made at the end of mouseMoveHandler
@@ -142,10 +141,10 @@ export default class Connectable {
     let currentX = event.clientX;
     let currentY = event.clientY;
 
-    console.log({currentX, currentY})
-
-    this.#line.setAttribute('x2', currentX); // initially a point
-    this.#line.setAttribute('y2', currentY); // initially a point
+    this.#lines.forEach(line=>{
+      line.setAttribute('x2', currentX); // initially a point
+      line.setAttribute('y2', currentY); // initially a point
+    })
 
     // Update previousN - get ready for next update
     this.#previousX = event.clientX;
@@ -161,10 +160,7 @@ export default class Connectable {
     if (this.#dragging){
       this.#dragging = false;
 
-      this.#svg.removeChild(this.#line);
-      // console.info(`Dropped element at ${this.finalX}x${this.finalY}.`, event.target, event.currentTarget, event.composedPath());
-
-      //
+      this.#lines.forEach(line=>line.remove());
 
       // NOTE: using element.id, not dataset or cutom property
       const fromActor = this.portComponent.window;
