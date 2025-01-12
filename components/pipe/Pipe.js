@@ -39,13 +39,17 @@ export default class Pipe extends HTMLElement {
     // SEED DATASET2
     for (const {name, value} of this.attributes) {
       if (name.startsWith('data-')) {
-        this.dataset2.set(name.substr(5), this.getAttribute(name));
+        const key = name.substr(5);
+        const val = this.getAttribute(name)
+        console.log('ZZZ', key, val);
+
+        this.dataset2.set(key, val);
       }
     }
 
     // PROCESS DEPENDENCIES
-    const fromDecoder = new Series(this.dataset2.get('from'), attribute => scene.getElementById(attribute.split(/\W/, 1)[0]).status);
-    const toDecoder = new Series(this.dataset2.get('to'), attribute => scene.getElementById(attribute.split(/\W/, 1)[0]).status);
+    const fromDecoder = new Series(this.dataset2.get('from'), attribute => scene.getElementById(attribute.split(':', 1)[0]).status);
+    const toDecoder = new Series(this.dataset2.get('to'), attribute => scene.getElementById(attribute.split(':', 1)[0]).status);
 
     // MONITOR FROM/TO ELEMENTS AND
     const dependencies = new Signal();
@@ -123,7 +127,7 @@ export default class Pipe extends HTMLElement {
       if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
         const attributeName = mutation.attributeName;
         const newValue = mutation.target.getAttribute(attributeName);
-        // console.log('SET ATTRIBUTE', attributeName, newValue);
+        console.log('SET ATTRIBUTE', attributeName.substr(5), newValue);
         this.dataset2.set(attributeName.substr(5), newValue);
       }
     }

@@ -19,11 +19,23 @@ export default class Prompt extends HTMLElement {
          	left: 1rem;
          	right: 1rem;
           padding: .1rem;
+          padding-right: 2rem;
 
           i.prompt-send {
             position: absolute;
             right: 1rem;
-            top: .69rem;
+            top: .49rem;
+
+            &:hover::before {
+              border: 1px solid rgba(220,220,220,.2);
+            }
+
+            &::before {
+              border-radius: 4px;
+              padding: 4px;
+              border: 1px solid rgba(0,0,0,.2);
+
+            }
           }
 
           button.prompt-send {
@@ -33,6 +45,7 @@ export default class Prompt extends HTMLElement {
           }
 
           .prompt-control {
+
            border-radius: 32px;
             border: none;
             background-color: transparent;

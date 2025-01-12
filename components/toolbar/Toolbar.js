@@ -33,6 +33,7 @@ export default class Console extends HTMLElement {
         </div>
 
         <div class="btn-group-vertical mb-2">
+          <button name="create-window" type="button" class="btn btn-outline-secondary" title="create window"  data-bs-content="Clear the stage of all actors and begin a new project."><i class="bi bi-plus-circle"></i></button>
           <button type="button" class="btn btn-outline-secondary opacity-25" title="Clear Stage"  data-bs-content="Clear the stage of all actors and begin a new project."><i class="bi bi-eraser"></i></button>
           <button type="button" class="btn btn-outline-secondary opacity-25" title="Open File"  data-bs-content="Load data from your computer."><i class="bi bi-folder2-open"></i></button>
           <button type="button" class="btn btn-outline-secondary opacity-25"><i class="bi bi-save"></i></button>
@@ -69,6 +70,11 @@ export default class Console extends HTMLElement {
 
       const application = transcend(this, `x-application`);
       if(!application) throw new Error('Unable to locate applicaion!')
+
+      const createWindowButton = this.container.querySelector('[name="create-window"]');
+      createWindowButton.addEventListener("click", function (e) {
+        application.project.commander.windowCreate({left:66, top:66});
+      });
 
       const mainSceneButton = this.container.querySelector('[name="main-scene"]');
 

@@ -1,4 +1,7 @@
 import Dataset from 'dataset';
+import Connectable from './Connectable.js';
+
+import transcend from 'transcend';
 
 export default class Port extends HTMLElement {
     constructor() {
@@ -21,8 +24,14 @@ export default class Port extends HTMLElement {
 
       const portComponents = shadow.querySelectorAll('span');
       const portLabel = portComponents[0];
+
       const portSticker = portComponents[1];
+
       const portIcon = shadow.querySelector('.bi');
+
+
+      const connectable = new Connectable(this);
+      this.gc = connectable.start();
 
       // UPDATE PORT ID
       this.dataset2.get('name').subscribe(v => portSticker.id = `port-${v}`);
@@ -82,9 +91,18 @@ export default class Port extends HTMLElement {
 
 
 
+    get application(){
+      return transcend(this, `x-application`);
+    }
 
+    get scene(){
+      console.log('SCENE REQUEST', transcend(this, `x-scene`) )
+      return transcend(this, `x-scene`);
+    }
 
-
+    get window(){
+      return transcend(this, `x-window`);
+    }
 
 
     getDecal() {

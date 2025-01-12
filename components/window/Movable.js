@@ -59,6 +59,7 @@ export default class Movable {
     event.preventDefault();
 
     if (this.#dragging) {
+
       // Calculate Relative Delta
       // NOTE: this depends on "Update previousN" and we just substract to get a -n or +n from the last few dozen miliseconds
       let deltaX = this.#previousX - event.clientX;
@@ -66,17 +67,13 @@ export default class Movable {
 
       // Apply scale transformation if any to delta (which uses screen pixels)
       // NOTE: deltaN calculations use screenN which is an untransformed pixel, but we maybe zoomed in/out so we account for that.
-      const scale =
-        this.cardElement.getBoundingClientRect().width /
-        this.cardElement.offsetWidth;
+      const scale = this.cardElement.getBoundingClientRect().width / this.cardElement.offsetWidth;
       deltaX = deltaX / scale;
       deltaY = deltaY / scale;
 
       // RARE: if there is no style set, initialize values
-      if (this.cardElement.style.left === "")
-        this.cardElement.style.left = this.cardElement.offsetLeft + "px";
-      if (this.cardElement.style.top === "")
-        this.cardElement.style.top = this.cardElement.offsetTop + "px";
+      if (this.cardElement.style.left === "") this.cardElement.style.left = this.cardElement.offsetLeft + "px";
+      if (this.cardElement.style.top === "") this.cardElement.style.top = this.cardElement.offsetTop + "px";
 
       // Apply the delta to element being dragged
       // NOTE: we are only adding the updated delta to existing x and y - think of it as matching the motion that the cursor made since the last sampling of previousN
@@ -94,8 +91,9 @@ export default class Movable {
 
       this.finalCoordinate = { id: this.windowComponent.id, left: x, top: y };
 
+      // WARN: you must use floating point numbers, otherwise motion is inaccurate
       this.windowComponent.project.commander.windowMove(
-        { id: this.windowComponent.id, left: parseInt(x), top: parseInt(y) }
+        { id: this.windowComponent.id, left: x, top: y }
       );
 
       // Update previousN - get ready for next update

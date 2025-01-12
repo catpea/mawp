@@ -69,16 +69,23 @@ project.create(teeScene);
   const httpRequest = new Component('httpRequest', 'window');
   httpRequest.dataset.set('title', 'HTTP Server API: Request');
   httpRequest.dataset.set('left', 100);
-  httpRequest.dataset.set('top', 300);
+  httpRequest.dataset.set('top', 250);
   httpRequest.dataset.set('port-in', false);
   mainScene.create(httpRequest)
 
   const scraperResource = new Component('scraperResource', 'window');
-  scraperResource.dataset.set('title', 'Web Scraper API: Resource');
+  scraperResource.dataset.set('title', 'Scraper API: URL Downloaded');
   scraperResource.dataset.set('left', 100);
-  scraperResource.dataset.set('top', 500);
+  scraperResource.dataset.set('top', 400);
   scraperResource.dataset.set('port-in', false);
   mainScene.create(scraperResource)
+
+  const intervalTimer = new Component('intervalTimer', 'window');
+  intervalTimer.dataset.set('title', 'Interval Timer API: Tick');
+  intervalTimer.dataset.set('left', 100);
+  intervalTimer.dataset.set('top', 550);
+  intervalTimer.dataset.set('port-in', false);
+  mainScene.create(intervalTimer)
 
   const uppercaseInput = new Component('uppercaseInput', 'window');
   uppercaseInput.dataset.set('title', 'Transducer');

@@ -65,8 +65,7 @@ export default class Window extends HTMLElement {
           </div>
 
           <ul class="list-group list-group-flush">
-            <li class="list-group-item bg-transparent">
-            </li>
+
           </ul>
 
 
@@ -94,15 +93,10 @@ export default class Window extends HTMLElement {
 
       this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
 
-      console.log(`this.dataset2.get('port-in').value`, this.dataset2.get('port-in').value);
-
       const iolistItem = lol.li({class:'list-group-item bg-transparent d-none'});
       listGroup.appendChild(iolistItem);
 
-      // if(this.dataset2.get('port-in').value === true){
       this.dataset2.get('port-in').subscribe(portEnabled => {
-        console.log('YYY', {portEnabled});
-
         if(portEnabled == 'true'){
           const portNode = lol['x-port']({ id: `port-in`, dataset:{title:'In', side: 'start', icon: 'circle'} });
           iolistItem.classList.remove('d-none');
@@ -110,12 +104,7 @@ export default class Window extends HTMLElement {
         }
       });
 
-      console.log(`XXX this.dataset2.get('port-out').value`, this.dataset2.get('id'), this.dataset2.get('port-out'));
-
-      // if(this.dataset2.get('port-out').value === true){
       this.dataset2.get('port-out').subscribe(portEnabled => {
-        console.log('YYY', {portEnabled});
-
         if(portEnabled == 'true'){
           const portNode = lol['x-port']({ id: `port-out`, dataset:{title:'Out', side: 'end', icon: 'circle'} });
           iolistItem.classList.remove('d-none');
@@ -142,7 +131,7 @@ export default class Window extends HTMLElement {
 
 
       // TODO: if a window is center/center put it in the center of the scene.
-      console.error('TODO: if a window is center/center put it in the center of the scene.')
+      console.warn('TODO: if a window is center/center put it in the center of the scene.')
       this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');
       this.dataset2.get('top').subscribe(v => cardNode.style.top = v + 'px');
 
