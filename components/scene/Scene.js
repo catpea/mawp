@@ -1,14 +1,33 @@
-import Signal from 'signal';
-import lol from 'lol';
+import Signal from "signal";
+import lol from "lol";
+
+import Pannable from "./Pannable.js";
 
 export default class Scene extends HTMLElement {
+  panX = new Signal(0);
+  panY = new Signal(0);
+  scale = new Signal(1);
 
-  pan = {x:0,y:0};
+  pan = { x: 0, y: 0 };
   zoom = 1;
 
-    constructor() {
-      super();
-      const localStyle = `
+  constructor() {
+    super();
+    const localStyle = `
+
+      :host {
+        display: block;
+        overflow: hidden;
+        position: relative;
+
+        touch-action: none;
+        user-select: none;
+      }
+
+      .content {
+        transform-origin: 0 0;
+        min-height: 100vh;
+      }
 
         .illustration {
           // border-radius: 16px 0 0 0;
@@ -30,19 +49,22 @@ export default class Scene extends HTMLElement {
 
         }
       `;
-      const localCss = new CSSStyleSheet();
-      localCss.replaceSync(localStyle.trim());
+    const localCss = new CSSStyleSheet();
+    localCss.replaceSync(localStyle.trim());
 
-      this.status = new Signal('loading');
+    this.status = new Signal("loading");
 
-      const shadow = this.attachShadow({ mode: 'open' });
+    const shadow = this.attachShadow({ mode: "open" });
 
-      shadow.adoptedStyleSheets = [...document.adoptedStyleSheets, localCss];
+    shadow.adoptedStyleSheets = [...document.adoptedStyleSheets, localCss];
 
-      const container = document.createElement('div');
-      // container.classList.add('position-relative');
+    this.container = document.createElement("div");
 
-      container.innerHTML = `
+
+    this.container.innerHTML = `
+
+
+        <div class="content">
         <svg class="illustration illustration-background">
           <defs>
             <pattern id="graph-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
@@ -51,10 +73,11 @@ export default class Scene extends HTMLElement {
           </defs>
           <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
         </svg>
-
         <slot></slot>
-
         <svg class="illustration illustration-foreground"></svg>
+        </div>
+
+
 
         <x-toolbar></x-toolbar>
         <x-prompt></x-prompt>
@@ -62,23 +85,21 @@ export default class Scene extends HTMLElement {
 
       `;
 
-      shadow.appendChild(container);
-    }
+    shadow.appendChild(this.container);
 
+    const pannable = new Pannable(this);
+    this.gc = pannable.start();
+  }
 
-    // fires after the element has been attached to the DOM
-    connectedCallback() {
-      this.status.value = 'ready';
-    }
-
-
-
+  // fires after the element has been attached to the DOM
+  connectedCallback() {
+    this.status.value = "ready";
+  }
 
   // QUESTIONABLE BUT USEFUL UTILITY FUNCTIONS
 
-
   get drawingSurfaces() {
-    return this.shadowRoot.querySelectorAll('svg')
+    return this.shadowRoot.querySelectorAll("svg");
   }
 
   getElementById(id) {
@@ -103,63 +124,69 @@ export default class Scene extends HTMLElement {
     const [elementId, portId] = colonAddress.split(/\W/, 2);
     const element = this.getElementById(elementId);
     if (!element) {
-
-      throw new Error(`Element ${elementId} not found`)
+      throw new Error(`Element ${elementId} not found`);
     }
 
     const port = element.getPortElement(portId);
-    if(!port) throw new Error(`Failed to locate port (${portId})`)
+    if (!port) throw new Error(`Failed to locate port (${portId})`);
     const decal = port.getDecal();
     return decal;
   }
 
   calculateCentralCoordinates(el) {
+    // let {x:sceneX,y:sceneY, width:sceneW, height:sceneH} = this.getBoundingClientRect();
 
-        // let {x:sceneX,y:sceneY, width:sceneW, height:sceneH} = this.getBoundingClientRect();
+    let {
+      x: elementX,
+      y: elementY,
+      width: elementW,
+      height: elementH,
+    } = el.getBoundingClientRect();
 
+    const scrollLeft = window.scrollX;
+    const scrollTop = window.scrollY;
 
-        let {x:elementX,y:elementY, width:elementW, height:elementH} = el.getBoundingClientRect();
+    elementX = elementX + scrollLeft;
+    elementY = elementY + scrollTop;
 
-        const scrollLeft = window.scrollX;
-        const scrollTop = window.scrollY;
+    let { x: panX, y: panY } = this.pan;
+    let zoom = this.zoom;
 
+    elementX = elementX / zoom;
+    elementY = elementY / zoom;
 
+    elementW = elementW / zoom;
+    elementH = elementH / zoom;
 
-        elementX = elementX + scrollLeft;
-        elementY = elementY + scrollTop;
+    const centerW = elementW / 2;
+    const centerH = elementH / 2;
 
-        let {x:panX,y:panY} = this.pan;
-        let zoom = this.zoom;
+    panX = panX / zoom;
+    panY = panY / zoom;
 
-        elementX = elementX / zoom;
-        elementY = elementY / zoom;
+    const positionedX = elementX - panX;
+    const positionedY = elementY - panY;
 
-        elementW = elementW / zoom;
-        elementH = elementH / zoom;
+    const centeredX = positionedX + centerW;
+    const centeredY = positionedY + centerH;
 
-        const centerW = elementW/2;
-        const centerH = elementH/2;
-
-        panX = panX / zoom;
-        panY = panY / zoom;
-
-        const positionedX = elementX-panX;
-        const positionedY = elementY-panY;
-
-        const centeredX = positionedX+centerW;
-        const centeredY = positionedY+centerH;
-
-        return [ centeredX, centeredY ];
-      }
-
-      // GARBAGE COLLECTION
-
-      #garbage = [];
-      collectGarbage(){
-        this.#garbage.map(s=>s.subscription())
-      }
-
-      set gc(subscription){ // shorthand for component level garbage collection
-        this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
-      }
+    return [centeredX, centeredY];
   }
+
+  // GARBAGE COLLECTION
+
+  #garbage = [];
+  collectGarbage() {
+    this.#garbage.map((s) => s.subscription());
+  }
+
+  set gc(subscription) {
+    // shorthand for component level garbage collection
+    this.#garbage.push({
+      type: "gc",
+      id: "gc-" + this.#garbage.length,
+      ts: new Date().toISOString(),
+      subscription,
+    });
+  }
+}
