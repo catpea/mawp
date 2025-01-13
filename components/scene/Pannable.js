@@ -28,6 +28,7 @@ export default class Pannable {
     window.addEventListener("mousemove", this.onMouseMove);
     window.addEventListener("mouseup", this.onMouseUp);
 
+    this.updateTransform();
     return () => this.stop();
   }
 
@@ -47,7 +48,7 @@ export default class Pannable {
 
     console.log("Pannable onMouseDown!", event.target);
 
-    // if (event.target !== this.sceneComponent) return;
+    if (event.target !== this.targetElement) return;
 
     // const target = event .composedPath() .find((o) => o.tagName === "BUTTON" || o === this.host);
     // if (target !== this.host) return;
@@ -82,7 +83,8 @@ export default class Pannable {
     const deltaScale = event.deltaY > 0 ? 0.9 : 1.1;
     this.sceneComponent.scale.value *= deltaScale;
 
-    const rect = this.targetElement.getBoundingClientRect();
+    // IMPORTANT: offsetX and offsetY must be calculated based on the sceneComponent AND NOT targetElement
+    const rect = this.sceneComponent.getBoundingClientRect();
     const offsetX = event.clientX - rect.left;
     const offsetY = event.clientY - rect.top;
 

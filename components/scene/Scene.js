@@ -8,9 +8,6 @@ export default class Scene extends HTMLElement {
   panY = new Signal(0);
   scale = new Signal(1);
 
-  pan = { x: 0, y: 0 };
-  zoom = 1;
-
   constructor() {
     super();
     const localStyle = `
@@ -33,11 +30,12 @@ export default class Scene extends HTMLElement {
           // border-radius: 16px 0 0 0;
           background-color: var(--bs-body-bg);
           pointer-events: none;
+
+          position: absolute;
           width: 100%;
           height: 100%;
-          position: absolute;
-          top: 0;
-          left: 0;
+
+          overflow: visible; /* does not cut off the lines when dragging outside into minus space */
 
           &.illustration-foreground {
             background-color: transparent;
@@ -62,28 +60,27 @@ export default class Scene extends HTMLElement {
 
 
     this.container.innerHTML = `
-
-
         <div class="content">
-        <svg class="illustration illustration-background">
-          <defs>
-            <pattern id="graph-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
-              <circle class="illustration-dot" r="1" cx="2.2" cy="2.2"></circle>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
-        </svg>
-        <slot></slot>
-        <svg class="illustration illustration-foreground"></svg>
+          <svg class="illustration illustration-background">
+            <defs>
+              <pattern id="graph-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+                <circle class="illustration-dot" r="1" cx="2.2" cy="2.2"></circle>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
+          </svg>
+          <slot></slot>
+          <svg class="illustration illustration-foreground"></svg>
         </div>
-
-
-
         <x-toolbar></x-toolbar>
         <x-prompt></x-prompt>
         <x-console></x-console>
 
-      `;
+        <span class="position-absolute top-0 start-50 dtranslate-middle opacity-25">
+          pan=<small name="debug-panX"></small>x<small name="debug-panY"></small> scale=<small name="debug-scale"></small>
+        </span>
+
+    `;
 
     shadow.appendChild(this.container);
 
@@ -93,6 +90,10 @@ export default class Scene extends HTMLElement {
 
   // fires after the element has been attached to the DOM
   connectedCallback() {
+    this.panX.subscribe(v => this.container.querySelector('[name="debug-panX"]').textContent = Number.parseFloat(v).toFixed(0));
+    this.panY.subscribe(v => this.container.querySelector('[name="debug-panY"]').textContent = Number.parseFloat(v).toFixed(0));
+    this.scale.subscribe(v => this.container.querySelector('[name="debug-scale"]').textContent = Number.parseFloat(v).toFixed(2));
+
     this.status.value = "ready";
   }
 
@@ -149,8 +150,9 @@ export default class Scene extends HTMLElement {
     elementX = elementX + scrollLeft;
     elementY = elementY + scrollTop;
 
-    let { x: panX, y: panY } = this.pan;
-    let zoom = this.zoom;
+    let panX = this.panX.value;
+    let panY = this.panY.value;
+    let zoom = this.scale.value;
 
     elementX = elementX / zoom;
     elementY = elementY / zoom;
@@ -172,6 +174,32 @@ export default class Scene extends HTMLElement {
 
     return [centeredX, centeredY];
   }
+
+
+
+  transformByScale(x, y){
+    const scale = this.scale.value;
+    x = x / scale;
+    y = y / scale;
+    return [x, y];
+  }
+  transformByPan(x, y){
+    let panX = this.panX.value;
+    let panY = this.panY.value;
+
+    // NOTE: pan values are raw and must always be transformed by scale before use
+    [panX, panY] = this.transformByScale(panX, panY)
+
+    x = x - panX;
+    y = y - panY;
+    return [x, y];
+  }
+  transform(x, y){
+    [x, y] = this.transformByScale(x, y);
+    [x, y] = this.transformByPan(x, y);
+    return [x, y];
+  }
+
 
   // GARBAGE COLLECTION
 

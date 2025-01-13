@@ -15,6 +15,14 @@ export default class Application extends HTMLElement {
       // const container = document.createElement('div');
       // container.innerHTML = `<x-scene></x-scene>`;
       // this.appendChild(container);
+      //
+      //
+    /*
+    <!-- NOTE: iframe to handle the Blob redirection -->
+    <iframe id="downloadIframe" style="display:none;"></iframe>
+    <!-- NOTE: iframe to handle file opening -->
+    <input type="file" id="fileInput" style="display: none;" />
+    */
     }
 
     connectedCallback() {

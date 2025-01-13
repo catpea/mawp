@@ -24,15 +24,7 @@ export default class Connectable {
 
   constructor(portComponent) {
     this.portComponent = portComponent;
-    // this.portComponent.scene.drawingSurfaces
 
-    this.portComponentXXX = portComponent;
-    console.log('VVV YAH')
-    // this.xElement = this.portComponent.shadowRoot.querySelector("...");
-    // this.xHandle = this.xElement.querySelectorAll("...");
-      // this.windowComponent.project.commander.windowMove(
-      //   { id: this.windowComponent.id, left: x, top: y }
-      // );
     this.mouseDownHandler = this.mouseDownHandler.bind(this);
     this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
     this.mouseUpHandler = this.mouseUpHandler.bind(this);
@@ -41,13 +33,13 @@ export default class Connectable {
   }
 
   start() {
-    this.portComponentXXX.addEventListener('mousedown', this.mouseDownHandler);
+    this.portComponent.addEventListener('mousedown', this.mouseDownHandler);
     document.addEventListener('mouseup', this.mouseUpHandler);
     return () => this.stop();
   }
 
   stop() {
-    this.portComponentXXX.removeEventListener('mousedown', this.mouseDownHandler);
+    this.portComponent.removeEventListener('mousedown', this.mouseDownHandler);
     document.removeEventListener('mouseup', this.mouseUpHandler);
     document.removeEventListener('mousemove', this.mouseMoveHandler);
   }
@@ -57,11 +49,11 @@ export default class Connectable {
 
   // TODO: create x and y transform funcion, rather than this mess
   getIconCoordinates(){
-    console.log('Coordinates of' , this.portComponentXXX);
+    console.log('Coordinates of' , this.portComponent);
 
-    const scale = this.portComponent.scene.zoom;
+    const scale = this.portComponent.scene.scale.value;
 
-    let {x:elementX,y:elementY, width:elementW, height:elementH} = this.portComponentXXX.getDecal().getBoundingClientRect();
+    let {x:elementX,y:elementY, width:elementW, height:elementH} = this.portComponent.getDecal().getBoundingClientRect();
 
     elementX = elementX / scale;
     elementY = elementY / scale;
@@ -75,7 +67,9 @@ export default class Connectable {
     let centeredX = elementX + centerW;
     let centeredY = elementY + centerH;
 
-    let {x:panX,y:panY} = this.portComponent.scene.pan;
+    let panX = this.portComponent.scene.panX.value;
+    let panY = this.portComponent.scene.panY.value;
+
 
     panX = panX / scale;
     panY = panY / scale;
@@ -121,9 +115,7 @@ export default class Connectable {
 
   }
 
-  transform(x,y){
 
-  }
 
   mouseMoveHandler(event) {
 
@@ -137,9 +129,13 @@ export default class Connectable {
     let deltaX = (this.#previousX - event.clientX);
     let deltaY = (this.#previousY - event.clientY);
 
+    // GET REAL COORDINATES
+    // TODO: this only works when scene is up against viewport, if there is distance to ede of page it must be added
     // MouseEvent: clientN property provides the N coordinate within the application's viewport at which the event occurred
     let currentX = event.clientX;
     let currentY = event.clientY;
+
+    [currentX, currentY] = this.portComponent.scene.transform(currentX, currentY);
 
     this.#lines.forEach(line=>{
       line.setAttribute('x2', currentX); // initially a point

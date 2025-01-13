@@ -20,6 +20,43 @@ MAWP
 1. Node is a Dom Element like node with enhanced functionality
 
 
+## Transforming x and y under scene scale, panX and panY
+
+### Using the built in transformer
+
+```JavaScript
+    // GET REAL COORDIANTES
+    let currentX = event.clientX;
+    let currentY = event.clientY;
+
+    // TRANSFORM
+    [currentX, currentY] = this.portComponent.scene.transform(currentX, currentY);
+```
+
+### Using the manual procedure
+```JavaScript
+
+    // GET REAL COORDIANTES
+    let currentX = event.clientX;
+    let currentY = event.clientY;
+
+    // GET SCALE INFORMATION
+    const scale = this.portComponent.scene.scale.value;
+    let panX = this.portComponent.scene.panX.value;
+    let panY = this.portComponent.scene.panY.value;
+
+    // TRANSFORM BY SCALE
+    currentX = currentX / scale;
+    currentY = currentY / scale;
+
+    // TRANSFORM BY PAN (note that you must first transform pan)
+    panX = panX / scale;
+    panY = panY / scale;
+    currentX = currentX - panX;
+    currentY = currentY - panY;
+
+```
+
 ## Cheatsheets
 
 Here is a simple cheat sheet for methods related to **creating** and **removing DOM elements** in JavaScript. These methods are essential for manipulating the DOM dynamically:
