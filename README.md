@@ -1,6 +1,14 @@
 MAWP
 ---
 
+## TODO
+
+- svg dots in pattern background may need to be offset to appear to move with panning/zoom?
+- Give newly created elements focus (requires windowFocus command, see selectable for code)
+- Save load files
+- enable pipe connections
+-  add an editor modal
+
 ## Server
 - server.js
 

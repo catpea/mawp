@@ -16,19 +16,36 @@ export default class Scene extends HTMLElement {
         display: block;
         overflow: hidden;
         position: relative;
-
         touch-action: none;
         user-select: none;
+        /* dimensions set programatically */
       }
 
-      .content {
-        transform-origin: 0 0;
-        min-height: 100vh;
-      }
+        .content {
+          transform-origin: 0 0;
+          height: 100%;
+        }
 
-        .illustration {
+
+
+        .pattern-background {
           // border-radius: 16px 0 0 0;
           background-color: var(--bs-body-bg);
+          pointer-events: none;
+
+          position: absolute;
+          width: 100%;
+          height: 100%;
+
+          overflow: visible; /* does not cut off the lines when dragging outside into minus space */
+
+          .illustration-dot {
+          fill: var(--bs-border-color)
+          }
+
+        }
+
+        .illustration {
           pointer-events: none;
 
           position: absolute;
@@ -40,12 +57,8 @@ export default class Scene extends HTMLElement {
           &.illustration-foreground {
             background-color: transparent;
           }
-
-          .illustration-dot {
-            fill: var(--bs-border-color)
-          }
-
         }
+
       `;
     const localCss = new CSSStyleSheet();
     localCss.replaceSync(localStyle.trim());
@@ -60,8 +73,7 @@ export default class Scene extends HTMLElement {
 
 
     this.container.innerHTML = `
-        <div class="content">
-          <svg class="illustration illustration-background">
+          <svg class="pattern-background">
             <defs>
               <pattern id="graph-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
                 <circle class="illustration-dot" r="1" cx="2.2" cy="2.2"></circle>
@@ -69,6 +81,8 @@ export default class Scene extends HTMLElement {
             </defs>
             <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
           </svg>
+        <div class="content">
+          <svg class="illustration illustration-background"></svg>
           <slot></slot>
           <svg class="illustration illustration-foreground"></svg>
         </div>
@@ -95,12 +109,36 @@ export default class Scene extends HTMLElement {
     this.scale.subscribe(v => this.container.querySelector('[name="debug-scale"]').textContent = Number.parseFloat(v).toFixed(2));
 
     this.status.value = "ready";
+    this.adjustNestedElementHeight()
+    window.addEventListener('resize', this.adjustNestedElementHeight.bind(this));
+    window.addEventListener('load', this.adjustNestedElementHeight.bind(this));
+  }
+  adjustNestedElementHeight() {
+
+      // let vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+      let viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+
+      // Get the nested element and its parent container
+      const sceneTop = this.getBoundingClientRect().top;
+
+      // // Get the computed styles of the container to account for padding and border
+      // const containerStyles = window.getComputedStyle(container);
+      // console.log('WWW', containerStyles);
+
+      // const containerPaddingTop = parseFloat(containerStyles.paddingTop);
+      // const containerPaddingBottom = parseFloat(containerStyles.paddingBottom);
+
+      // Calculate the available height for the nested element
+      const availableHeight = viewportHeight - sceneTop;
+      console.log({viewportHeight, sceneTop, availableHeight})
+      // Set the height of the nested element
+      this.style.height = `${availableHeight}px`;
   }
 
   // QUESTIONABLE BUT USEFUL UTILITY FUNCTIONS
 
   get drawingSurfaces() {
-    return this.shadowRoot.querySelectorAll("svg");
+    return this.shadowRoot.querySelectorAll("svg.illustration");
   }
 
   getElementById(id) {
@@ -134,7 +172,34 @@ export default class Scene extends HTMLElement {
     return decal;
   }
 
-  calculateCentralCoordinates(el) {
+
+  getCenterDropCoordinates(){
+    let {
+      width,
+      height,
+    } = this.getBoundingClientRect();
+
+    let scale = this.scale.value;
+    let panX = this.panX.value;
+    let panY = this.panY.value;
+
+    panX = panX / scale;
+    panY = panY / scale;
+
+    width = width / scale;
+    height = height / scale;
+
+    let x = (width/2) + (-panX);
+    let y = (height/2) + (-panY);
+
+
+    // x = x - this.getBoundingClientRect().left;
+
+
+    return [x,y];
+  }
+
+  calculateCentralCoordinatesOld(el) {
     // let {x:sceneX,y:sceneY, width:sceneW, height:sceneH} = this.getBoundingClientRect();
 
     let {
@@ -177,6 +242,47 @@ export default class Scene extends HTMLElement {
 
 
 
+  calculateCentralCoordinates(el) {
+
+    let {
+      x: elementX,
+      y: elementY,
+      width: elementW,
+      height: elementH,
+    } = el.getBoundingClientRect();
+
+    const centerW = elementW / 2;
+    const centerH = elementH / 2;
+
+    const centeredX = elementX + centerW;
+    const centeredY = elementY + centerH;
+
+    return [centeredX, centeredY];
+
+  }
+
+
+
+  transformByRect(x, y){
+
+    let {
+      x: elementX,
+      y: elementY,
+    } = this.getBoundingClientRect();
+
+    x = x - elementX;
+    y = y - elementY;
+    return [x, y];
+  }
+  // transformByScroll(x, y){
+
+  //   const scrollLeft = window.scrollX;
+  //   const scrollTop = window.scrollY;
+
+  //   x = x - scrollLeft;
+  //   y = y - scrollTop;
+  //   return [x, y];
+  // }
   transformByScale(x, y){
     const scale = this.scale.value;
     x = x / scale;
@@ -195,6 +301,9 @@ export default class Scene extends HTMLElement {
     return [x, y];
   }
   transform(x, y){
+
+    [x, y] = this.transformByRect(x, y);
+    // [x, y] = this.transformByScroll(x, y);
     [x, y] = this.transformByScale(x, y);
     [x, y] = this.transformByPan(x, y);
     return [x, y];

@@ -102,12 +102,21 @@ export default class Pipe extends HTMLElement {
 
       this.gc = dependencies.subscribe((_, a, b) => {
         if (a === 'ready' && a === b) {
-          const [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
-          const [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
+
+          // NOTE: this function return untransformed coordinates
+          let [x1, y1] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('from').value));
+          let [x2, y2] = scene.calculateCentralCoordinates(scene.getDecal(this.dataset2.get('to').value));
+
+          // Transform Coordinates with Pan and Zoom
+          [x1, y1] = scene.transform(x1, y1);
+          [x2, y2] = scene.transform(x2, y2);
+
+
           this.#x1.value = x1;
           this.#y1.value = y1;
           this.#x2.value = x2;
           this.#y2.value = y2;
+
         } else {
           // component exited
         }

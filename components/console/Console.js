@@ -18,7 +18,7 @@ export default class Console extends HTMLElement {
          	position: absolute;
          	top: 1rem;
          	bottom: 4rem;
-         	width: 33vw;
+         	width: 20vw;
          	right: 1rem;
           padding: 1rem;
           overflow: scroll;

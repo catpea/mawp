@@ -23,8 +23,8 @@ export default class Pannable {
   start() {
     console.log("Pannable start!", this.targetElement);
 
-    this.targetElement.addEventListener("wheel", this.onWheel, { passive: false, });
-    this.targetElement.addEventListener("mousedown", this.onMouseDown);
+    this.sceneComponent.addEventListener("wheel", this.onWheel, { passive: false, });
+    this.sceneComponent.addEventListener("mousedown", this.onMouseDown);
     window.addEventListener("mousemove", this.onMouseMove);
     window.addEventListener("mouseup", this.onMouseUp);
 
@@ -48,7 +48,7 @@ export default class Pannable {
 
     console.log("Pannable onMouseDown!", event.target);
 
-    if (event.target !== this.targetElement) return;
+    if (event.target !== this.sceneComponent) return;
 
     // const target = event .composedPath() .find((o) => o.tagName === "BUTTON" || o === this.host);
     // if (target !== this.host) return;

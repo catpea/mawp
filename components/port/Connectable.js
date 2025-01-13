@@ -28,7 +28,6 @@ export default class Connectable {
     this.mouseDownHandler = this.mouseDownHandler.bind(this);
     this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
     this.mouseUpHandler = this.mouseUpHandler.bind(this);
-    this.getCoordinates = this.getIconCoordinates.bind(this);
 
   }
 
@@ -48,37 +47,51 @@ export default class Connectable {
 
 
   // TODO: create x and y transform funcion, rather than this mess
-  getIconCoordinates(){
-    console.log('Coordinates of' , this.portComponent);
+  // getIconCoordinatesOld(){
+  //   console.log('Coordinates of' , this.portComponent);
 
-    const scale = this.portComponent.scene.scale.value;
+  //   const scale = this.portComponent.scene.scale.value;
 
-    let {x:elementX,y:elementY, width:elementW, height:elementH} = this.portComponent.getDecal().getBoundingClientRect();
+  //   let {x:elementX,y:elementY, width:elementW, height:elementH} = this.portComponent.getDecal().getBoundingClientRect();
 
-    elementX = elementX / scale;
-    elementY = elementY / scale;
-    elementW = elementW / scale;
-    elementH = elementH / scale;
+  //   elementX = elementX / scale;
+  //   elementY = elementY / scale;
+  //   elementW = elementW / scale;
+  //   elementH = elementH / scale;
 
-    // center of element
-    const centerW = elementW/2;
-    const centerH = elementH/2;
+  //   // center of element
+  //   const centerW = elementW/2;
+  //   const centerH = elementH/2;
 
-    let centeredX = elementX + centerW;
-    let centeredY = elementY + centerH;
+  //   let centeredX = elementX + centerW;
+  //   let centeredY = elementY + centerH;
 
-    let panX = this.portComponent.scene.panX.value;
-    let panY = this.portComponent.scene.panY.value;
+  //   let panX = this.portComponent.scene.panX.value;
+  //   let panY = this.portComponent.scene.panY.value;
 
 
-    panX = panX / scale;
-    panY = panY / scale;
+  //   panX = panX / scale;
+  //   panY = panY / scale;
 
-    centeredX = centeredX - panX;
-    centeredY = centeredY - panY;
+  //   centeredX = centeredX - panX;
+  //   centeredY = centeredY - panY;
 
-    return [centeredX, centeredY];
-  }
+  //   return [centeredX, centeredY];
+  // }
+
+  // getIconCoordinates(){
+  //   let {x:elementX,y:elementY, width:elementW, height:elementH} = this.portComponent.getDecal().getBoundingClientRect();
+
+  //   // calculate half of element width
+  //   const centerW = elementW/2;
+  //   const centerH = elementH/2;
+
+  //   // add halves to elemt x, to move into the center
+  //   let centeredX = elementX + centerW;
+  //   let centeredY = elementY + centerH;
+
+  //   return [centeredX, centeredY];
+  // }
 
   mouseDownHandler(event) {
     event.stopPropagation(); // Prevents the event from bubbling up the DOM tree, preventing any parent handlers from being notified of the event.
@@ -92,7 +105,9 @@ export default class Connectable {
     this.#touchdownOffsetX = event.offsetX;
     this.#touchdownOffsetY = event.offsetY;
 
-    let [x1, y1] = this.getIconCoordinates();
+    // let [x1, y1] = this.getIconCoordinates();
+    let [x1, y1] = this.portComponent.scene.calculateCentralCoordinates( this.portComponent.getDecal() );
+    [x1, y1] = this.portComponent.scene.transform(x1, y1);
 
     for (const [sceneIndex, svgSurface] of Object.entries(this.portComponent.scene.drawingSurfaces)) {
       const svgLline = document.createElementNS('http://www.w3.org/2000/svg', 'line');

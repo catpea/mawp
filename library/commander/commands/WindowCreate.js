@@ -3,10 +3,10 @@ import Command from './Command.js';
 // windowCreate -id a
 export default class WindowCreate extends Command {
 
-  execute({ id, title='Untitled', reference=null, top=0, left=0, style }) {
+  execute({ id, title='Untitled', reference=null, top=null, left=null, style }) {
     const scene = this.project.get(this.project.activeScene.value);
 
-    console.log('WindowCreate', id, title, reference);
+    console.log('WindowCreate', scene, id, title, reference);
 
 
     const component = new this.project.Component(id, 'window');

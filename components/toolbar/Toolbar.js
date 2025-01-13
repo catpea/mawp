@@ -69,11 +69,13 @@ export default class Console extends HTMLElement {
     connectedCallback() {
 
       const application = transcend(this, `x-application`);
+      const scene = transcend(this, `x-scene`);
       if(!application) throw new Error('Unable to locate applicaion!')
 
       const createWindowButton = this.container.querySelector('[name="create-window"]');
       createWindowButton.addEventListener("click", function (e) {
-        application.project.commander.windowCreate({left:66, top:66});
+        const [left, top] = scene.getCenterDropCoordinates();
+        application.project.commander.windowCreate({left, top});
       });
 
       const mainSceneButton = this.container.querySelector('[name="main-scene"]');
