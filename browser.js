@@ -98,7 +98,7 @@ project.create(teeScene);
   uppercaseInput.dataset.set('reference', 'upper');
   uppercaseInput.dataset.set('left', 400);
   uppercaseInput.dataset.set('top', 300);
-  uppercaseInput.dataset.set('note', 'Edit me! click the yellow icon ^');
+  uppercaseInput.dataset.set('note', 'Edit me! click the arrow icon in the caption bar.');
   mainScene.create(uppercaseInput)
 
   const uppercaseOutput = new Component('uppercaseOutput', 'window');
