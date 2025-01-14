@@ -54,6 +54,10 @@ export default class UI {
 
   }
 
+  removeComponent({id}){
+    //console.log('removeComponent', id)
+    this.application.querySelector('x-scene').getElementById(id).remove();
+  }
   addComponent(branch){
       const component = document.createElement(`x-${branch.type}`);
       component.id = branch.id;
@@ -78,14 +82,15 @@ export default class UI {
   // =^o.O^= //
   #watching = false;
   watch(sceneName){
-    console.log(`Watching sceneName ${sceneName}`);
 
     // this.project.activeScene
     this.clearSceneGarbage()
 
-    const watchPath = `/project/${sceneName}/*`;
-    this.sceneGarbage = this.project.watch('create', watchPath, ({target})=>{
+    this.sceneGarbage = this.project.watch('create', `/project/${sceneName}/*`, ({target})=>{
       this.addComponent(target)
+    })
+    this.sceneGarbage = this.project.watch('delete', `/project/${sceneName}`, ({target})=>{
+      this.removeComponent(target)
     })
 
     const scenePath = `${sceneName}`;

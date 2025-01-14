@@ -30,7 +30,7 @@ export default class Connectable {
   }
 
   connectedCallback() {
-    console.log('SSS', this.element);
+    //console.log('SSS', this.element);
 
     this.element.style.position = 'absolute'; // Ensure the element is absolutely positioned
     this.element.addEventListener('mousedown', this.mouseDownHandler);
@@ -52,7 +52,7 @@ export default class Connectable {
     const scale = this.element.getBoundingClientRect().width / this.element.offsetWidth;
 
     let correct = y / scale ;
-    console.log('SSS', {correct, y, scrollbar});
+    //console.log('SSS', {correct, y, scrollbar});
 
 
     return correct ;

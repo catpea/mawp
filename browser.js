@@ -2,8 +2,6 @@ import Signal from 'signal';
 import Branch from 'branch';
 import Commander from 'commander';
 
-console.log('------------------------------SYSTEM START!------------------------------')
-
 class Project extends Branch {
   Scene = Scene;
   Component = Component;
@@ -22,6 +20,13 @@ class Scene extends Branch {
   getWindow(id) {
     return this.get(id);
   }
+
+  getRelated(id) { // return items related to id in a scene, usualy for removal.
+    const from = this.children.filter(child=>child.type==='pipe').filter(child=>child.dataset.get('from')!==undefined).filter(child=>child.dataset.get('from').value.startsWith(id+':'));
+    const to = this.children.filter(child=>child.type==='pipe').filter(child=>child.dataset.get('to')!==undefined).filter(child=>child.dataset.get('to').value.startsWith(id+':'));
+    return [...from, ...to];
+  }
+
 }
 
 class Component extends Branch {
@@ -32,6 +37,7 @@ class Component extends Branch {
   }
 }
 class Connector extends Branch {
+
 }
 
 const project = new Project('project');
@@ -42,10 +48,10 @@ const ui = new UI(project);
 
 
 const mainScene = new Scene('main');
-mainScene.onStart = async () => console.log('ASYNC START GRRR')
+// mainScene.onStart = async () => console.log('ASYNC START GRRR')
 
 mainScene.once('stop', () => {
-  console.log('Main scene Branch got stoppppp...')
+  // console.log('Main scene Branch got stoppppp...')
 });
 
 const upperScene = new Scene('upper');
@@ -279,7 +285,7 @@ await project.start();
 
 await ui.start(); // WARN: must come after the tree has fully loaded, otherwise the watcher will begin adding nodes, that are yet to be loaded.
 
-console.log(`Startup at ${new Date().toISOString()}`);
+//console.log(`Startup at ${new Date().toISOString()}`);
 
 window.addEventListener('beforeunload', function(event) {
   console.log('beforeunload was triggered!')

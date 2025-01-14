@@ -96,7 +96,7 @@ export default class Port extends HTMLElement {
     }
 
     get scene(){
-      console.log('SCENE REQUEST', transcend(this, `x-scene`) )
+      //console.log('SCENE REQUEST', transcend(this, `x-scene`) )
       return transcend(this, `x-scene`);
     }
 

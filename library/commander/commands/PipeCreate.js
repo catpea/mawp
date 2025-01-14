@@ -7,7 +7,7 @@ export default class PipeCreate extends Command {
 
   execute({ id=guid(), from, to }) {
     const scene = this.project.get(this.project.activeScene.value);
-    console.log('PipeCreate', id, from, to);
+    //console.log('PipeCreate', id, from, to);
     const pipe = new this.project.Connector(id, 'pipe');
     pipe.dataset.set('from', from);
     pipe.dataset.set('to', to);

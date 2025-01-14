@@ -14,7 +14,7 @@ export default class Focusable {
 
   connectedCallback() {
     if( this.element.querySelectorAll(this.activationClass).length == 0 ){
-      console.log(`Located ${this.element.querySelectorAll(this.activationClass).length} ${this.activationClass} `);
+      //console.log(`Located ${this.element.querySelectorAll(this.activationClass).length} ${this.activationClass} `);
       throw new Error('failed to locate activation targets')
     }
 

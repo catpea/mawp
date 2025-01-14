@@ -21,7 +21,7 @@ export default class Pannable {
   }
 
   start() {
-    console.log("Pannable start!", this.targetElement);
+    //console.log("Pannable start!", this.targetElement);
 
     this.sceneComponent.addEventListener("wheel", this.onWheel, { passive: false, });
     this.sceneComponent.addEventListener("mousedown", this.onMouseDown);
@@ -46,9 +46,9 @@ export default class Pannable {
 
   onMouseDown(event) {
 
-    console.log("Pannable onMouseDown!", event.target);
+    //console.log("Pannable onMouseDown!", event.target);
 
-    if (event.target !== this.sceneComponent) return;
+    if (event.originalTarget !== this.sceneComponent) return;
 
     // const target = event .composedPath() .find((o) => o.tagName === "BUTTON" || o === this.host);
     // if (target !== this.host) return;
@@ -64,7 +64,7 @@ export default class Pannable {
   onMouseMove(event) {
 
     if (this.#isPanning) {
-      console.log("Pannable onMouseMove!", event.target);
+      //console.log("Pannable onMouseMove!", event.target);
       this.sceneComponent.panX.value = this.#startPanX + (event.clientX - this.#startMousePos.x);
       this.sceneComponent.panY.value = this.#startPanY + (event.clientY - this.#startMousePos.y);
       this.updateTransform();
@@ -78,7 +78,12 @@ export default class Pannable {
   }
 
   onWheel(event) {
-    console.log("Pannable onWheel!", event.target);
+
+    //console.log("Pannable onWheel Target", event.originalTarget, event);
+    let allow = true;
+    if (event.originalTarget !== this.sceneComponent) allow = false;
+    if (event.target.tagName == 'X-WINDOW') allow = true; // overturn verdict;
+    if(!allow) return;
 
     const deltaScale = event.deltaY > 0 ? 0.9 : 1.1;
     this.sceneComponent.scale.value *= deltaScale;

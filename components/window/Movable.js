@@ -32,9 +32,8 @@ export default class Movable {
   }
 
   stop() {
-    this.dragHandle.forEach((el) =>
-      el.removeEventListener("mousedown", this.mouseDownHandler),
-    );
+    this.dragHandle.removeEventListener("mousedown", this.mouseDownHandler);
+
     document.removeEventListener("mouseup", this.mouseUpHandler);
     document.removeEventListener("mousemove", this.mouseMoveHandler);
   }

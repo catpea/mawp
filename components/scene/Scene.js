@@ -55,6 +55,7 @@ export default class Scene extends HTMLElement {
           overflow: visible; /* does not cut off the lines when dragging outside into minus space */
 
           &.illustration-foreground {
+            z-index: 2642657228;
             background-color: transparent;
           }
         }
@@ -130,7 +131,7 @@ export default class Scene extends HTMLElement {
 
       // Calculate the available height for the nested element
       const availableHeight = viewportHeight - sceneTop;
-      console.log({viewportHeight, sceneTop, availableHeight})
+      //console.log({viewportHeight, sceneTop, availableHeight})
       // Set the height of the nested element
       this.style.height = `${availableHeight}px`;
   }

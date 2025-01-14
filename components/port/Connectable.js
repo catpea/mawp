@@ -177,14 +177,14 @@ export default class Connectable {
       const fromActor = this.portComponent.window;
       const fromValve = this.portComponent;
       const from = [fromActor.id, fromValve.id.replace(/^port-/,'')].join(':');
-      console.log({from});
+      //console.log({from});
 
       if (!fromActor) {
         // did not drag to anything
         return;
       }
       const composedPath = event.composedPath().filter(el=>el instanceof HTMLElement).filter(el=>el.hasAttribute('id'))
-      console.log('composedPath', composedPath);
+      //console.log('composedPath', composedPath);
 
       const toActor = composedPath.find(el=>el.matches(`x-window`))
       if (!toActor) {
@@ -198,7 +198,7 @@ export default class Connectable {
         return;
       }
       const to = [toActor.id, toValve.id.replace(/^port-/,'')].join(':');
-      console.log({to});
+      //console.log({to});
 
 
 

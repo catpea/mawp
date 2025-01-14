@@ -1,6 +1,7 @@
 import Signal from 'signal';
 import lol from 'lol';
 import transcend from 'transcend';
+import guid from 'guid';
 
 export default class Console extends HTMLElement {
 
@@ -74,8 +75,11 @@ export default class Console extends HTMLElement {
 
       const createWindowButton = this.container.querySelector('[name="create-window"]');
       createWindowButton.addEventListener("click", function (e) {
-        const [left, top] = scene.getCenterDropCoordinates();
-        application.project.commander.windowCreate({left, top});
+        let [left, top] = scene.getCenterDropCoordinates();
+        [left, top] = [left, top].map(o=>o*.5)
+        const id = guid();
+        application.project.commander.windowCreate({id, left, top, active:true});
+
       });
 
       const mainSceneButton = this.container.querySelector('[name="main-scene"]');

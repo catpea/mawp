@@ -19,10 +19,10 @@ export default class Pipe extends HTMLElement {
     super();
     this.dataset2 = new Dataset();
     this.status = new Signal('loading');
-    this.status.subscribe(v => console.log('PIPE STATUS: ', v) );
+    // this.status.subscribe(v => console.log('PIPE STATUS: ', v) );
     this.status.subscribe(v => {
       if (v == 'unloaded') {
-        console.log('Removing Pipe Component', this);
+        //console.log('Removing Pipe Component', this);
         this.remove();
       }
     });
@@ -42,7 +42,7 @@ export default class Pipe extends HTMLElement {
       if (name.startsWith('data-')) {
         const key = name.substr(5);
         const val = this.getAttribute(name)
-        console.log('ZZZ', key, val);
+        //console.log('ZZZ', key, val);
 
         this.dataset2.set(key, val);
       }
@@ -57,7 +57,7 @@ export default class Pipe extends HTMLElement {
     dependencies.addDependency(fromDecoder);
     dependencies.addDependency(toDecoder);
     this.gc = dependencies.subscribe((_, a, b) => {
-      console.log('STATUS', a,b)
+      //console.log('STATUS', a,b)
       if (a === 'ready' && a === b) {
         this.status.value = 'ready'
 
@@ -135,7 +135,7 @@ export default class Pipe extends HTMLElement {
       if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
         const attributeName = mutation.attributeName;
         const newValue = mutation.target.getAttribute(attributeName);
-        console.log('SET ATTRIBUTE', attributeName.substr(5), newValue);
+        //console.log('SET ATTRIBUTE', attributeName.substr(5), newValue);
         this.dataset2.set(attributeName.substr(5), newValue);
       }
     }

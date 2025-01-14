@@ -26,8 +26,8 @@ export default class Forms {
   createCompactInput({ id, name, value, type="text", formText}){
     if (!id) id = guid();
     const container = lol.div({ type, class: 'mb-1 row', style: {fontSize: '.72rem'} },
-      lol.label({for: id, class: 'col-sm-2 col-form-label'}, name),
-      lol.div({class:'col-sm-10'},
+      lol.label({for: id, class: 'col-5 col-form-label text-truncate text-end'}, name),
+      lol.div({class:'col-7'},
         lol.input({ type, class: 'form-control form-control-sm', id, name, value, placeholder:name, style: {fontSize: '.72rem', }}),
       ),
     );

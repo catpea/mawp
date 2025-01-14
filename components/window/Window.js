@@ -9,7 +9,10 @@ import Focusable from './Focusable.js';
 
 export default class Window extends HTMLElement {
 
-    // #el = {};
+    #el = {
+      destroyButton: '[name=remove-component]',
+      openReferencedSceneButton: '[name=open-referenced-scene]',
+    };
 
     constructor() {
       // establish prototype chain
@@ -100,7 +103,6 @@ export default class Window extends HTMLElement {
 
 
       this.dataset2.get('zindex').subscribe(v => cardNode.style.zIndex = v);
-      this.dataset2.get('active').subscribe(v => v=='true'?cardNode.classList.add('active'):cardNode.classList.remove('active'));
 
       this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
 
@@ -124,14 +126,14 @@ export default class Window extends HTMLElement {
       });
 
       this.dataset2.get('reference').subscribe(reference => {
-        console.log('GOT REFERENCE', reference);
+        //console.log('GOT REFERENCE', reference);
 
         // Create Button
-        if(reference) cardHeader.appendChild(lol.i({ class:'bi bi-pencil-square text-warning float-end cursor-pointer', on:{ click:()=> application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
+        if(reference) cardHeader.appendChild(lol.i({ name:'open-referenced-scene' ,class:'bi bi-arrow-right-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
 
         const referencedScene = application.project.get(reference);
         for( const element of referencedScene.children.filter(child=>child.dataset.get('incoming').value ) ){
-          console.log(element);
+          //console.log(element);
 
           const portNode = lol['x-port']({ id: `port-${element.id}`, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
           const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
@@ -140,6 +142,8 @@ export default class Window extends HTMLElement {
 
       });
 
+      cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.windowDelete({id:this.id}) }}))
+      cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.windowRead({id:this.id}) }}))
 
       // TODO: if a window is center/center put it in the center of the scene.
       console.warn('TODO: if a window is center/center put it in the center of the scene.')
@@ -162,7 +166,7 @@ export default class Window extends HTMLElement {
 
       this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
       this.observer.observe(this, { attributes: true });
-      this.gc = ()=> observer.disconnect();
+      this.gc = ()=> this.observer.disconnect();
 
       for (const {name, value} of this.attributes) {
         if (name.startsWith('data-')) {
@@ -194,6 +198,7 @@ export default class Window extends HTMLElement {
 
     disconnectedCallback() {
       this.status.value = 'unloaded';
+      this.collectGarbage();
     }
 
 
@@ -225,7 +230,7 @@ export default class Window extends HTMLElement {
 
   #previousStyle = null;
   changeCardStyle(cardNode, newStyle){
-    console.log('CCC changeCardStyle', cardNode, newStyle);
+    //console.log('CCC changeCardStyle', cardNode, newStyle);
     if(this.#previousStyle) CardStyles.remove(cardNode, this.#previousStyle);
     CardStyles.add(cardNode, newStyle);
     this.#previousStyle = newStyle;

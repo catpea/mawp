@@ -24,6 +24,10 @@ export default class Branch {
     this.propagate('create', node);
   }
 
+  remove(){
+    this.parent.delete(this);
+  }
+
   delete(node){
     const index = this.children.indexOf(node);
     if (index > -1) {
@@ -182,7 +186,7 @@ export default class Branch {
   // LIFECYCLE SYSTEM
 
   async load(url){
-    console.log('TODO...');
+    ///console.log('TODO...');
   }
 
   async start(){

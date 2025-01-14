@@ -2,23 +2,44 @@ export default class Focusable {
 
   constructor(windowComponent) {
     this.windowComponent = windowComponent;
+
+
+
     this.cardElement = this.windowComponent.shadowRoot.querySelector(".card");
     this.mouseDownHandler = this.mouseDownHandler.bind(this);
   }
 
   start() {
-    console.log('Focusable start!', this.cardElement);
+    //console.log('Focusable start!', this.cardElement);
     this.cardElement.addEventListener('mousedown', this.mouseDownHandler);
+    this.unlistenActive = this.windowComponent.dataset2.get('active').subscribe(v => this.activeHandler(v));
 
     return () => this.stop();
   }
 
   stop() {
+    this.unlistenActive()
     this.cardElement.removeEventListener('mousedown', this.mouseDownHandler);
   }
 
   mouseDownHandler(event) {
-    console.log(`Focusable mouseDownHandler for ${this.windowComponent.id}`);
+    this.setFocus();
+  }
+
+  activeHandler(v) {
+      const cardNode = this.windowComponent.shadowRoot.querySelector('.card');
+
+    if(v==='true'){
+      cardNode.classList.add('active')
+      this.setFocus();
+    }else{
+      cardNode.classList.remove('active')
+
+    }
+  }
+
+  setFocus(){
+    //console.log(`Focusable mouseDownHandler for ${this.windowComponent.id}`);
 
 
     const windowGroup = Array.from(this.windowComponent.scene.children)
@@ -38,7 +59,7 @@ export default class Focusable {
     let newTopmost = Math.max( ...windowGroup.map(o=>parseInt(o.dataset.zindex)) ) + 1;
 
     console.dir(windowGroup.map(o=>[o.id, o.dataset.zindex]));
-    console.log('new topmost is', newTopmost);
+    //console.log('new topmost is', newTopmost);
 
     // Setting the Selected Element: It updates the z-index of the selected element to be one higher than the current maximum.
     this.windowComponent.dataset.zindex = newTopmost;
