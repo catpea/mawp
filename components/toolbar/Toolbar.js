@@ -89,7 +89,9 @@ export default class Console extends HTMLElement {
       const deleteActiveButton = this.container.querySelector('[name="delete-active"]');
       const deleteActiveButtonFunction = () => {
         const id = this.scene.active.value.id;
+        this.scene.active.value = false;
         application.project.commander.componentDelete({id});
+
       }
       deleteActiveButton.addEventListener("click", deleteActiveButtonFunction);
       this.gc = () => deleteActiveButton.removeEventListener("click", deleteActiveButtonFunction);
