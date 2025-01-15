@@ -161,12 +161,19 @@ export default class Window extends HTMLElement {
 
       this.gc = this.dataset2.get('active').subscribe(v => {
         if(v==='true'){
-          cardNode.classList.add('active')
+          cardNode.classList.add('active');
+
         }else{
           cardNode.classList.remove('active')
         }
       });
 
+      let newlyCreated = true;
+      this.dataset2.get('active').subscribe(v => {
+        if(!newlyCreated) return;
+        if(v==='true') this.scene.setFocus(this);
+        newlyCreated = false;
+      });
 
 
       const movable = new Movable(this);
