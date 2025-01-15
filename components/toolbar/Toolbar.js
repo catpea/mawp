@@ -77,18 +77,25 @@ export default class Console extends HTMLElement {
       const scene = transcend(this, `x-scene`);
       if(!application) throw new Error('Unable to locate applicaion!')
 
+
+
+
+
       const createWindowButton = this.container.querySelector('[name="create-window"]');
       createWindowButton.addEventListener("click", function (e) {
         let [left, top] = scene.getCenterDropCoordinates();
         [left, top] = [left, top].map(o=>o*.5)
-        const id = guid();
+        const id = guid();//.substr(0,10);
         application.project.commander.windowCreate({id, left, top, active:true});
-
       });
+
+
+
+
 
       const deleteActiveButton = this.container.querySelector('[name="delete-active"]');
       const deleteActiveButtonFunction = () => {
-        const id = this.scene.active.value.id;
+        const id = this.scene.active.value;
         this.scene.active.value = false;
         application.project.commander.componentDelete({id});
 
@@ -128,6 +135,13 @@ export default class Console extends HTMLElement {
           mainSceneButton.disabled = false;
         }
       })
+
+
+
+
+
+
+
       this.status.value = 'ready';
     }
 

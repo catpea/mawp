@@ -1,5 +1,5 @@
 import PRELOAD_windowMove from './commands/WindowMove.js'
-import PRELOAD_windowFocus from './commands/WindowFocus.js'
+// import PRELOAD_windowFocus from './commands/WindowFocus.js'
 
 const commandModules = new Map();
 

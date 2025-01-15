@@ -4,6 +4,7 @@ import lol from "lol";
 import Pannable from "./Pannable.js";
 
 export default class Scene extends HTMLElement {
+  active = new Signal(false);
   panX = new Signal(0);
   panY = new Signal(0);
   scale = new Signal(1);
@@ -92,7 +93,7 @@ export default class Scene extends HTMLElement {
         <x-console></x-console>
 
         <span class="position-absolute top-0 start-50 dtranslate-middle opacity-25">
-          pan=<small name="debug-panX"></small>x<small name="debug-panY"></small> scale=<small name="debug-scale"></small>
+          pan=<small name="debug-panX"></small>x<small name="debug-panY"></small> scale=<small name="debug-scale"></small> active=<small name="debug-active"></small>
         </span>
 
     `;
@@ -108,6 +109,7 @@ export default class Scene extends HTMLElement {
     this.panX.subscribe(v => this.container.querySelector('[name="debug-panX"]').textContent = Number.parseFloat(v).toFixed(0));
     this.panY.subscribe(v => this.container.querySelector('[name="debug-panY"]').textContent = Number.parseFloat(v).toFixed(0));
     this.scale.subscribe(v => this.container.querySelector('[name="debug-scale"]').textContent = Number.parseFloat(v).toFixed(2));
+    this.active.subscribe(v => this.container.querySelector('[name="debug-active"]').textContent = v);
 
     this.status.value = "ready";
     this.adjustNestedElementHeight()
@@ -141,7 +143,7 @@ export default class Scene extends HTMLElement {
   }
 
 
-   active = new Signal(false);
+
    clearFocusHandler(){
      if (event.originalTarget === this) this.clearFocus()
    }
@@ -154,6 +156,7 @@ export default class Scene extends HTMLElement {
 
 
    setFocus(sceneElement){
+     console.log('setFocus', sceneElement.id);
 
     const childGroup = Array.from(this.children)
 
@@ -168,7 +171,7 @@ export default class Scene extends HTMLElement {
 
     childGroup.filter(o=>o.id !== sceneElement.id).filter(o=>o.dataset.active != 'false').map(o=>o.dataset.active = 'false');
     if(sceneElement.dataset.active != 'true') sceneElement.dataset.active = 'true';
-    this.active.value = sceneElement;
+    this.active.value = sceneElement.id;
 
     // Reindexing: Finally, it sorts the children by their z-index and applies a zero-based numbering scheme.
     for (const [index, win] of [...childGroup].sort((a,b)=>parseInt(a.dataset.zindex) - parseInt(b.dataset.zindex) ).entries()) {

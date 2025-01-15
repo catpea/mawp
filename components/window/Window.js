@@ -159,18 +159,19 @@ export default class Window extends HTMLElement {
       const focusable = new Focusable(this);
       this.gc = focusable.start();
 
-      this.gc = this.dataset2.get('active').subscribe(v => {
-        if(v==='true'){
+      this.gc = this.scene.active.subscribe(v => {
+        if(v && v == this.id){
           cardNode.classList.add('active');
-
         }else{
           cardNode.classList.remove('active')
         }
       });
 
       let newlyCreated = true;
-      this.dataset2.get('active').subscribe(v => {
+      this.gc = this.dataset2.get('active').subscribe(v => {
+        const id = this.id;
         if(!newlyCreated) return;
+        console.log({id, newlyCreated, v});
         if(v==='true') this.scene.setFocus(this);
         newlyCreated = false;
       });
