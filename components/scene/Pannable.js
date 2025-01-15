@@ -79,10 +79,12 @@ export default class Pannable {
 
   onWheel(event) {
 
-    //console.log("Pannable onWheel Target", event.originalTarget, event);
+    console.log("Pannable onWheel Target", event.originalTarget.tagName, event.target.tagName);
+
     let allow = true;
     if (event.originalTarget !== this.sceneComponent) allow = false;
     if (event.target.tagName == 'X-WINDOW') allow = true; // overturn verdict;
+    if (event.originalTarget.tagName == 'line') allow = true; // overturn verdict;
     if(!allow) return;
 
     const deltaScale = event.deltaY > 0 ? 0.9 : 1.1;

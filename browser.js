@@ -17,6 +17,10 @@ class Project extends Branch {
 }
 
 class Scene extends Branch {
+
+  getPipe(id) {
+    return this.get(id);
+  }
   getWindow(id) {
     return this.get(id);
   }

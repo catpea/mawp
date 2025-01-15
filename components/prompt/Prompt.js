@@ -107,7 +107,7 @@ export default class Prompt extends HTMLElement {
       this.shadowRoot.appendChild(container);
 
       setTimeout(()=>{
-        const commandLine = `alert --type info --ttl 60 --title "Hello!" --text "Command line is working now. Just hit enter (when in there) to execute, or click send icon." --note "Click arrow-icons in window captions to move between scenes. You can now close, and move windows. Selecting/deleting lines not yet supported." `;
+        const commandLine = `alert --type info --ttl 60 --title "Hello!" --text "Command line is working now. Just hit enter (when in there) to execute, or click send icon." --note "Click arrow-icons in window captions to move between scenes. You can now close, and move windows. Selecting/deleting lines is now supported." `;
         for( const { commandName, commandArguments } of commando(commandLine)){
           //console.log(commandName, commandArguments);
           application.project.commander[commandName](commandArguments);

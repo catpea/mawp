@@ -159,6 +159,16 @@ export default class Window extends HTMLElement {
       const focusable = new Focusable(this);
       this.gc = focusable.start();
 
+      this.gc = this.dataset2.get('active').subscribe(v => {
+        if(v==='true'){
+          cardNode.classList.add('active')
+        }else{
+          cardNode.classList.remove('active')
+        }
+      });
+
+
+
       const movable = new Movable(this);
       this.gc = movable.start();
 

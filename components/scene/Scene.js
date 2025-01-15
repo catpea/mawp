@@ -113,6 +113,10 @@ export default class Scene extends HTMLElement {
     this.adjustNestedElementHeight()
     window.addEventListener('resize', this.adjustNestedElementHeight.bind(this));
     window.addEventListener('load', this.adjustNestedElementHeight.bind(this));
+
+    this.addEventListener("mousedown", this.clearFocusHandler.bind(this));
+    this.gc = () => this.removeEventListener("mousedown", this.clearFocusHandler.bind(this));
+
   }
   adjustNestedElementHeight() {
 
@@ -135,6 +139,53 @@ export default class Scene extends HTMLElement {
       // Set the height of the nested element
       this.style.height = `${availableHeight}px`;
   }
+
+
+   active = new Signal(false);
+   clearFocusHandler(){
+     if (event.originalTarget === this) this.clearFocus()
+   }
+   clearFocus(){
+    const childGroup = Array.from(this.children)
+    this.active.value = false;
+    childGroup.filter(o=>o.dataset.active != 'false').map(o=>o.dataset.active = 'false');
+   }
+
+
+
+   setFocus(sceneElement){
+
+    const childGroup = Array.from(this.children)
+
+    // Normalizing z-index: It ensures that any elements without a defined z-index are assigned one based on their order.
+    for (const [index, win] of childGroup.entries()) {
+      if(win.dataset.zindex === undefined) win.dataset.zindex=index;
+    }
+
+    // Finding the Topmost z-index: It calculates the maximum z-index among the children to determine the next available z-index.
+    let newTopmost = Math.max( ...childGroup.map(o=>parseInt(o.dataset.zindex)) ) + 1;
+    sceneElement.dataset.zindex = newTopmost;
+
+    childGroup.filter(o=>o.id !== sceneElement.id).filter(o=>o.dataset.active != 'false').map(o=>o.dataset.active = 'false');
+    if(sceneElement.dataset.active != 'true') sceneElement.dataset.active = 'true';
+    this.active.value = sceneElement;
+
+    // Reindexing: Finally, it sorts the children by their z-index and applies a zero-based numbering scheme.
+    for (const [index, win] of [...childGroup].sort((a,b)=>parseInt(a.dataset.zindex) - parseInt(b.dataset.zindex) ).entries()) {
+      const oldValue = parseInt(win.dataset.zindex);
+      const newValue = index;
+      if(oldValue !== newValue){
+        win.dataset.zindex = newValue;
+      }
+    }
+    // console.dir(childGroup.map(o=>[o.id, o.dataset.zindex]));
+
+  }
+
+
+
+
+
 
   // QUESTIONABLE BUT USEFUL UTILITY FUNCTIONS
 

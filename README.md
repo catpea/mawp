@@ -3,6 +3,7 @@ MAWP
 
 ## TODO
 
+- add this.gc = to all subscriptions
 - live update (signal) inner pipes, test by adding upper to upper and watch it live
 - Save load files
 - enable pipe connections

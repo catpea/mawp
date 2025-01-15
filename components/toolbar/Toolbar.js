@@ -34,7 +34,11 @@ export default class Console extends HTMLElement {
         </div>
 
         <div class="btn-group-vertical mb-2">
-          <button name="create-window" type="button" class="btn btn-outline-secondary" title="create window"  data-bs-content="Clear the stage of all actors and begin a new project."><i class="bi bi-plus-circle"></i></button>
+          <button name="create-window" type="button" class="btn btn-outline-secondary" title="create window"><i class="bi bi-plus-circle"></i></button>
+          <button name="delete-active" type="button" class="btn btn-outline-secondary" title="delete selected"><i class="bi bi-x-circle"></i></button>
+        </div>
+
+        <div class="btn-group-vertical mb-2">
           <button type="button" class="btn btn-outline-secondary opacity-25" title="Clear Stage"  data-bs-content="Clear the stage of all actors and begin a new project."><i class="bi bi-eraser"></i></button>
           <button type="button" class="btn btn-outline-secondary opacity-25" title="Open File"  data-bs-content="Load data from your computer."><i class="bi bi-folder2-open"></i></button>
           <button type="button" class="btn btn-outline-secondary opacity-25"><i class="bi bi-save"></i></button>
@@ -82,6 +86,29 @@ export default class Console extends HTMLElement {
 
       });
 
+      const deleteActiveButton = this.container.querySelector('[name="delete-active"]');
+      const deleteActiveButtonFunction = () => {
+        const id = this.scene.active.value.id;
+        application.project.commander.componentDelete({id});
+      }
+      deleteActiveButton.addEventListener("click", deleteActiveButtonFunction);
+      this.gc = () => deleteActiveButton.removeEventListener("click", deleteActiveButtonFunction);
+      this.scene.active.subscribe(active=>{
+        if(active){
+          deleteActiveButton.classList.remove(...Array.from(deleteActiveButton.classList).filter(className => className.startsWith('btn-outline-')) )
+          deleteActiveButton.classList.add('btn-outline-danger');
+          deleteActiveButton.disabled = false;
+        }else{
+          deleteActiveButton.classList.remove(...Array.from(deleteActiveButton.classList).filter(className => className.startsWith('btn-outline-')) )
+          deleteActiveButton.classList.add('btn-outline-secondary');
+          deleteActiveButton.disabled = true;
+        }
+      });
+
+
+
+
+
       const mainSceneButton = this.container.querySelector('[name="main-scene"]');
 
       mainSceneButton.addEventListener("click", function (e) {
@@ -100,6 +127,10 @@ export default class Console extends HTMLElement {
         }
       })
       this.status.value = 'ready';
+    }
+
+    get scene(){
+      return transcend(this, `x-scene`);
     }
 
   }
