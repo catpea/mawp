@@ -144,6 +144,12 @@ export default class Scene extends HTMLElement {
 
 
 
+
+  // componentDelete(id){
+  //   this.application.project.commander.windowDelete({id:this.id});
+  //   this.scene.clearFocus();
+  // }
+
    clearFocusHandler(){
      if (event.originalTarget === this) this.clearFocus()
    }

@@ -124,8 +124,8 @@ export default class Console extends HTMLElement {
         application.project.commander.sceneSelect({id:'main'});
       });
 
-      application.project.activeScene.subscribe(activeScene=>{
-        if(activeScene==='main'){
+      application.project.activeLocation.subscribe(activeLocation=>{
+        if(activeLocation==='main'){
           mainSceneButton.classList.remove(...Array.from(mainSceneButton.classList).filter(className => className.startsWith('btn-outline-')) )
           mainSceneButton.classList.add('btn-outline-secondary');
           mainSceneButton.disabled = true;

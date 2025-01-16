@@ -49,66 +49,69 @@ export default class UI {
     this.application.appendChild(this.scene);
     this.mountPoint.appendChild(this.application);
 
-    this.project.activeScene.subscribe(v=>this.watch(v))
+    this.project.activeLocation.subscribe(v=>this.watch(v))
     // this.watch(this.project.activeScene.value);
 
   }
 
-  removeComponent({id}){
+  removeWebComponent({id}){
     //console.log('removeComponent', id)
-    this.application.querySelector('x-scene').getElementById(id).remove();
+    this.scene.getElementById(id).remove();
   }
-  addComponent(branch){
-      const component = document.createElement(`x-${branch.type}`);
-      component.id = branch.id;
-      component.project = this.project;
-      // component.source = branch;
+  addWebComponent(location){
+    const tagName = `x-${location.type}`;
+    const component = document.createElement(tagName);
+    component.id = location.id;
 
-      // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
-      this.sceneGarbage = branch.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
-      this.application.querySelector('x-scene').appendChild(component);
-      this.sceneGarbage = () => component.remove();
+    // NOTE: here we inject server side project into uiser interface elements
+    component.project = this.project;
+
+    // NOTE: agent is transported here
+    component.agent = location.agent;
+    if(component.agent) component.agent.start();
+
+    // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
+    this.locationGarbageCollector = location.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
+    this.application.querySelector('x-scene').appendChild(component);
+    this.locationGarbageCollector = () => component.remove();
   }
 
 
   async stop(){
-    // this.clearSceneGarbage();
-    // this.collectGarbage();
+    this.clearSceneGarbage();
+    this.collectGarbage();
   }
 
 
 
 
   // =^o.O^= //
-  #watching = false;
-  watch(sceneName){
-
+  watch(locationName){
+    console.log(`Watching locationName: ${locationName}`)
     // this.project.activeScene
-    this.clearSceneGarbage()
+    this.clearLocationGarbage()
 
-    this.sceneGarbage = this.project.watch('create', `/project/${sceneName}/*`, ({target})=>{
-      this.addComponent(target)
-    })
-    this.sceneGarbage = this.project.watch('delete', `/project/${sceneName}`, ({target})=>{
-      this.removeComponent(target)
-    })
+    // MONITORING
+    this.locationGarbageCollector = this.project.watch('create', `/project/${locationName}/*`, ({target})=> this.addWebComponent(target));
+    this.locationGarbageCollector = this.project.watch('delete', `/project/${locationName}`, ({target})=> this.removeWebComponent(target));
 
-    const scenePath = `${sceneName}`;
-    const scene = this.project.get(scenePath);
-    for(const child of scene.children){
-      this.addComponent(child)
+    // INSTALLATION
+    const location = this.project.get(locationName);
+    for(const child of location.children){
+      this.addWebComponent(child)
     }
+    console.log(`Installed ${location.children.length}`);
 
   }
 
-  // PER SCENE GARBAGE
-  #sceneGarbage = [];
-  clearSceneGarbage(){
-    this.#sceneGarbage.map(s=>s.subscription())
-    this.#sceneGarbage = [];
+  // PER LOCATION GARBAGE
+  #locationGarbage = [];
+  clearLocationGarbage(){
+    this.#locationGarbage.map(s=>s.subscription())
+    this.#locationGarbage = [];
   }
-  set sceneGarbage(subscription){ // shorthand for component level garbage collection
-    this.#sceneGarbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
+  set locationGarbageCollector(subscription){ // shorthand for component level garbage collection
+    this.#locationGarbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
   }
 
   // MAIN GARBAGE

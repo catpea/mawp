@@ -4,10 +4,10 @@ export default class Command {
     this.project = project;
   }
 
-  getScene(sceneName=this.project.activeScene.value) {
-    const sceneObject = this.project.get(sceneName);
-    if (!sceneObject) throw new Error(`Scene object "${sceneName}" not found`);
-    return sceneObject;
+  getLocation(locationName=this.project.activeLocation.value) {
+    const locationObject = this.project.get(locationName);
+    if (!locationObject) throw new Error(`Location object "${locationName}" not found`);
+    return locationObject;
   }
 
 }

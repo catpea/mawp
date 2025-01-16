@@ -2,12 +2,14 @@ import Signal from 'signal';
 import Branch from 'branch';
 import Commander from 'commander';
 
+import Agent from 'agent';
+
 class Project extends Branch {
-  Scene = Scene;
+  Scene = Location;
   Component = Component;
   Connector = Connector;
   commander;
-  activeScene = new Signal('main');
+  activeLocation = new Signal('main');
 
   constructor(...a) {
     super(...a)
@@ -16,14 +18,7 @@ class Project extends Branch {
 
 }
 
-class Scene extends Branch {
-
-  getPipe(id) {
-    return this.get(id);
-  }
-  getWindow(id) {
-    return this.get(id);
-  }
+class Location extends Branch {
 
   getRelated(id) { // return items related to id in a scene, usualy for removal.
     const from = this.children.filter(child=>child.type==='pipe').filter(child=>child.dataset.get('from')!==undefined).filter(child=>child.dataset.get('from').value.startsWith(id+':'));
@@ -33,15 +28,53 @@ class Scene extends Branch {
 
 }
 
+
+
+
+class BeaconTransmitter extends Agent {
+  constructor() {
+    super();
+    // this.dataset.set('interval', 600);
+    this.dataset.set('interval', 60_000);
+  }
+  start(){
+    this.pulseCounter = 0;
+    this.intervalId = setInterval( this.beacon.bind(this), this.dataset.get('interval').value );
+    this.beacon();
+  }
+  stop(){
+    clearInterval(this.intervalId);
+  }
+
+
+  receive(message){
+    console.info(message);
+  }
+
+  // --- BeaconTransmitter HELPER FUNCIONS --- //
+
+  beacon(){
+      this.pulseCounter++;
+      const pulse = {counter: this.pulseCounter, value: this.pulseCounter % 2 == 0};
+      this.receive(pulse);
+    }
+}
+
+
+
+
 class Component extends Branch {
-  constructor(...a) {
-    super(...a)
+  constructor(id) {
+    super(id, 'window')
     this.dataset.set('port-in', true);
     this.dataset.set('port-out', true);
   }
 }
-class Connector extends Branch {
 
+class Connector extends Branch {
+  constructor(id) {
+    super(id, 'pipe')
+  }
 }
 
 const project = new Project('project');
@@ -51,128 +84,129 @@ const ui = new UI(project);
 
 
 
-const mainScene = new Scene('main');
+const mainLocation = new Location('main');
 // mainScene.onStart = async () => console.log('ASYNC START GRRR')
 
-mainScene.once('stop', () => {
+mainLocation.once('stop', () => {
   // console.log('Main scene Branch got stoppppp...')
 });
 
-const upperScene = new Scene('upper');
-const teeScene = new Scene('tee');
+const upperLocation = new Location('upper');
+const teeLocation = new Location('tee');
 
-project.create(mainScene);
-project.create(upperScene);
-project.create(teeScene);
+project.create(mainLocation);
+project.create(upperLocation);
+project.create(teeLocation);
 
 
 
 
 {
-  const windowPostMessage = new Component('windowPostMessage', 'window');
+  const windowPostMessage = new Component('windowPostMessage');
   windowPostMessage.dataset.set('title', 'Window API: postMessage');
   windowPostMessage.dataset.set('left', 100);
   windowPostMessage.dataset.set('top', 100);
   windowPostMessage.dataset.set('port-in', false);
-  mainScene.create(windowPostMessage)
+  mainLocation.create(windowPostMessage)
 
-  const httpRequest = new Component('httpRequest', 'window');
+  const httpRequest = new Component('httpRequest');
   httpRequest.dataset.set('title', 'HTTP Server API: Request');
   httpRequest.dataset.set('left', 100);
   httpRequest.dataset.set('top', 250);
   httpRequest.dataset.set('port-in', false);
-  mainScene.create(httpRequest)
+  mainLocation.create(httpRequest)
 
-  const scraperResource = new Component('scraperResource', 'window');
+  const scraperResource = new Component('scraperResource');
   scraperResource.dataset.set('title', 'Scraper API: URL Downloaded');
   scraperResource.dataset.set('left', 100);
   scraperResource.dataset.set('top', 400);
   scraperResource.dataset.set('port-in', false);
-  mainScene.create(scraperResource)
+  mainLocation.create(scraperResource)
 
-  const intervalTimer = new Component('intervalTimer', 'window');
-  intervalTimer.dataset.set('title', 'Interval Timer API: Tick');
+  const intervalTimer = new Component('beaconTransmitter');
+  intervalTimer.agent = new BeaconTransmitter({interval: 6000});
+  intervalTimer.dataset.set('title', 'Beacon Transmitter Agent');
   intervalTimer.dataset.set('left', 100);
   intervalTimer.dataset.set('top', 550);
   intervalTimer.dataset.set('port-in', false);
-  mainScene.create(intervalTimer)
+  mainLocation.create(intervalTimer)
 
-  const uppercaseInput = new Component('uppercaseInput', 'window');
+  const uppercaseInput = new Component('uppercaseInput');
   uppercaseInput.dataset.set('title', 'Transducer');
   uppercaseInput.dataset.set('reference', 'upper');
   uppercaseInput.dataset.set('left', 400);
   uppercaseInput.dataset.set('top', 300);
   uppercaseInput.dataset.set('note', 'Edit me! click the arrow icon in the caption bar.');
-  mainScene.create(uppercaseInput)
+  mainLocation.create(uppercaseInput)
 
-  const uppercaseOutput = new Component('uppercaseOutput', 'window');
+  const uppercaseOutput = new Component('uppercaseOutput');
   uppercaseOutput.dataset.set('title', 'Output Branch');
   uppercaseOutput.dataset.set('left', 700);
   uppercaseOutput.dataset.set('top', 300);
   uppercaseOutput.dataset.set('port-out', false);
-  mainScene.create(uppercaseOutput)
+  mainLocation.create(uppercaseOutput)
 
-  const pipe1 = new Connector('pipe1', 'pipe');
+  const pipe1 = new Connector('pipe1');
   pipe1.dataset.set('from', 'windowPostMessage:out');
   pipe1.dataset.set('to', 'uppercaseInput:in');
-  mainScene.create(pipe1);
+  mainLocation.create(pipe1);
 
-  const pipe2 = new Connector('pipe2', 'pipe');
+  const pipe2 = new Connector('pipe2');
   pipe2.dataset.set('from', 'uppercaseInput:out');
   pipe2.dataset.set('to', 'uppercaseOutput:in');
-  mainScene.create(pipe2);
+  mainLocation.create(pipe2);
 }
 
 
 
 {
-  const secondaryStream = new Component('secondaryStream', 'window');
+  const secondaryStream = new Component('secondaryStream');
   secondaryStream.dataset.set('title', 'Secondary Stream');
   secondaryStream.dataset.set('incoming', true);
   secondaryStream.dataset.set('left', 150);
   secondaryStream.dataset.set('top', 100);
-  upperScene.create(secondaryStream)
+  upperLocation.create(secondaryStream)
 
-  const auxiliaryStream = new Component('auxiliaryStream', 'window');
+  const auxiliaryStream = new Component('auxiliaryStream');
   auxiliaryStream.dataset.set('title', 'Auxiliary Stream');
   auxiliaryStream.dataset.set('incoming', true);
   auxiliaryStream.dataset.set('left', 150);
   auxiliaryStream.dataset.set('top', 500);
   auxiliaryStream.dataset.set('style', 'solid-warning');
   setTimeout(()=>{ auxiliaryStream.dataset.set('style', 'solid-danger'); }, 3_000)
-  upperScene.create(auxiliaryStream)
+  upperLocation.create(auxiliaryStream)
 
-  const uppercaseInput1 = new Component('uppercaseInput', 'window');
+  const uppercaseInput1 = new Component('uppercaseInput');
   uppercaseInput1.dataset.set('title', 'Transducer2');
   uppercaseInput1.dataset.set('reference', 'tee');
   uppercaseInput1.dataset.set('left', 400);
   uppercaseInput1.dataset.set('top', 300);
   uppercaseInput1.dataset.set('note', 'Edit me too!!!');
 
-  upperScene.create(uppercaseInput1)
+  upperLocation.create(uppercaseInput1)
 
 
 
-  const uppercaseOutput = new Component('uppercaseOutput', 'window');
+  const uppercaseOutput = new Component('uppercaseOutput');
   uppercaseOutput.dataset.set('title', 'Output');
   uppercaseOutput.dataset.set('left', 700);
   uppercaseOutput.dataset.set('top', 300);
-  upperScene.create(uppercaseOutput)
+  upperLocation.create(uppercaseOutput)
 
-  const pipe0 = new Connector('pipe0', 'pipe');
+  const pipe0 = new Connector('pipe0');
   pipe0.dataset.set('from', 'secondaryStream:out');
   pipe0.dataset.set('to', 'uppercaseInput:in');
-  upperScene.create(pipe0);
+  upperLocation.create(pipe0);
 
-  const pipe1 = new Connector('pipe1', 'pipe');
+  const pipe1 = new Connector('pipe1');
   pipe1.dataset.set('from', 'auxiliaryStream:out');
   pipe1.dataset.set('to', 'uppercaseInput:in');
-  upperScene.create(pipe1);
+  upperLocation.create(pipe1);
 
-  const pipe2 = new Connector('pipe2', 'pipe');
+  const pipe2 = new Connector('pipe2');
   pipe2.dataset.set('from', 'uppercaseInput:out');
   pipe2.dataset.set('to', 'uppercaseOutput:in');
-  upperScene.create(pipe2);
+  upperLocation.create(pipe2);
 }
 
 
@@ -180,23 +214,23 @@ project.create(teeScene);
 
 
 {
-  const secondaryStream = new Component('secondaryStream', 'window');
+  const secondaryStream = new Component('secondaryStream');
   secondaryStream.dataset.set('title', 'Secondary Stream');
   secondaryStream.dataset.set('incoming', true);
   secondaryStream.dataset.set('left', 150);
   secondaryStream.dataset.set('top', 300);
-  teeScene.create(secondaryStream)
+  teeLocation.create(secondaryStream)
 
-  const uppercaseOutput = new Component('uppercaseOutput', 'window');
+  const uppercaseOutput = new Component('uppercaseOutput');
   uppercaseOutput.dataset.set('title', 'Output');
   uppercaseOutput.dataset.set('left', 700);
   uppercaseOutput.dataset.set('top', 300);
-  teeScene.create(uppercaseOutput)
+  teeLocation.create(uppercaseOutput)
 
-  const pipe0 = new Connector('pipe0', 'pipe');
+  const pipe0 = new Connector('pipe0');
   pipe0.dataset.set('from', 'secondaryStream:out');
   pipe0.dataset.set('to', 'uppercaseOutput:in');
-  teeScene.create(pipe0);
+  teeLocation.create(pipe0);
 
 }
 

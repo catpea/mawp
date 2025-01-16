@@ -142,7 +142,7 @@ export default class Window extends HTMLElement {
 
       });
 
-      cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.windowDelete({id:this.id}) }}))
+      cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
       cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.windowRead({id:this.id}) }}))
 
       // TODO: if a window is center/center put it in the center of the scene.

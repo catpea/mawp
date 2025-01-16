@@ -3,8 +3,8 @@ import Command from './Command.js';
 export default class WindowDelete extends Command {
 
   execute({ id }) {
-    this.getScene().getRelated(id).map(o=>o.remove())
-    this.getScene().getWindow(id).remove();
+    this.getLocation().getRelated(id).map(o=>o.remove())
+    this.getLocation().get(id).remove();
   }
 
 }
