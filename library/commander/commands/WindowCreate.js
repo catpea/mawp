@@ -4,7 +4,7 @@ import Command from './Command.js';
 export default class WindowCreate extends Command {
 
   execute({ id, title='Untitled', reference=null, top=null, left=null, style, active=false }) {
-    const scene = this.project.get(this.project.activeScene.value);
+    const scene = this.project.get(this.project.activeLocation.value);
 
     //console.log('WindowCreate', scene, id, title, reference);
 

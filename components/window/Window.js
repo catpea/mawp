@@ -7,20 +7,21 @@ import transcend from 'transcend';
 import Movable from './Movable.js';
 import Focusable from './Focusable.js';
 
-export default class Window extends HTMLElement {
+import ReactiveHTMLElement from '../ReactiveHTMLElement.js';
+export default class Window extends ReactiveHTMLElement {
 
-    #el = {
-      destroyButton: '[name=remove-component]',
-      openReferencedSceneButton: '[name=open-referenced-scene]',
-    };
-
-    constructor() {
-      // establish prototype chain
-      super();
-      this.status = new Signal('loading');
-      this.sizeSignal = new Signal([0,0]);
-      this.dataset2 = new Dataset();
-
+    // el =
+    // this.el.destroyButton
+    // #el = {
+    //   destroyButton: '[name=remove-component]',
+    //   openReferencedSceneButton: '[name=open-referenced-scene]',
+    // };
+    // el = new Proxy({}, {
+    //   get(target, elementName, receiver) {
+    //     const matches = this.querySelectorAll( this.#el[elementName] )
+    //     return matches;
+    // });
+    //
       // #elements: {
       // SELECTOR                    | el.GETTER ????
       //   "dblclick"                : "open",
@@ -30,7 +31,7 @@ export default class Window extends HTMLElement {
       //   "click .title .lock"      : "editAccessLevel",
       //   "mouseover .title .date"  : "showTooltip"
       // },
-      //
+
       // #events: {
       //   "dblclick"                : "open",
       //   "click .icon.doc"         : "select",
@@ -41,29 +42,30 @@ export default class Window extends HTMLElement {
       // },
 
 
+    initialize() {
+      this.sizeSignal = new Signal([0,0]);
 
+      this.attachShadow({ mode: 'open' });
 
       const localStyle = `
         .card.active {
           border-color: var(--bs-primary);
         }
       `;
-      const localCss = new CSSStyleSheet();
-      localCss.replaceSync(localStyle.trim());
 
-      const shadow = this.attachShadow({ mode: 'open' });
-      shadow.adoptedStyleSheets = [...document.adoptedStyleSheets, localCss];
+      this.styles(localStyle);
 
 
     }
 
-    connectedCallback() {
-
-      const application = transcend(this, `x-application`);
-      if(!application) throw new Error('Unable to locate applicaion!')
+    connected() {
 
        // creating a container for the editable-list component
       const cardNode = document.createElement('div');
+
+      if(this.agent){
+        this.agent.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
+      }
 
       // adding a class to our container for the sake of clarity
       cardNode.classList.add('card', 'text-center', 'm-4', 'shadow', 'position-absolute');
@@ -73,24 +75,14 @@ export default class Window extends HTMLElement {
           <div class="card-header cursor-default user-select-none">
              <span class="card-title"></span>
           </div>
-
           <ul class="list-group list-group-flush">
-
           </ul>
-
-
           <div class="card-footer text-body-secondary" style="font-size: .75rem">
           </div>
       `;
 
-      // <x-port id="port-in" data-title="In" data-side="start" data-icon="circle"></x-port>
-      // <x-port id="port-out" data-title="Out" data-side="end" data-icon="circle"></x-port>
-
       // appending the container to the shadow DOM
       this.shadowRoot.appendChild(cardNode);
-
-      // NOTE: UPDATE VALUES HERE (hide/show should take place here as well)
-      // TIP: treat the html as non-dynamic, this is not a generic template engine, it is oprimized ofr VPL UI
 
       const cardHeader = this.shadowRoot.querySelector('.card-header');
       const cardFooter = this.shadowRoot.querySelector('.card-footer');
@@ -100,10 +92,7 @@ export default class Window extends HTMLElement {
       this.dataset2.get('date').subscribe(v => cardFooter.textContent = v);
       this.dataset2.get('title').subscribe(v => cardTitle.textContent = v);
       this.dataset2.get('note').subscribe(v => cardFooter.textContent = v);
-
-
       this.dataset2.get('zindex').subscribe(v => cardNode.style.zIndex = v);
-
       this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
 
       const iolistItem = lol.li({class:'list-group-item bg-transparent d-none'});
@@ -126,15 +115,12 @@ export default class Window extends HTMLElement {
       });
 
       this.dataset2.get('reference').subscribe(reference => {
-        //console.log('GOT REFERENCE', reference);
 
         // Create Button
-        if(reference) cardHeader.appendChild(lol.i({ name:'open-referenced-scene' ,class:'bi bi-arrow-right-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
+        if(reference) cardHeader.appendChild(lol.i({ name:'open-referenced-scene' ,class:'bi bi-arrow-right-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
 
-        const referencedScene = application.project.get(reference);
+        const referencedScene = this.application.project.get(reference);
         for( const element of referencedScene.children.filter(child=>child.dataset.get('incoming').value ) ){
-          //console.log(element);
-
           const portNode = lol['x-port']({ id: `port-${element.id}`, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
           const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
           listGroup.appendChild(listItem)
@@ -142,11 +128,10 @@ export default class Window extends HTMLElement {
 
       });
 
-      cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
-      cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> application.project.commander.windowRead({id:this.id}) }}))
+      cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
+      cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.windowRead({id:this.id}) }}))
 
       // TODO: if a window is center/center put it in the center of the scene.
-      console.warn('TODO: if a window is center/center put it in the center of the scene.')
       this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');
       this.dataset2.get('top').subscribe(v => cardNode.style.top = v + 'px');
 
@@ -182,15 +167,7 @@ export default class Window extends HTMLElement {
 
 
 
-      this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
-      this.observer.observe(this, { attributes: true });
-      this.gc = ()=> this.observer.disconnect();
 
-      for (const {name, value} of this.attributes) {
-        if (name.startsWith('data-')) {
-          this.dataset2.set(name.substr(5), this.getAttribute(name));
-        }
-      }
 
 
 
@@ -214,24 +191,11 @@ export default class Window extends HTMLElement {
     }
 
 
-    disconnectedCallback() {
-      this.status.value = 'unloaded';
-      this.collectGarbage();
+    disconnected() {
+      this.status.value = 'unloaded'; // ALERT THE PIPES
     }
 
 
-
-
-    #handleAttributeMutations(mutationsList) {
-      for (let mutation of mutationsList) {
-        if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
-          const attributeName = mutation.attributeName;
-          const newValue = mutation.target.getAttribute(attributeName);
-          // console.log('SET ATTRIBUTE', attributeName, newValue);
-          this.dataset2.set(attributeName.substr(5), newValue);
-        }
-      }
-    }
 
     #handleResizeMutation(entries) {
       for (let entry of entries) {
@@ -260,16 +224,11 @@ export default class Window extends HTMLElement {
 
 
 
-  // GARBAGE COLLECTION
 
-  #garbage = [];
-  collectGarbage(){
-    this.#garbage.map(s=>s.subscription())
-  }
 
-  set gc(subscription){ // shorthand for component level garbage collection
-    this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
-  }
+
+
+
   }
 
 
@@ -294,10 +253,12 @@ export default class Window extends HTMLElement {
     }
 
     static remove(element, styleName){
+      if(!this.styles[styleName]) return; //NOTE: nominal style will be skipped here
       const styleClasses = this.styles[styleName];
       styleClasses.forEach(o=>element.classList.remove(o));
     }
     static add(element, styleName){
+      if(!this.styles[styleName]) return; //NOTE: nominal style will be skipped here
       const styleClasses = this.styles[styleName];
       styleClasses.forEach(o=>element.classList.add(o));
     }

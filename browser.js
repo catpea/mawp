@@ -34,8 +34,7 @@ class Location extends Branch {
 class BeaconTransmitter extends Agent {
   constructor() {
     super();
-    // this.dataset.set('interval', 600);
-    this.dataset.set('interval', 60_000);
+    this.dataset.set('interval', 600);
   }
   start(){
     this.pulseCounter = 0;
@@ -48,7 +47,12 @@ class BeaconTransmitter extends Agent {
 
 
   receive(message){
-    console.info(message);
+    // console.info(message);
+    if(message.value){
+      this.health.value = 'none';
+    }else{
+      this.health.value = 'info'
+    }
   }
 
   // --- BeaconTransmitter HELPER FUNCIONS --- //

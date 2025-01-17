@@ -1,11 +1,15 @@
+import Signal from 'signal';
 import Dataset from 'dataset';
 import guid from 'guid';
 
 export default class Agent {
 
+  id = guid();
+  dataset = new Dataset();
+  health = new Signal('nominal'); // nominal, primary, secondary, success, danger, warning, info, light, dark.
+
   constructor() {
-    this.id = guid();
-    this.dataset = new Dataset();
+
   }
 
   initialize(){}

@@ -6,7 +6,7 @@ import Command from './Command.js';
 export default class PipeCreate extends Command {
 
   execute({ id=guid(), from, to }) {
-    const scene = this.project.get(this.project.activeScene.value);
+    const scene = this.project.get(this.project.activeLocation.value);
     //console.log('PipeCreate', id, from, to);
     const pipe = new this.project.Connector(id, 'pipe');
     pipe.dataset.set('from', from);
