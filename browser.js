@@ -45,7 +45,6 @@ class BeaconTransmitter extends Agent {
     clearInterval(this.intervalId);
   }
 
-
   receive(message){
     // console.info(message);
     if(message.value){
@@ -53,9 +52,12 @@ class BeaconTransmitter extends Agent {
     }else{
       this.health.value = 'info'
     }
+
+    this.send(message.value);
+
   }
 
-  // --- BeaconTransmitter HELPER FUNCIONS --- //
+  // --- Personal BeaconTransmitter HELPER FUNCIONS --- //
 
   beacon(){
       this.pulseCounter++;

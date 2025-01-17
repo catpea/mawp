@@ -3,6 +3,13 @@ import Signal from 'signal';
 
 import transcend from 'transcend';
 
+/*
+
+  Nothing special here, just a reactive dataset, and some health singals
+  this class exists to eliminate code duplication, it is just something you can't avoid.
+
+*/
+
 export default class ReactiveHTMLElement extends HTMLElement {
 
   // Signals

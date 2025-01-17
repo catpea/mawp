@@ -1,4 +1,4 @@
 export default {
-    dbUrl: 'https://example.com/db',
-    apiEndpoint: 'https://api.example.com'
-}
+  dbUrl: "https://example.com/db",
+  apiEndpoint: "https://api.example.com",
+};
