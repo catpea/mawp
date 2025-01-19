@@ -6,38 +6,83 @@ import guid from 'guid';
 export default class Agent {
 
   id = guid();
+
+  // debug is a plain object to avoid unnecessary lookups
+  debug = null; // {delay:1_234}
+
   health = new Signal('nominal'); // nominal, primary, secondary, success, danger, warning, info, light, dark.
+  alert = new Signal(); // new Signal({context:'danger', message:'There was an error in the pipe.'});
+
   settings = new Setings();
   state = new State();
 
-  constructor() {
-    this.initialize();
+  constructor(...a) {
+    this.initialize(...a);
   }
 
-  initialize(){}
-  start(){}
-  stop(){}
+  upgrade(process, state, extra){}
 
-  upgrade(state, extra){}
-  status(){}
-  terminate(){}
+  reset(){
+    this.stop();
+    this.state.reset();
+    this.start();
+  }
 
   connection(port, pipe){
-  }
-  disconnection(port, pipe){
+
   }
 
+  disconnection(port, pipe){
+
+  }
+
+  /**
+   * Send data out of a specific port, which may have a pipe attached to it that will pass it on to some other agents port.
+   * data is emitted into a pipe that has subscribed on the appropriate port.
+   */
   send(port, data, options){
     const eventName = `send:${port}`;
     this.emit(eventName, data, options);
+    if(this.debug) this.emit('tx', port); // Light for received data
   }
+
+  /**
+   * This is the function that accepts data from a pipe, it indicates what port that data is meant for, and what agent it is from.
+   */
   receive(port, data, address, options){
-    this.process(port, data, address, options);
+    if(this.debug){
+      setTimeout(()=>this.process(port, data, address, options), this.debug.delay); // simulate delay to allow animations
+    }else{
+      this.process(port, data, address, options); //NOTE: process is under user's control
+    }
+    if(this.debug) this.emit('rx', port); // Light for transmitted data
   }
 
-  // OVERLOADS
+  // METHOD OVERRIDING · USER CONTROL
+
+  /**
+   * Initialize your variables and needs in preparation for starting the Agent.
+   */
+  initialize(){
+
+  }
+  /**
+   * Commit resources to the agent and activate it.
+   */
+  start(){
+
+  }
+  /**
+   * Free up all the resources
+   */
+  stop(){
+
+  }
+  /**
+   * The heart of the agent, put your processing in here.
+   */
   process(port, data, address, options){
-    console.error('User must provide own receive function.')
+
   }
 
 
@@ -45,7 +90,7 @@ export default class Agent {
 
 
 
-  // Emitter
+  // CUSTOM EVENT EMITTER
   subscribers = {};
   // Event handling methods
   on(event, callback) {

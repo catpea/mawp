@@ -1,5 +1,6 @@
 import Signal from 'signal';
 import Series from 'series';
+import guid from 'guid';
 import Focusable from './Focusable.js';
 
 import ReactiveHTMLElement from '../ReactiveHTMLElement.js';
@@ -7,7 +8,7 @@ export default class Pipe extends ReactiveHTMLElement {
 
   #line;
   #circle; // TODO: position of the circle should use x1 signals, piggy back
-  #progress = new Signal(0);
+  #rate = new Signal(0); // 0-2 the local rate that affects global delay, lol!
   #x1 = new Signal(0);
   #y1 = new Signal(0);
   #x2 = new Signal(0);
@@ -39,6 +40,21 @@ export default class Pipe extends ReactiveHTMLElement {
   }
 
   connected() {
+
+    // console.log('pipe debug-delay', this.dataset2.get('debug-delay').value )
+    // this.gc = this.agent.on('rx', name=> console.log(`Pipe got data, should play animation for ${this.dataset2.get('debug-delay').value}ms.`) );
+
+    this.gc = this.agent.on('tx', name => this.playBall( new Marble({
+      container: this.scene.drawingSurfaces[0],
+      begin: new Date(),
+      duration: this.dataset2.get('debug-delay'),
+      rate: this.#rate,
+      x1: this.#x1,
+      y1: this.#y1,
+      x2: this.#x2,
+      y2: this.#y2
+    }) ) );
+
 
     // PROCESS DEPENDENCIES
     const fromWindowStatusSignal = new Series(this.dataset2.get('from'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
@@ -126,5 +142,84 @@ export default class Pipe extends ReactiveHTMLElement {
   }
 
 
+  playBall(marble){
+    marble.start();
+  }
 
+
+}
+
+
+class Marble {
+
+  percentComplete = new Signal(0);
+
+  container; // SVGElement
+  marble; // SVGElement
+  marbleColor = `hsla(${Math.random() * 360}, 20%, 50%, 1)`;
+  marbleRadius = 8;
+
+  beginAnimationAt; // ms
+  completeAnimationAt; // ms
+  x1; // Signal()
+  y1; // Signal()
+  x2; // Signal()
+  y2; // Signal()
+
+  constructor({container, begin, duration, rate, x1,y1,x2,y2}){
+
+    this.container = container;
+    this.beginAnimationAt = begin.getTime();
+
+    const fin = new Date( begin.getTime() + parseFloat(duration.value) );
+    this.completeAnimationAt = fin.getTime();
+
+    this.x1 = x1;
+    this.y1 = y1;
+    this.x2 = x2;
+    this.y2 = y2;
+
+    this.marble = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this.marble.setAttribute('r', this.marbleRadius);
+    this.marble.setAttribute('fill', this.marbleColor);
+
+  }
+
+  get progress(){
+    const currentTime = (new Date()).getTime();
+    const fullAnimationDuration = this.completeAnimationAt - this.beginAnimationAt;
+    const currentAnimationDuration = currentTime - this.beginAnimationAt;
+    const ratio = currentAnimationDuration/fullAnimationDuration;
+    return ratio;
+  }
+
+  get coordinates(){
+    let lenX = this.x2.value - this.x1.value;
+    let lenY = this.y2.value - this.y1.value;
+    lenX = lenX * this.progress;
+    lenY = lenY * this.progress;
+    let x =  this.x1.value + lenX;
+    let y =  this.y1.value + lenY;
+    return [x,y];
+  }
+
+  start(){
+    this.container.appendChild(this.marble);
+    requestAnimationFrame(this.step.bind(this));
+  }
+
+  step(){
+    const [cx,cy] = this.coordinates;
+    this.marble.setAttribute('cx', cx);
+    this.marble.setAttribute('cy', cy);
+    if(this.progress < 1){
+      requestAnimationFrame(this.step.bind(this));
+    }else{
+      this.stop()
+    }
+  }
+
+  stop(){
+    this.marble.remove();
+  }
 }

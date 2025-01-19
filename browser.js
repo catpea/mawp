@@ -4,6 +4,8 @@ import Commander from 'commander';
 
 import Agent from 'agent';
 
+const DEBUGGER = {delay:5_000};
+
 class Project extends Branch {
   Scene = Location;
   Component = Component;
@@ -49,10 +51,45 @@ class Location extends Branch {
     return [...from, ...to];
   }
 
+  createComponent(id, options, agent){
+    // Initialize important objects
+    const component = new Component(id);
+    component.agent = agent;
+
+    // Assign options
+    Object.entries(options).forEach(([key,val])=>component.dataset.set(key,val))
+
+    if(DEBUGGER){
+      // send DEBUGGER (Which is the VPL UI) values to their subsystems (plain object for agent for efficency)
+      component.debug = DEBUGGER; // values for branch
+      if( component.agent) component.agent.debug = DEBUGGER; // values for agent
+      Object.entries(DEBUGGER).forEach(([key,val])=>component.dataset.set('debug-'+key,val)) // values for UI
+    }
+
+    // Add to stage
+    this.create(component);
+    return component;
+  }
+
   createConnection(fromAddress, toAddress){
+    // Initialize important objects
     const connector = new Connector();
+    connector.agent = new ConnectorAgent();
+
+    // Assign options
     connector.dataset.set('from', fromAddress);
     connector.dataset.set('to', toAddress);
+    connector.dataset.subscribe((k, v) => connector.agent.settings.set(k, v));
+
+    if(DEBUGGER){
+      // send DEBUGGER (Which is the VPL UI) values to their subsystems (plain object for agent for efficency)
+      if(connector.agent && DEBUGGER) connector.agent.debug = DEBUGGER;
+      connector.debug = DEBUGGER; // values for branch
+      Object.entries(DEBUGGER).forEach(([key,val])=>connector.dataset.set('debug-'+key,val)) // values for UI
+    }
+
+
+    // Add to stage
     this.create(connector);
     return connector;
   }
@@ -62,52 +99,24 @@ class Location extends Branch {
 }
 
 
-class VisualAgent extends Agent {
-  visualDelay = 666;
-
-  receive(...arg){
-    setTimeout(()=>super.receive(...arg), this.visualDelay); // simulate delay
-    const port = arg[0];
-    this.emit('rx', port); // Light for received data
-  }
-
-  send(...arg){
-    super.send(...arg);
-    const port = arg[0];
-    this.emit('tx', port); // Light for transmitted data
-  }
-
-
-}
 
 
 
-class BasicAgent extends VisualAgent {
 
+class BasicAgent extends Agent {
   process(port, message, sender, setup){
-    //console.warn('FFF DataMerge RECEIVE',...[...arguments])
     this.send('out', message, {});
   }
-
-  // --- PERSONAL HELPER FUNCIONS --- //
-
 }
 
-
-class DataMerge extends VisualAgent {
-
+class DataMerge extends Agent {
   process(port, message, sender, setup){
-    //console.warn('FFF DataMerge RECEIVE',...[...arguments])
     this.send('out', message, {});
   }
-
-  // --- PERSONAL HELPER FUNCIONS --- //
-
 }
 
-class ReactiveVariable extends VisualAgent {
+class ReactiveVariable extends Agent {
   #previousValue = undefined;
-
   process(port, message, sender, setup){
     //console.warn('ReactiveVariable RECEIVE', this.id, ...[...arguments])
     const newValue = message;
@@ -185,13 +194,18 @@ class ReactiveVariable extends VisualAgent {
   }
 }
 
-class DataSignal extends VisualAgent {
+class DataBeacon extends Agent {
 
-  initialize() {
+  initialize(options) {
+
     this.settings.types('interval:Number delay:Number');
     this.settings.group('user', 'interval delay');
+
     this.settings.interval = 2_000;
     this.settings.delay = 1_000;
+
+    Object.entries(options).forEach(([key,val])=>this.settings.set(key,val))
+
   }
 
   start(){
@@ -206,12 +220,12 @@ class DataSignal extends VisualAgent {
 
   process(port, message, sender, setup){
     if(message.value){
-      this.health.value = 'none';
+      // this.health.value = 'none';
     }else{
-      this.health.value = 'info'
+      // this.health.value = 'info'
     }
 
-    const data = message.value;
+    const data = message ;
     this.send('out', data, {});
   }
 
@@ -225,9 +239,82 @@ class DataSignal extends VisualAgent {
 }
 
 
+// class OldConnectorAgent extends Agent {
+
+//   start(){
+//     const address = this.settings.get('from').value;
+//     const [fromId, fromPort] = address.split(':');
+//     const [toId, toPort] = this.settings.get('to').value.split(':');
+//     if(!this.source.agent) return console.warn(this.settings.get('from').value + ' has no agent')
+
+//     if(!this.debug){
+//       this.gc = this.source.agent.on(`send:${fromPort}`, (data, options)=>this.destination.agent.receive(toPort, data, address, options));
+//     }else{
+//       this.gc = this.source.agent.on(`send:${fromPort}`, (data, options)=>{
+//         setTimeout(()=> this.destination.agent.receive(toPort, data, address, options), this.debug.delay); // simulate delay
+//       });
+
+//     }
+
+//   }
+//   stop(){
+//     this.collectGarbage()
+//   }
+
+
+// }
+//
+
+class ConnectorAgent extends Agent {
+  // used to send important signals up to AI
+
+  process(port){
+    console.log('DATA', ...arguments);
+    this.emit('tx', port);
+  }
+
+}
+
+
+
+
+
+
+
+// class Connector_AGENT extends Branch {
+//   constructor(id) {
+//     super(id, 'pipe');
+//     this.agent = new ConnectorAgent();
+//     // we just happen to share the same settings here
+//     this.dataset.subscribe((k, v) => this.agent.settings.set(k, v));
+//   }
+
+//   start(){
+//     if(this.agent && DEBUGGER) this.agent.debug = DEBUGGER;
+
+//     const [fromId] = this.dataset.get('from').value.split(':');
+//     const [toId] = this.dataset.get('to').value.split(':');
+
+//     this.agent.source = this.parent.get(fromId);
+//     this.agent.destination = this.parent.get(toId);
+
+//     this.agent.start();
+//   }
+
+//   stop(){
+//     this.agent.stop();
+//     this.collectGarbage()
+//   }
+
+// }
+
+
 
 
 class Component extends Branch {
+
+  debug = null; // {delay:1_234}
+
   constructor(id) {
     super(id, 'window')
     this.dataset.set('port-in', true);
@@ -243,73 +330,49 @@ class Component extends Branch {
   }
 }
 
+class Connector extends Branch {
+  debug = null; // {delay:1_234}
 
-
-
-class ConnectorAgent extends VisualAgent {
+  constructor(id) {
+    super(id, 'pipe');
+  }
 
   start(){
-    const address = this.settings.get('from').value;
-    const [fromId, fromPort] = address.split(':');
-    const [toId, toPort] = this.settings.get('to').value.split(':');
-    if(!this.source.agent) return console.warn(this.settings.get('from').value + ' has no agent')
 
-    if(!this.visualDelay){
-      this.gc = this.source.agent.on(`send:${fromPort}`, (data, options)=>this.destination.agent.receive(toPort, data, address, options));
+    const address = this.dataset.get('from').value.split(':');
+    const [fromId, fromPort] = address;
+    const [toId, toPort] = this.dataset.get('to').value.split(':');
+
+    const source = this.parent.get(fromId);
+    const destination = this.parent.get(toId);
+
+    if(!source.agent) return console.warn(source.id + ' has no agent')
+
+    if(!this.debug){
+      this.gc = source.agent.on(`send:${fromPort}`, (data, options)=>destination.agent.receive(toPort, data, address, options));
+      if(DEBUGGER) this.agent.receive(toPort, data, address, options); // IN A CONNECTOR local agent gets a copy of data
     }else{
-      this.gc = this.source.agent.on(`send:${fromPort}`, (data, options)=>{
-        setTimeout(()=> this.destination.agent.receive(toPort, data, address, options), this.visualDelay); // simulate delay
+      this.gc = source.agent.on(`send:${fromPort}`, (data, options)=>{
+        // simulate delay, and allow animations to run
+        setTimeout(()=>{
+          destination.agent.receive(toPort, data, address, options);
+          if(DEBUGGER) this.agent.receive(toPort, data, address, options); // IN A CONNECTOR local agent gets a copy of data
+        }, this.debug.delay);
       });
-
     }
 
   }
-   stop(){
-    this.collectGarbage()
-  }
-
-}
-
-class Connector extends Branch {
-  constructor(id) {
-    super(id, 'pipe');
-    this.agent = new ConnectorAgent();
-    // we just happen to share the same settings here
-    this.dataset.subscribe((k, v) => this.agent.settings.set(k, v));
-    //
-
-
-  }
-
-  start(){
-    const [fromId] = this.dataset.get('from').value.split(':');
-    const [toId] = this.dataset.get('to').value.split(':');
-    this.agent.source = this.parent.get(fromId);
-    this.agent.destination = this.parent.get(toId);
-    this.agent.start();
-  }
 
   stop(){
-    this.agent.stop();
     this.collectGarbage()
   }
-
 }
 
 const project = new Project('project');
-
 import UI from './src/UI.js';
 const ui = new UI(project);
 
-
-
 const mainLocation = new Location('main');
-// mainScene.onStart = async () => console.log('ASYNC START GRRR')
-
-mainLocation.once('stop', () => {
-  // console.log('Main scene Branch got stoppppp...')
-});
-
 const upperLocation = new Location('upper');
 const teeLocation = new Location('tee');
 
@@ -317,66 +380,76 @@ project.create(mainLocation);
 project.create(upperLocation);
 project.create(teeLocation);
 
-
-
-
 {
 
-  const beacon1 = new Component('beacon1');
-  beacon1.agent = new DataSignal({interval: 6000});
-  beacon1.dataset.set('title', 'Beacon Transmitter Agent');
-  beacon1.dataset.set('left', 100);
-  beacon1.dataset.set('top', 100);
-  beacon1.dataset.set('port-in', false);
-  mainLocation.create(beacon1)
-
-  const beacon2 = new Component('beacon2');
-  beacon2.agent = new DataSignal({interval: 6000});
-  beacon2.dataset.set('title', 'Beacon Transmitter Agent');
-  beacon2.dataset.set('left', 100);
-  beacon2.dataset.set('top', 400);
-  beacon2.dataset.set('port-in', false);
-  mainLocation.create(beacon2)
+  mainLocation.createComponent('beacon1', {title: 'Beacon Transmitter Agent', left: 100, top: 100, 'port-in': false, }, new DataBeacon({interval: 4333}) );
+  mainLocation.createComponent('beacon2', {title: 'Beacon Transmitter Agent', left: 100, top: 400, 'port-in': false, }, new DataBeacon({interval: 3000}) );
 
 
-  const combinator1 = new Component('combinator1');
-  combinator1.agent = new DataMerge();
-  combinator1.dataset.set('title', 'Combinator');
-  combinator1.dataset.set('left', 500);
-  combinator1.dataset.set('top', 333);
-  mainLocation.create(combinator1)
+  mainLocation.createComponent('merge1', {title: 'Data Merge', left: 500, top: 333 }, new DataMerge());
+  mainLocation.createConnection('beacon1:out', 'merge1:in');
+  mainLocation.createConnection('beacon2:out', 'merge1:in');
 
-  mainLocation.createConnection('beacon1:out', 'combinator1:in');
-  mainLocation.createConnection('beacon2:out', 'combinator1:in');
+  mainLocation.createComponent('dataSignal1', {title: 'Data Signal', left: 800, top: 333 }, new ReactiveVariable());
+  mainLocation.createConnection('merge1:out', 'dataSignal1:in');
+
+  mainLocation.createComponent('dataSignal2', {title: 'Beacon Transmitter Agent', left: 100, top: 777, 'port-in': false, });
+  mainLocation.createComponent('dataLog1', {title: 'Debug Display', left: 800, top: 777, 'port-out': false, });
+  mainLocation.createConnection('dataSignal2:out', 'dataLog1:in');
+
+  // const beacon1 = new Component('beacon1');
+  // beacon1.agent = new DataSignal({interval: 6000});
+  // beacon1.dataset.set('title', 'Beacon Transmitter Agent');
+  // beacon1.dataset.set('left', 100);
+  // beacon1.dataset.set('top', 100);
+  // beacon1.dataset.set('port-in', false);
+  // mainLocation.create(beacon1)
 
 
-  const dataSignal1 = new Component('dataSignal1');
-  dataSignal1.agent = new ReactiveVariable();
-  dataSignal1.dataset.set('title', 'Data Signal');
-  dataSignal1.dataset.set('left', 800);
-  dataSignal1.dataset.set('top', 333);
-  mainLocation.create(dataSignal1)
-  mainLocation.createConnection('combinator1:out', 'dataSignal1:in');
+  // const beacon2 = new Component('beacon2');
+  // beacon2.agent = new DataSignal({interval: 6000});
+  // beacon2.dataset.set('title', 'Beacon Transmitter Agent');
+  // beacon2.dataset.set('left', 100);
+  // beacon2.dataset.set('top', 400);
+  // beacon2.dataset.set('port-in', false);
+  // mainLocation.create(beacon2)
+
+
+  // const combinator1 = new Component('combinator1');
+  // combinator1.agent = new DataMerge();
+  // combinator1.dataset.set('title', 'Combinator');
+  // combinator1.dataset.set('left', 500);
+  // combinator1.dataset.set('top', 333);
+  // mainLocation.create(combinator1)
+
+
+
+  // const dataSignal1 = new Component('dataSignal1');
+  // dataSignal1.agent = new ReactiveVariable();
+  // dataSignal1.dataset.set('title', 'Data Signal');
+  // dataSignal1.dataset.set('left', 800);
+  // dataSignal1.dataset.set('top', 333);
+  // mainLocation.create(dataSignal1)
 
   // Below
 
-  const dataSignal2 = new Component('dataSignal2');
-  // dataSignal2.agent = new BeaconTransmitter({interval: 6000});
-  dataSignal2.dataset.set('title', 'Beacon Transmitter Agent');
-  dataSignal2.dataset.set('left', 100);
-  dataSignal2.dataset.set('top', 777);
-  dataSignal2.dataset.set('port-in', false);
-  mainLocation.create(dataSignal2)
+  // const dataSignal2 = new Component('dataSignal2');
+  // // dataSignal2.agent = new BeaconTransmitter({interval: 6000});
+  // dataSignal2.dataset.set('title', 'Beacon Transmitter Agent');
+  // dataSignal2.dataset.set('left', 100);
+  // dataSignal2.dataset.set('top', 777);
+  // dataSignal2.dataset.set('port-in', false);
+  // mainLocation.create(dataSignal2)
 
-  const dataLog1 = new Component('dataLog1');
-  // dataLog1.agent = new BeaconTransmitter({interval: 6000});
-  dataLog1.dataset.set('title', 'Beacon Transmitter Agent');
-  dataLog1.dataset.set('left', 800);
-  dataLog1.dataset.set('top', 777);
-  dataLog1.dataset.set('port-out', false);
-  mainLocation.create(dataLog1)
 
-  mainLocation.createConnection('dataSignal2:out', 'dataLog1:in');
+  // const dataLog1 = new Component('dataLog1');
+  // // dataLog1.agent = new BeaconTransmitter({interval: 6000});
+  // dataLog1.dataset.set('title', 'Beacon Transmitter Agent');
+  // dataLog1.dataset.set('left', 800);
+  // dataLog1.dataset.set('top', 777);
+  // dataLog1.dataset.set('port-out', false);
+  // mainLocation.create(dataLog1)
+
 
 
 
@@ -600,13 +673,12 @@ project.create(teeLocation);
 
 await project.load();
 await project.startup();
-
 await ui.start(); // WARN: must come after the tree has fully loaded, otherwise the watcher will begin adding nodes, that are yet to be loaded.
 
 //console.log(`Startup at ${new Date().toISOString()}`);
 
-window.addEventListener('beforeunload', function(event) {
-  //console.log('beforeunload was triggered!')
-  // ui.stop();
-  // project.shutdown();
-});
+// window.addEventListener('beforeunload', function(event) {
+//   //console.log('beforeunload was triggered!')
+//   // ui.stop();
+//   // project.shutdown();
+// });
