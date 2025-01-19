@@ -44,7 +44,7 @@ export default class Pipe extends ReactiveHTMLElement {
     // console.log('pipe debug-delay', this.dataset2.get('debug-delay').value )
     // this.gc = this.agent.on('rx', name=> console.log(`Pipe got data, should play animation for ${this.dataset2.get('debug-delay').value}ms.`) );
 
-    this.gc = this.agent.on('tx', name => this.playBall( new Marble({
+    this.gc = this.agent.on('marble:start', name => this.playBall( new Marble({
       container: this.scene.drawingSurfaces[0],
       begin: new Date(),
       duration: this.dataset2.get('debug-delay'),

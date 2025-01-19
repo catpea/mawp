@@ -268,10 +268,8 @@ class DataBeacon extends Agent {
 class ConnectorAgent extends Agent {
   // used to send important signals up to AI
 
-  process(port){
-    console.log('DATA', ...arguments);
-    this.emit('tx', port);
-  }
+
+
 
 }
 
@@ -340,7 +338,7 @@ class Connector extends Branch {
   start(){
 
     const address = this.dataset.get('from').value.split(':');
-    const [fromId, fromPort] = address;
+    const [fromId, port] = address;
     const [toId, toPort] = this.dataset.get('to').value.split(':');
 
     const source = this.parent.get(fromId);
@@ -348,18 +346,25 @@ class Connector extends Branch {
 
     if(!source.agent) return console.warn(source.id + ' has no agent')
 
-    if(!this.debug){
-      this.gc = source.agent.on(`send:${fromPort}`, (data, options)=>destination.agent.receive(toPort, data, address, options));
-      if(DEBUGGER) this.agent.receive(toPort, data, address, options); // IN A CONNECTOR local agent gets a copy of data
-    }else{
-      this.gc = source.agent.on(`send:${fromPort}`, (data, options)=>{
-        // simulate delay, and allow animations to run
-        setTimeout(()=>{
-          destination.agent.receive(toPort, data, address, options);
-          if(DEBUGGER) this.agent.receive(toPort, data, address, options); // IN A CONNECTOR local agent gets a copy of data
-        }, this.debug.delay);
+      this.gc = source.agent.on(`send:${port}`, (data, options)=>{
+        if(DEBUGGER) this.agent.emit('marble:start', port) // as data is received, trigger the ball rolling
+        destination.agent.receive(toPort, data, address, options);
+        if(DEBUGGER) this.agent.receive(toPort, data, address, options); // IN A CONNECTOR local agent gets a copy of data
       });
-    }
+    //
+    // if(!this.debug){
+    //   this.gc = source.agent.on(`send:${fromPort}`, (data, options)=>destination.agent.receive(toPort, data, address, options));
+    //   if(DEBUGGER) this.agent.receive(toPort, data, address, options); // IN A CONNECTOR local agent gets a copy of data
+    // }else{
+    //   this.gc = source.agent.on(`send:${fromPort}`, (data, options)=>{
+    //     // simulate delay, and allow animations to run
+    //     setTimeout(()=>{
+    //       destination.agent.receive(toPort, data, address, options);
+    //       if(DEBUGGER) this.agent.receive(toPort, data, address, options); // IN A CONNECTOR local agent gets a copy of data
+    //     }, this.debug.delay);
+    //   });
+    //
+    //}
 
   }
 

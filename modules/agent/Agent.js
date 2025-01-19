@@ -42,21 +42,41 @@ export default class Agent {
    */
   send(port, data, options){
     const eventName = `send:${port}`;
+
+    //NOTE: THIS SIMULATES NODE PROCESSING
+  if(this.debug1){
+    setTimeout(()=>{
+      this.emit(eventName, data, options);
+      this.emit('tx', port); // Light for received data
+    }, this.debug.delay)
+  }else{
     this.emit(eventName, data, options);
     if(this.debug) this.emit('tx', port); // Light for received data
+  }
+
+
   }
 
   /**
    * This is the function that accepts data from a pipe, it indicates what port that data is meant for, and what agent it is from.
    */
   receive(port, data, address, options){
+
+    // NOTE HERE WE WAIT FOR PIPE TO FINISH ANIMATING
     if(this.debug){
-      setTimeout(()=>this.process(port, data, address, options), this.debug.delay); // simulate delay to allow animations
+      setTimeout(()=>{
+        this.emit('rx', port); // Light for transmitted data
+        this.process(port, data, address, options)
+      }, this.debug.delay); // simulate delay to allow animations
     }else{
       this.process(port, data, address, options); //NOTE: process is under user's control
+      if(this.debug) this.emit('rx', port); // Light for transmitted data
     }
-    if(this.debug) this.emit('rx', port); // Light for transmitted data
   }
+  // receive(port, data, address, options){
+  //   this.process(port, data, address, options); //NOTE: process is under user's control
+  //   if(this.debug) this.emit('rx', port); // Light for transmitted data
+  // }
 
   // METHOD OVERRIDING · USER CONTROL
 
