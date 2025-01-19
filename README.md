@@ -3,6 +3,8 @@ MAWP
 
 ## TODO
 
+- fix squish add min-width (add resize)
+- clear selection on scene change
 - redo deleting, selecting, perhaps bubble events up to the scene...Capture this as operations at UI vs. VFS
 - add this.gc = to all subscriptions
 - live update (signal) inner pipes, test by adding upper to upper and watch it live

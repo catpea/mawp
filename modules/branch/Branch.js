@@ -156,6 +156,7 @@ export default class Branch {
       this.subscribers[event] = [];
     }
     this.subscribers[event].push(callback);
+    return ()=>this.off(event, callback);
   }
 
   once(event, callback) {
@@ -182,23 +183,6 @@ export default class Branch {
       callback(...args);
     }
   }
-
-  // LIFECYCLE SYSTEM
-
-  async load(url){
-    ///console.log('TODO...');
-  }
-
-  async start(){
-    await Promise.all( this.all.filter(o=>o.onStart).map(o=>o.onStart()) )
-    this.all.map(node=>node.emit('start'));
-  }
-
-  async stop(){
-    await Promise.all(this.all.filter(o=>o.onStop).map(o=>o.onStop()))
-    this.all.map(node => node.emit('stop'));
-  }
-
 
   // GARBAGE COLLECTION
 

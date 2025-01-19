@@ -55,9 +55,9 @@ export default class UI {
   }
 
   removeWebComponent({id}){
-    //console.log('removeComponent', id)
     this.scene.getElementById(id).remove();
   }
+
   addWebComponent(location){
     const tagName = `x-${location.type}`;
     const component = document.createElement(tagName);
@@ -68,14 +68,12 @@ export default class UI {
 
     // NOTE: agent is transported here
     component.agent = location.agent;
-    if(component.agent) component.agent.start();
 
     // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
     this.locationGarbageCollector = location.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
     this.application.querySelector('x-scene').appendChild(component);
     this.locationGarbageCollector = () => component.remove();
   }
-
 
   async stop(){
     this.clearSceneGarbage();

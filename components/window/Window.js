@@ -26,10 +26,7 @@ export default class Window extends ReactiveHTMLElement {
     // creating a container for the editable-list component
     const cardNode = document.createElement('div');
 
-    if(this.agent){
-      // CONNECT WITH AGENT, the agent is unaware of existence of UI, but we can monitor its signals.
-      this.agent.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
-    }
+
 
     // adding a class to our container for the sake of clarity
     cardNode.classList.add('card', 'text-center', 'm-4', 'shadow', 'position-absolute');
@@ -88,6 +85,34 @@ export default class Window extends ReactiveHTMLElement {
         listGroup.appendChild(listItem)
       }
     });
+
+    // ADD AGENT SETTINGS
+    //
+    if(this.agent){
+      // CONNECT WITH AGENT, the agent is unaware of existence of UI, but we can monitor its signals.
+      this.gc = this.agent.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
+
+      // this.gc = this.agent.health.subscribe(health=>this.changePortStyle('out', `solid-${health}`));
+
+      const flash = (port, indicator, normal) => {
+        this.changePortStyle(port, `solid-${indicator}`)
+        setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
+      };
+      this.gc = this.agent.on('rx', name=>flash(name, 'danger', 'primary'));
+      this.gc = this.agent.on('tx', name=>flash(name, 'warning', 'primary'));
+
+
+    }
+    if(this.agent){
+
+      for (const keyName of this.agent.settings.group('user')){
+        const keyType = this.agent.settings.type(keyName);
+        const valueSignal = this.agent.settings.get(keyName);
+        const portNode = lol['x-port']({ id: `port-${keyName}`, dataset:{title:`${keyName}:${keyType}`, side: 'start', icon: 'box-arrow-in-right'} });
+        const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
+        listGroup.appendChild(listItem)
+      }
+    };
 
     // TOOLBAR BUTTONS
     cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
@@ -150,11 +175,14 @@ export default class Window extends ReactiveHTMLElement {
   getPortElement(id) {
     return this.shadowRoot.querySelector(`#port-${id}`);
   }
+  changePortStyle(portId, newStyle){
+    const portElement = this.getPortElement(portId);
+    portElement.setAttribute('data-style', newStyle);
+  }
 
   // STYLE MANAGEMENT
   #previousStyle = null;
   changeCardStyle(cardNode, newStyle){
-    //console.log('CCC changeCardStyle', cardNode, newStyle);
     if(this.#previousStyle) CardStyles.remove(cardNode, this.#previousStyle);
     CardStyles.add(cardNode, newStyle);
     this.#previousStyle = newStyle;

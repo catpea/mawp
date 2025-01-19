@@ -6,6 +6,8 @@ import ReactiveHTMLElement from '../ReactiveHTMLElement.js';
 export default class Pipe extends ReactiveHTMLElement {
 
   #line;
+  #circle; // TODO: position of the circle should use x1 signals, piggy back
+  #progress = new Signal(0);
   #x1 = new Signal(0);
   #y1 = new Signal(0);
   #x2 = new Signal(0);

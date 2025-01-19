@@ -10,6 +10,7 @@ export default class WindowCreate extends Command {
 
 
     const component = new this.project.Component(id, 'window');
+    component.agent = new this.project.BasicAgent();
     component.dataset.set('title', title);
     component.dataset.set('active', active);
     if(reference) component.dataset.set('reference', reference);
@@ -19,7 +20,7 @@ export default class WindowCreate extends Command {
     if(style) component.dataset.set('style', style);
 
     scene.create(component)
-
+    component.start()
   }
 
 }

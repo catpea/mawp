@@ -17,7 +17,7 @@ export default class Port extends HTMLElement {
 
       portNode.innerHTML = `
         <span></span>
-        <span class="position-absolute top-50 translate-middle badge rounded-pill bg-success p-1"><i class="bi"></i></span>
+        <span class="position-absolute top-50 translate-middle badge rounded-pill p-1"><i class="bi"></i></span>
       `;
 
       shadow.appendChild(portNode);
@@ -26,6 +26,9 @@ export default class Port extends HTMLElement {
       const portLabel = portComponents[0];
 
       const portSticker = portComponents[1];
+
+      this.changePortStyle(portSticker, 'solid-primary')
+      this.dataset2.get('style').subscribe(newStyle => this.changePortStyle(portSticker, newStyle));
 
       const portIcon = shadow.querySelector('.bi');
 
@@ -120,4 +123,45 @@ export default class Port extends HTMLElement {
       this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
     }
 
+// STYLE MANAGEMENT
+  #previousStyle = null;
+  changePortStyle(element, newStyle){
+    if(this.#previousStyle) CardStyles.remove(element, this.#previousStyle);
+    CardStyles.add(element, newStyle);
+    this.#previousStyle = newStyle;
   }
+}
+
+class CardStyles {
+  static styles = {
+    'solid-primary': ['text-bg-primary'],
+    'solid-secondary': ['text-bg-secondary'],
+    'solid-success': ['text-bg-success'],
+    'solid-danger': ['text-bg-danger'],
+    'solid-warning': ['text-bg-warning'],
+    'solid-info': ['text-bg-info'],
+    'solid-light': ['text-bg-light'],
+    'solid-dark': ['text-bg-dark'],
+    'border-primary': ['border-primary'],
+    'border-secondary': ['border-secondary'],
+    'border-success': ['border-success'],
+    'border-danger': ['border-danger'],
+    'border-warning': ['border-warning'],
+    'border-info': ['border-info'],
+    'border-light': ['border-light'],
+    'border-dark': ['border-dark'],
+  }
+
+  static remove(element, styleName){
+    if(!this.styles[styleName]) return; //NOTE: nominal/none/* style will be skipped here
+    const styleClasses = this.styles[styleName];
+    styleClasses.forEach(o=>element.classList.remove(o));
+  }
+
+  static add(element, styleName){
+    if(!this.styles[styleName]) return; //NOTE: nominal/none/* style will be skipped here
+    const styleClasses = this.styles[styleName];
+    styleClasses.forEach(o=>element.classList.add(o));
+  }
+
+}
