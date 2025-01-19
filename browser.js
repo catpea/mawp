@@ -11,6 +11,8 @@ class Project extends Branch {
   Component = Component;
   Connector = Connector;
   BasicAgent = BasicAgent;
+  ConnectorAgent = ConnectorAgent;
+
   commander;
   activeLocation = new Signal('main');
 
@@ -57,7 +59,7 @@ class Location extends Branch {
     component.agent = agent;
 
     // Assign options
-    Object.entries(options).forEach(([key,val])=>component.dataset.set(key,val))
+    Object.entries(options).filter(([key,val])=>val).forEach(([key,val])=>component.dataset.set(key,val))
 
     if(DEBUGGER){
       // send DEBUGGER (Which is the VPL UI) values to their subsystems (plain object for agent for efficency)
