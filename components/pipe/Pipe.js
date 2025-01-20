@@ -143,7 +143,7 @@ export default class Pipe extends ReactiveHTMLElement {
 
 
   playBall(marble){
-    marble.start();
+    this.gc = marble.start();
   }
 
 
@@ -206,6 +206,7 @@ class Marble {
   start(){
     this.container.appendChild(this.marble);
     requestAnimationFrame(this.step.bind(this));
+    return ()=>this.stop();
   }
 
   step(){
