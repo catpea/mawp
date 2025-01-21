@@ -98,7 +98,7 @@ export default class UI {
     for(const child of location.children){
       this.addWebComponent(child)
     }
-    console.log(`Installed ${location.children.length}`);
+    console.log(`Installed ${location.children.length} WebComponents`);
 
   }
 

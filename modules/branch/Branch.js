@@ -25,7 +25,12 @@ export default class Branch {
   }
 
   remove(){
+    this.stop();
     this.parent.delete(this);
+  }
+
+  stop(){
+    this.collectGarbage();
   }
 
   delete(node){

@@ -119,7 +119,7 @@ export default class Signal {
 
   unsubscribeFromAllDependencies() {
     for (const [dependency, unsubscribe] of this.#dependencies) {
-      unsubscribe();
+      if(unsubscribe) unsubscribe(); // sometimes there is an automatic unsubscription.
       this.#dependencies.set(dependency, null);
     }
   }

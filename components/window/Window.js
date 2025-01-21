@@ -95,11 +95,13 @@ export default class Window extends ReactiveHTMLElement {
       // this.gc = this.agent.health.subscribe(health=>this.changePortStyle('out', `solid-${health}`));
 
       const flash = (port, indicator, normal) => {
+        console.log('Message from ',  this.agent.id);
+
         this.changePortStyle(port, `solid-${indicator}`)
-        setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
+        this.setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
       };
-      this.gc = this.agent.on('rx', name=>flash(name, 'danger', 'primary'));
-      this.gc = this.agent.on('tx', name=>flash(name, 'warning', 'primary'));
+      this.gc = this.agent.on('process', name=>flash(name, 'warning', 'primary'));
+      this.gc = this.agent.on('send', name=>flash(name, 'info', 'primary'));
 
 
     }

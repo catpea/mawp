@@ -1,3 +1,5 @@
+import CONFIGURATION from 'configuration';
+
 import Signal from 'signal';
 import Series from 'series';
 import guid from 'guid';
@@ -8,7 +10,7 @@ export default class Pipe extends ReactiveHTMLElement {
 
   #line;
   #circle; // TODO: position of the circle should use x1 signals, piggy back
-  #rate = new Signal(0); // 0-2 the local rate that affects global delay, lol!
+  #localRate = new Signal(1); // 0-2 the local rate that affects global delay, lol!
   #x1 = new Signal(0);
   #y1 = new Signal(0);
   #x2 = new Signal(0);
@@ -27,6 +29,8 @@ export default class Pipe extends ReactiveHTMLElement {
           break;
         case "ready": // windows reported ready state
           // be a pipe that updated its x1y1 and x2y2
+          console.log('Pipe in ready mode!');
+
           break;
         case "unloaded": // one of the windows was unloaded (removed)
           // remove this pipe as it is no longer makeing a from - to connection.
@@ -44,16 +48,7 @@ export default class Pipe extends ReactiveHTMLElement {
     // console.log('pipe debug-delay', this.dataset2.get('debug-delay').value )
     // this.gc = this.agent.on('rx', name=> console.log(`Pipe got data, should play animation for ${this.dataset2.get('debug-delay').value}ms.`) );
 
-    this.gc = this.agent.on('marble:start', name => this.playBall( new Marble({
-      container: this.scene.drawingSurfaces[0],
-      begin: new Date(),
-      duration: this.dataset2.get('debug-delay'),
-      rate: this.#rate,
-      x1: this.#x1,
-      y1: this.#y1,
-      x2: this.#x2,
-      y2: this.#y2
-    }) ) );
+    this.gc = this.agent.on('receive', () => this.playBall() );
 
 
     // PROCESS DEPENDENCIES
@@ -142,7 +137,18 @@ export default class Pipe extends ReactiveHTMLElement {
   }
 
 
-  playBall(marble){
+  playBall(){
+    const marble = new Marble({
+      container: this.scene.drawingSurfaces[0],
+      begin: new Date(),
+      localRate: this.#localRate,
+      rate: CONFIGURATION.rate,
+      duration: CONFIGURATION.duration,
+      x1: this.#x1,
+      y1: this.#y1,
+      x2: this.#x2,
+      y2: this.#y2,
+    })
     this.gc = marble.start();
   }
 
@@ -160,19 +166,23 @@ class Marble {
   marbleRadius = 8;
 
   beginAnimationAt; // ms
-  completeAnimationAt; // ms
+  duration; // Signal()
+  rate; // Signal()
+  localRate; // Signal()
   x1; // Signal()
   y1; // Signal()
   x2; // Signal()
   y2; // Signal()
 
-  constructor({container, begin, duration, rate, x1,y1,x2,y2}){
+  constructor({container, begin, duration, rate, localRate, x1,y1,x2,y2}){
 
     this.container = container;
-    this.beginAnimationAt = begin.getTime();
 
-    const fin = new Date( begin.getTime() + parseFloat(duration.value) );
-    this.completeAnimationAt = fin.getTime();
+    this.duration = duration;
+    this.rate = rate;
+    this.localRate = localRate;
+
+    this.beginAnimationAt = begin.getTime();
 
     this.x1 = x1;
     this.y1 = y1;
@@ -186,10 +196,12 @@ class Marble {
   }
 
   get progress(){
+    const completeAnimationAt = (new Date( this.beginAnimationAt + parseFloat(this.duration.value*this.rate.value*this.localRate.value) )).getTime(); // NOTE: live update as signals change
     const currentTime = (new Date()).getTime();
-    const fullAnimationDuration = this.completeAnimationAt - this.beginAnimationAt;
+    const fullAnimationDuration = completeAnimationAt - this.beginAnimationAt;
     const currentAnimationDuration = currentTime - this.beginAnimationAt;
     const ratio = currentAnimationDuration/fullAnimationDuration;
+    // console.log({ completeAnimationAt, currentTime, fullAnimationDuration, currentAnimationDuration, ratio, })
     return ratio;
   }
 

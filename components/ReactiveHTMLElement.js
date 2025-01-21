@@ -2,6 +2,7 @@ import Dataset from 'dataset';
 import Signal from 'signal';
 
 import transcend from 'transcend';
+import guid from 'guid';
 
 /*
 
@@ -21,7 +22,9 @@ export default class ReactiveHTMLElement extends HTMLElement {
   // USER CONTROL:
   initialize(){}
   connected(){}
-  disconnected(){}
+  disconnected(){
+    this.collectGarbage()
+  }
 
   constructor() {
     super();
@@ -85,6 +88,16 @@ export default class ReactiveHTMLElement extends HTMLElement {
   }
   get window(){
     return transcend(this, `x-window`);
+  }
+
+    // GARBAGE COLLECTED TIMEOUT
+  setTimeout(timeoutFunction, timeoutDuration){
+    const timeoutGuid = guid();
+    const timeoutId = setTimeout(()=>{
+    this.#garbage.splice(this.#garbage.findIndex(o=>o.id===timeoutGuid), 1);
+    timeoutFunction();
+    }, timeoutDuration);
+    this.#garbage.push( {type:'timeout', id:timeoutGuid, ts:(new Date()).toISOString(), subscription: ()=>clearTimeout(timeoutId)} );
   }
 
   // STANDARD GARBAGE COLLECTION
