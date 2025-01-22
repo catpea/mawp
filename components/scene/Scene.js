@@ -75,19 +75,21 @@ export default class Scene extends HTMLElement {
 
 
     this.container.innerHTML = `
-          <svg class="pattern-background">
-            <defs>
-              <pattern id="graph-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
-                <circle class="illustration-dot" r="1" cx="2.2" cy="2.2"></circle>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
-          </svg>
+        <svg class="pattern-background">
+          <defs>
+            <pattern id="graph-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+              <circle class="illustration-dot" r="1" cx="2.2" cy="2.2"></circle>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#graph-pattern)" opacity="0.5"></rect>
+        </svg>
+
         <div class="content">
           <svg class="illustration illustration-background"></svg>
           <slot></slot>
           <svg class="illustration illustration-foreground"></svg>
         </div>
+
         <x-toolbar></x-toolbar>
         <x-prompt></x-prompt>
         <x-console></x-console>

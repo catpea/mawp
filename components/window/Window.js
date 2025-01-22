@@ -14,6 +14,9 @@ export default class Window extends ReactiveHTMLElement {
     this.sizeSignal = new Signal([0,0]);
     this.attachShadow({ mode: 'open' });
     const localStyle = `
+      .card {
+        min-width: 16rem;
+      };
       .card.active {
         border-color: var(--bs-primary);
       }
@@ -95,7 +98,7 @@ export default class Window extends ReactiveHTMLElement {
       // this.gc = this.agent.health.subscribe(health=>this.changePortStyle('out', `solid-${health}`));
 
       const flash = (port, indicator, normal) => {
-        console.log('Message from ',  this.agent.id);
+        // console.log('Message from ',  this.agent.id);
 
         this.changePortStyle(port, `solid-${indicator}`)
         this.setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);

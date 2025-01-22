@@ -3,15 +3,19 @@ import CONFIGURATION from 'configuration';
 import Signal from 'signal';
 import Setings from 'settings';
 import State from 'state';
+import Scheduler from 'scheduler';
+
 import guid from 'guid';
 
 export default class Agent {
+  forceRealtime = false;
 
   id = 'agent'+guid();
 
   // debug is a plain object to avoid unnecessary lookups
   debug = null; // {delay:1_234}
 
+  rate = new Signal(1); // speed of execution under simulation; 1=normal
   health = new Signal('nominal'); // nominal, primary, secondary, success, danger, warning, info, light, dark.
   alert = new Signal(); // new Signal({context:'danger', message:'There was an error in the pipe.'});
 
@@ -47,17 +51,35 @@ export default class Agent {
     const eventName = `send:${port}`;
 
   // NOTE: THIS SIMULATES NODE PROCESSING DELAY
-  if(CONFIGURATION.simulation.value === true){
-    const durationOfSimulatedProcessingTime = CONFIGURATION.duration.value * CONFIGURATION.processing.value * CONFIGURATION.rate.value;
-    this.setTimeout(()=>{
+  // if(CONFIGURATION.simulation.value === true){
+  //   const durationOfSimulatedProcessingTime =  CONFIGURATION.computationDuration.value;
+  //   // console.log({durationOfSimulatedProcessingTime})
+  //   this.setTimeout(()=>{
+  //     this.emit(eventName, data, options);
+  //     this.emit('send', port, data, options);
+  //   }, durationOfSimulatedProcessingTime, 'simulation')
+
+
+  // }else{
+    // this.emit(eventName, data, options);
+    // this.emit('send', port, data, options);
+  // }
+
+
+  if( this.forceRealtime == false && CONFIGURATION.simulation.value === true){
+      const scheduler = new Scheduler({ // schedule the arrival
+      begin: new Date(),
+      localRate: this.rate,
+      duration: CONFIGURATION.computationDuration,
+      callback: ()=>{
       this.emit(eventName, data, options);
       this.emit('send', port, data, options);
-    }, durationOfSimulatedProcessingTime, 'simulation')
-
-
+      }
+      });
+      this.gc = scheduler.start();
   }else{
-    this.emit(eventName, data, options);
-    this.emit('send', port, data, options);
+      this.emit(eventName, data, options);
+      this.emit('send', port, data, options);
   }
 
 

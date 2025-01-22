@@ -10,7 +10,6 @@ export default class Pipe extends ReactiveHTMLElement {
 
   #line;
   #circle; // TODO: position of the circle should use x1 signals, piggy back
-  #localRate = new Signal(1); // 0-2 the local rate that affects global delay, lol!
   #x1 = new Signal(0);
   #y1 = new Signal(0);
   #x2 = new Signal(0);
@@ -141,9 +140,8 @@ export default class Pipe extends ReactiveHTMLElement {
     const marble = new Marble({
       container: this.scene.drawingSurfaces[0],
       begin: new Date(),
-      localRate: this.#localRate,
-      rate: CONFIGURATION.rate,
-      duration: CONFIGURATION.duration,
+      localRate: this.agent.localRate,
+      duration: CONFIGURATION.flowDuration,
       x1: this.#x1,
       y1: this.#y1,
       x2: this.#x2,
@@ -167,19 +165,17 @@ class Marble {
 
   beginAnimationAt; // ms
   duration; // Signal()
-  rate; // Signal()
   localRate; // Signal()
   x1; // Signal()
   y1; // Signal()
   x2; // Signal()
   y2; // Signal()
 
-  constructor({container, begin, duration, rate, localRate, x1,y1,x2,y2}){
+  constructor({container, begin, duration, localRate, x1,y1,x2,y2}){
 
     this.container = container;
 
     this.duration = duration;
-    this.rate = rate;
     this.localRate = localRate;
 
     this.beginAnimationAt = begin.getTime();
@@ -196,12 +192,13 @@ class Marble {
   }
 
   get progress(){
-    const completeAnimationAt = (new Date( this.beginAnimationAt + parseFloat(this.duration.value*this.rate.value*this.localRate.value) )).getTime(); // NOTE: live update as signals change
+    const d = parseFloat(this.duration.value/this.localRate.value);
+    const completeAnimationAt = (new Date( this.beginAnimationAt + d )).getTime(); // NOTE: live update as signals change
     const currentTime = (new Date()).getTime();
     const fullAnimationDuration = completeAnimationAt - this.beginAnimationAt;
     const currentAnimationDuration = currentTime - this.beginAnimationAt;
     const ratio = currentAnimationDuration/fullAnimationDuration;
-    // console.log({ completeAnimationAt, currentTime, fullAnimationDuration, currentAnimationDuration, ratio, })
+    // console.log({ d, completeAnimationAt, currentTime, fullAnimationDuration, currentAnimationDuration, ratio, })
     return ratio;
   }
 

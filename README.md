@@ -3,6 +3,7 @@ MAWP
 
 ## TODO
 
+- "lol" library, on has no garbage collection
 - fix squish add min-width (add resize)
 - clear selection on scene change
 - redo deleting, selecting, perhaps bubble events up to the scene...Capture this as operations at UI vs. VFS

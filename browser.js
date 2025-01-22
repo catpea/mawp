@@ -2,6 +2,8 @@ import Signal from 'signal';
 import Branch from 'branch';
 import Commander from 'commander';
 import Agent from 'agent';
+import Scheduler from 'scheduler';
+
 import CONFIGURATION from 'configuration';
 
 class Project extends Branch {
@@ -189,7 +191,7 @@ class ReactiveVariable extends Agent {
 }
 
 class DataBeacon extends Agent {
-
+  forceRealtime = true;
   initialize(options) {
 
     this.settings.types('interval:Number delay:Number');
@@ -220,7 +222,7 @@ class DataBeacon extends Agent {
     }
 
     const data = message;
-    console.log('SEND!!!!!!!!!!!!!!', data);
+    // console.log('SEND!!!!!!!!!!!!!!', data);
 
     this.send('out', data, {});
   }
@@ -255,11 +257,15 @@ class Component extends Branch {
   }
 }
 
+class ConnectorAgent extends Agent {
+  localRate = new Signal(1); // 0-2 the local rate that affects global delay, lol!
+}
+
 class Connector extends Branch {
 
   constructor(id) {
     super(id, 'pipe');
-    this.agent = new Agent();
+    this.agent = new ConnectorAgent();
   }
 
   start(){
@@ -275,12 +281,33 @@ class Connector extends Branch {
     if(!this.agent) throw new Error('Agent is always required');
 
     if(CONFIGURATION.simulation.value === true){
+
+
+
+
+      // this.gc = source.agent.on(`send:${port}`, (data, options)=>{
+      //   this.agent.receive(toPort, data, address, options); // start the ball
+      //   this.setTimeout(()=>{
+      //     destination.agent.receive(toPort, data, address, options); // flash the port on arrival
+      //   }, CONFIGURATION.flowDuration.value / this.agent.localRate.value, 'simulation'); // simulate delay to allow animations
+      // });
+
+
       this.gc = source.agent.on(`send:${port}`, (data, options)=>{
-        this.agent.receive(toPort, data, address, options); // start the ball
-        this.setTimeout(()=>{
-          destination.agent.receive(toPort, data, address, options); // flash the port on arrival
-        }, CONFIGURATION.duration.value * CONFIGURATION.rate.value, 'simulation'); // simulate delay to allow animations
+        this.agent.receive(toPort, data, address, options); // start the ball (uses rate sensitive scheduler)
+        const scheduler = new Scheduler({ // schedule the arrival
+        begin: new Date(),
+        localRate: this.agent.localRate,
+        duration: CONFIGURATION.flowDuration,
+        callback: ()=>destination.agent.receive(toPort, data, address, options),
+        });
+        this.gc = scheduler.start();
       });
+
+
+
+
+
     }else{
       this.gc = source.agent.on(`send:${port}`, (data, options)=>[destination.agent, this.agent].forEach(agent=>agent.receive(toPort, data, address, options)));
     }
@@ -303,6 +330,12 @@ class Connector extends Branch {
     this.collectGarbage()
   }
 }
+
+
+
+
+
+
 
 const project = new Project('project');
 import UI from './src/UI.js';
