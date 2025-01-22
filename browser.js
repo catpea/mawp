@@ -274,11 +274,27 @@ class Connector extends Branch {
     if(!destination.agent) throw new Error('Agent is always required');
     if(!this.agent) throw new Error('Agent is always required');
 
-    this.gc = source.agent.on(`send:${port}`, (data, options)=>[destination.agent, this.agent].forEach(agent=>agent.receive(toPort, data, address, options)));
+    if(CONFIGURATION.simulation.value === true){
+      this.gc = source.agent.on(`send:${port}`, (data, options)=>{
+        this.agent.receive(toPort, data, address, options); // start the ball
+        this.setTimeout(()=>{
+          destination.agent.receive(toPort, data, address, options); // flash the port on arrival
+        }, CONFIGURATION.duration.value * CONFIGURATION.rate.value, 'simulation'); // simulate delay to allow animations
+      });
+    }else{
+      this.gc = source.agent.on(`send:${port}`, (data, options)=>[destination.agent, this.agent].forEach(agent=>agent.receive(toPort, data, address, options)));
+    }
 
     //TODO: a more realistic simulation would be a good idea, but that requires queues... and is that justified?
-    this.gc = ()=>destination.agent.endSimulation(); // pipe has been destroyed, and any simulated events must be destroyed as well.
-    this.gc = ()=>this.agent.endSimulation(); // pipe has been destroyed, and any simulated events must be destroyed as well.
+    // this.gc = ()=>destination.agent.endSimulation(); // pipe has been destroyed, and any simulated events must be destroyed as well.
+    // this.gc = ()=>this.agent.endSimulation(); // pipe has been destroyed, and any simulated events must be destroyed as well.
+
+
+
+
+
+
+
   }
 
   stop(){

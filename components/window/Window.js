@@ -100,7 +100,7 @@ export default class Window extends ReactiveHTMLElement {
         this.changePortStyle(port, `solid-${indicator}`)
         this.setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
       };
-      this.gc = this.agent.on('process', name=>flash(name, 'warning', 'primary'));
+      this.gc = this.agent.on('receive', name=>flash(name, 'warning', 'primary'));
       this.gc = this.agent.on('send', name=>flash(name, 'info', 'primary'));
 
 

@@ -48,11 +48,11 @@ export default class Agent {
 
   // NOTE: THIS SIMULATES NODE PROCESSING DELAY
   if(CONFIGURATION.simulation.value === true){
-
+    const durationOfSimulatedProcessingTime = CONFIGURATION.duration.value * CONFIGURATION.processing.value * CONFIGURATION.rate.value;
     this.setTimeout(()=>{
       this.emit(eventName, data, options);
       this.emit('send', port, data, options);
-    }, CONFIGURATION.duration.value * CONFIGURATION.processing.value * CONFIGURATION.rate.value, 'simulation')
+    }, durationOfSimulatedProcessingTime, 'simulation')
 
 
   }else{
@@ -68,30 +68,36 @@ export default class Agent {
    */
   receive(port, data, address, options){
     this.emit('receive', port, data, address, options) // asap as data is received, (ex. trigger the ball rolling)
-
-    if(CONFIGURATION.simulation.value === true){
-      this.receiveSimulated(port, data, address, options);
-    }else{
-      this.receiveReal(port, data, address, options);
-    }
-  }
-
-  endSimulation(){
-    this.clearTimeouts('simulation');
-  }
-  receiveSimulated(port, data, address, options){
-    // NOTE: this funcion is not used during normal operation.
-    // NOTE: HERE WE WAIT FOR PIPE TO FINISH ANIMATING - reception of data arrives for marbles
-    this.setTimeout(()=>{
-      this.emit('process', port, data, address, options); // To alert others
-      this.process(port, data, address, options); // NOTE: process is under user's control
-    }, CONFIGURATION.duration.value * CONFIGURATION.rate.value, 'simulation'); // simulate delay to allow animations
-  }
-
-  receiveRealtime(port, data, address, options){
-    this.emit('process', port, data, address, options); // To alert others
     this.process(port, data, address, options); // NOTE: process is under user's control
   }
+
+
+  // receive(port, data, address, options){
+  //   this.emit('receive', port, data, address, options) // asap as data is received, (ex. trigger the ball rolling)
+
+  //   if(CONFIGURATION.simulation.value === true){
+  //     this.receiveSimulated(port, data, address, options);
+  //   }else{
+  //     this.receiveReal(port, data, address, options);
+  //   }
+  // }
+
+  // endSimulation(){
+  //   this.clearTimeouts('simulation');
+  // }
+  // receiveSimulated(port, data, address, options){
+  //   // NOTE: this funcion is not used during normal operation.
+  //   // NOTE: HERE WE WAIT FOR PIPE TO FINISH ANIMATING - reception of data arrives for marbles
+  //   this.setTimeout(()=>{
+  //     this.emit('process', port, data, address, options); // To alert others
+  //     this.process(port, data, address, options); // NOTE: process is under user's control
+  //   }, CONFIGURATION.duration.value * CONFIGURATION.rate.value, 'simulation'); // simulate delay to allow animations
+  // }
+
+  // receiveRealtime(port, data, address, options){
+  //   this.emit('process', port, data, address, options); // To alert others
+  //   this.process(port, data, address, options); // NOTE: process is under user's control
+  // }
 
 
 
