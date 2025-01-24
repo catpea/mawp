@@ -9,28 +9,24 @@ class Configuration {
 
   constructor(){
 
+    this.paused = new Signal(); // time does not pass
+    this.simulation = new Signal( true ); // true=gui-mode, false=server-mode
+
     // ability to stop, slow, and speed up the running program
-    this.rate = new Signal( .5 ); // 0 to stop program! 1=normal-operation
-    this.computationDurationMs = new Signal( 100 ); // ms, 0=disable agent processing delay, used to simulate comptation time within an agent;
-    this.flowDurationMs = new Signal( 500 ); // ms, 0=normal-operation, run live, and disable flow visualizations.
+    this.rate = new Signal( .01 ); // 0 to stop program! 1=normal-operation
 
-    this.computationDuration = new Signal( this.computationDurationMs.value/this.rate.value );
-    this.flowDuration = new Signal( this.flowDurationMs.value/this.rate.value );
+    this.computationDurationMs = new Signal( 100 ); // ms
+    this.flowDurationMs = new Signal( 500 ); // ms
 
-    this.simulation = new Signal(); // true means we are simulating
+    this.computationDuration = new Signal( this.computationDurationMs.value / this.rate.value );
+    this.flowDuration = new Signal( this.flowDurationMs.value / this.rate.value );
+
 
     const simulationCalculation = new Signal(1);
     simulationCalculation.addDependency(this.rate);
     simulationCalculation.addDependency(this.computationDurationMs);
     simulationCalculation.addDependency(this.flowDurationMs);
     simulationCalculation.subscribe((_,rate, computationDurationMs, flowDurationMs)=>{
-
-
-      if(computationDurationMs===0&&flowDurationMs===0){
-        this.simulation.value = false;
-      }else{
-        this.simulation.value = true;
-      }
 
       if(rate === 0){
         const oneHour = 1_000*60*60;

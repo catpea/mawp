@@ -36,6 +36,11 @@ export default class Console extends HTMLElement {
         .btn-group-vertical {
           pointer-events: auto;  /* fix overflow and get riid of pointer events, no time now */
         }
+
+        button[disabled] {
+          opacity: .35 ! important;
+        }
+
       `;
       const localCss = new CSSStyleSheet();
       localCss.replaceSync(localStyle.trim());
@@ -56,10 +61,13 @@ export default class Console extends HTMLElement {
           <div class="btn-toolbar my-vertical">
 
             <div class="btn-group-vertical mb-2" role="group" aria-label="First group">
-              <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Start"><i class="bi bi-play"></i></button>
-              <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Start"><i class="bi bi-pause"></i></button>
+              <button name="application-play" type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-play"></i></button>
+              <button name="application-pause" type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-pause"></i></button>
+
+              <!--
               <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Stop"><i class="bi bi-stop"></i></button>
               <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Kill"><i class="bi bi-capsule"></i></button>
+              -->
             </div>
 
             <div class="btn-group-vertical mb-2">
@@ -119,6 +127,41 @@ export default class Console extends HTMLElement {
       applicationSpeedRangeInput.addEventListener("input", applicationSpeedRangeInputHandler)
       this.gc = ()=> applicationSpeedRangeInput.removeEventListener("input", applicationSpeedRangeInputHandler)
       applicationSpeedRangeInput.value = CONFIGURATION.rate.value;
+
+
+
+
+      const applicationPlayButton = this.container.querySelector('[name="application-play"]');
+      const applicationPauseButton = this.container.querySelector('[name="application-pause"]');
+      // INITIAL STATE
+      applicationPlayButton.disabled = true;
+      applicationPauseButton.disabled = false;
+      // SET ABILITY
+      CONFIGURATION.paused.subscribe(paused=>{
+        if(paused){
+          applicationPlayButton.disabled = false;
+          applicationPauseButton.disabled = true;
+        }else{
+          applicationPlayButton.disabled = true;
+          applicationPauseButton.disabled = false;
+        }
+      });
+      //ACTIONS
+      const applicationPlayButtonHandler = function(event){
+        CONFIGURATION.paused.value = false;
+      }.bind(this);
+      applicationPlayButton.addEventListener("click", applicationPlayButtonHandler)
+      this.gc = ()=> applicationPlayButton.removeEventListener("click", applicationPlayButtonHandler)
+
+      const applicationPauseButtonHandler = function(event){
+        CONFIGURATION.paused.value = true;
+      }.bind(this);
+      applicationPauseButton.addEventListener("click", applicationPauseButtonHandler)
+      this.gc = ()=> applicationPauseButton.removeEventListener("click", applicationPauseButtonHandler)
+
+
+
+
 
 
 

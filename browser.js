@@ -230,6 +230,7 @@ class DataBeacon extends Agent {
   // --- PERSONAL HELPER FUNCIONS --- //
 
   generateData(){
+      if (CONFIGURATION.paused.value === true) return;
       this.pulseCounter++;
       const pulse = {counter: this.pulseCounter, value: this.pulseCounter % 2 == 0, color: `hsla(${Math.random() * 360}, 80%, 50%, 1)`};
       this.process('in', pulse, null, {}); // NOTE: you must use process directly as receive receives UI hooks, a made up port needs to use process directly.
@@ -296,10 +297,10 @@ class Connector extends Branch {
       this.gc = source.agent.on(`send:${port}`, (data, options)=>{
         this.agent.receive(toPort, data, address, options); // start the ball (uses rate sensitive scheduler)
         const scheduler = new Scheduler({ // schedule the arrival
-        begin: new Date(),
-        localRate: this.agent.localRate,
-        duration: CONFIGURATION.flowDuration,
-        callback: ()=>destination.agent.receive(toPort, data, address, options),
+          rate: this.agent.rate,
+          duration: CONFIGURATION.flowDuration,
+          paused: CONFIGURATION.paused,
+          stop: ()=>destination.agent.receive(toPort, data, address, options),
         });
         this.gc = scheduler.start();
       });

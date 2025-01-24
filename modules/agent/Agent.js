@@ -67,16 +67,18 @@ export default class Agent {
 
 
   if( this.forceRealtime == false && CONFIGURATION.simulation.value === true){
+
       const scheduler = new Scheduler({ // schedule the arrival
-      begin: new Date(),
-      localRate: this.rate,
-      duration: CONFIGURATION.computationDuration,
-      callback: ()=>{
-      this.emit(eventName, data, options);
-      this.emit('send', port, data, options);
-      }
+        stop: ()=>{
+          this.emit(eventName, data, options);
+          this.emit('send', port, data, options);
+        },
+        rate: this.rate,
+        duration: CONFIGURATION.computationDuration,
+        paused: CONFIGURATION.paused,
       });
       this.gc = scheduler.start();
+
   }else{
       this.emit(eventName, data, options);
       this.emit('send', port, data, options);
