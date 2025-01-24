@@ -95,7 +95,7 @@ export default class Console extends HTMLElement {
 
             </div>
 
-            <div class="btn-group-vertical mb-2 d-none">
+            <div class="btn-group-vertical mb-2">
               <button name="main-scene" type="button" class="btn btn-outline-secondary" title="Switch to main scene"><i class="bi bi-arrow-return-left"></i></button>
             </div>
 
@@ -215,10 +215,12 @@ export default class Console extends HTMLElement {
         if(activeLocation==='main'){
           mainSceneButton.classList.remove(...Array.from(mainSceneButton.classList).filter(className => className.startsWith('btn-outline-')) )
           mainSceneButton.classList.add('btn-outline-secondary');
+          mainSceneButton.classList.add('d-none');
           mainSceneButton.disabled = true;
         }else{
           mainSceneButton.classList.remove(...Array.from(mainSceneButton.classList).filter(className => className.startsWith('btn-outline-')) )
           mainSceneButton.classList.add('btn-outline-success');
+          mainSceneButton.classList.remove('d-none');
           mainSceneButton.disabled = false;
         }
       })
