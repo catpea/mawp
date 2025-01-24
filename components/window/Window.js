@@ -16,9 +16,9 @@ export default class Window extends ReactiveHTMLElement {
     const localStyle = `
       .card {
         min-width: 16rem;
-      };
+      }
       .card.active {
-        border-color: var(--bs-primary);
+        border-color: var(--bs-primary) ! important;
       }
     `;
     this.styles(localStyle);

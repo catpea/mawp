@@ -94,7 +94,7 @@ export default class Scene extends HTMLElement {
         <x-prompt></x-prompt>
         <x-console></x-console>
 
-        <span class="position-absolute top-0 start-50 dtranslate-middle opacity-25">
+        <span class="position-absolute top-0 start-50 dtranslate-middle opacity-0">
           pan=<small name="debug-panX"></small>x<small name="debug-panY"></small> scale=<small name="debug-scale"></small> active=<small name="debug-active"></small>
         </span>
 

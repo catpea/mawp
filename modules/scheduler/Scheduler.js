@@ -28,11 +28,11 @@ export default class Scheduler {
     this.duration = duration;
     this.rate = rate; // NOTE: this is local rate control, globa rate is already accounted for in duration
     this.paused = paused;
-
   }
 
   start(){
     this.laststepAt = Date.now();
+
     if(this.user.start) this.user.start(this.user.state);
     this.next( this.step.bind(this) ); // begin the scheduling
     return ()=>this.stop(); // for gc
@@ -45,18 +45,14 @@ export default class Scheduler {
     if(this.paused.value === true) this.elapsedPausedDuration += stepGapDuration;
     const totalElapsedDuration = this.elapsedDuration - this.elapsedPausedDuration;
     const targetDuration = this.rate ? this.duration.value / this.rate.value : this.duration.value;
+
     const progress = totalElapsedDuration / targetDuration;
-
-    console.log(progress, totalElapsedDuration, targetDuration)
-
-
     if(progress < 1){
       if(this.user.step) this.user.step(this.user.state, progress);
       this.next( this.step.bind(this) );
     } else {
       this.stop();
     }
-
     this.laststepAt = currentStepAt;
   }
 

@@ -53,8 +53,8 @@ export default class Console extends HTMLElement {
         <div class="position-relative">
 
           <div class="application-speed-container">
-            <label for="application-speed" class="form-label"><small>Speed: <span name="application-speed-label">100%</span></small></label>
-            <input name="application-speed" type="range" min="0.01" max="1" step="0.01" value="1" class="form-range" id="application-speed">
+            <label for="application-speed" class="form-label d-none"><small>Speed: <span name="application-speed-label">100%</span></small></label>
+            <input name="application-speed" type="range" min="0" max="1" step="0.01" value="1" class="form-range" id="application-speed">
           </div>
 
           <div class="toolbar-container">
@@ -74,6 +74,7 @@ export default class Console extends HTMLElement {
               <button name="create-window" type="button" class="btn btn-outline-secondary" title="create window"><i class="bi bi-plus-circle"></i></button>
               <button name="delete-active" type="button" class="btn btn-outline-secondary" title="delete selected"><i class="bi bi-x-circle"></i></button>
             </div>
+              <!--
 
             <div class="btn-group-vertical mb-2">
               <button type="button" class="btn btn-outline-secondary opacity-25" title="Clear Stage"  data-bs-content="Clear the stage of all actors and begin a new project."><i class="bi bi-eraser"></i></button>
@@ -90,10 +91,11 @@ export default class Console extends HTMLElement {
               <button type="button" class="btn btn-outline-secondary opacity-25"><i class="bi bi-zoom-in"></i></button>
               <button type="button" class="btn btn-outline-secondary opacity-25"><i class="bi bi-zoom-out"></i></button>
               <button type="button" class="btn btn-outline-secondary opacity-25"><i class="bi bi-aspect-ratio"></i></button>
+              -->
 
             </div>
 
-            <div class="btn-group-vertical mb-2">
+            <div class="btn-group-vertical mb-2 d-none">
               <button name="main-scene" type="button" class="btn btn-outline-secondary" title="Switch to main scene"><i class="bi bi-arrow-return-left"></i></button>
             </div>
 
