@@ -1,4 +1,5 @@
 import Dataset from 'dataset';
+import Signal from 'signal';
 import guid from 'guid';
 
 export default class Branch {
@@ -6,6 +7,7 @@ export default class Branch {
   type;
   parent;
   children = [];
+  content = new Signal();
 
   constructor(id, type) {
     this.initialize();
@@ -115,6 +117,7 @@ export default class Branch {
     if (this.watchers[phase][name][pattern].length == 0) delete this.watchers[phase][name][pattern];
   }
   propagate(name, target, ...args) {
+
     const event = '/' + target.path.map(o => o.id).join('/');
     const taillessPath = target.path.slice(0,-1)
     const phasedStack = [taillessPath, [target, ...taillessPath.toReversed()]];

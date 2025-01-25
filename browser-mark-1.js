@@ -6,10 +6,6 @@ import Scheduler from 'scheduler';
 
 import CONFIGURATION from 'configuration';
 
-class Application extends Branch {
-
-}
-
 class Project extends Branch {
   Scene = Location;
   Component = Component;
@@ -54,6 +50,8 @@ class Project extends Branch {
     this.#commandModules.set(name, AgentModule.default);
     return AgentModule.default;
   }
+
+
 }
 
 class Location extends Branch {
@@ -87,7 +85,153 @@ class Location extends Branch {
     this.create(connector);
     return connector;
   }
+
 }
+
+
+
+
+
+
+class StandardAgent extends Agent {
+  process(port, message, sender, setup){
+    this.send('out', message, {});
+  }
+}
+
+class DataMerge extends Agent {
+  process(port, message, sender, setup){
+    this.send('out', message, {});
+  }
+}
+
+class ReactiveVariable extends Agent {
+  #previousValue = undefined;
+  process(port, message, sender, setup){
+    //console.warn('ReactiveVariable RECEIVE', this.id, ...[...arguments])
+    const newValue = message;
+
+    if( newValue === undefined || newValue === null ) return; // NOTE: core feature: not interested in empty
+    if(this.deepEqual(newValue, this.#previousValue)) return; // NOTE: core feature: silent on unchanged
+
+    this.send('out', newValue, {});
+
+    this.#previousValue = newValue;
+  }
+
+  // --- PERSONAL HELPER FUNCIONS --- //
+
+  deepEqual(a, b, visited = new Set()) {
+    // Check for strict equality first
+    if (a === b) {
+      return true;
+    }
+
+    // If either value is primitive, they are not equal (since !==)
+    if (this.isPrimitive(a) || this.isPrimitive(b)) {
+      return false;
+    }
+
+    // Handle cyclic references
+    if (visited.has(a)) {
+      return true; // Assume cyclic structures are equal
+    }
+    visited.add(a);
+
+    // Ensure both are of the same type
+    if (Object.prototype.toString.call(a) !== Object.prototype.toString.call(b)) {
+      return false;
+    }
+
+    // Compare arrays
+    if (Array.isArray(a)) {
+      if (a.length !== b.length) {
+        return false;
+      }
+
+      for (let i = 0; i < a.length; i++) {
+        if (!this.deepEqual(a[i], b[i], visited)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    // Compare objects
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+
+    // Check for different number of keys
+    if (keysA.length !== keysB.length) {
+      return false;
+    }
+
+    // Check if all keys and values are equal
+    for (let key of keysA) {
+      if (!Object.prototype.hasOwnProperty.call(b, key)) {
+        return false;
+      }
+      if (!this.deepEqual(a[key], b[key], visited)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+  isPrimitive(value) {
+    return value === null || (typeof value !== 'object' && typeof value !== 'function');
+  }
+}
+
+class DataBeacon extends Agent {
+  forceRealtime = true;
+  initialize(options) {
+
+    this.settings.types('interval:Number delay:Number');
+    this.settings.group('user', 'interval delay');
+
+    this.settings.interval = 2_000;
+    this.settings.delay = 1_000;
+
+    Object.entries(options).forEach(([key,val])=>this.settings.set(key,val))
+
+  }
+
+  start(){
+    this.pulseCounter = 0;
+    this.intervalId = setInterval( this.generateData.bind(this), this.settings.interval);
+    this.generateData();
+  }
+
+  stop(){
+    clearInterval(this.intervalId);
+  }
+
+  process(port, message, sender, setup){
+    if(message.value){
+      // this.health.value = 'none';
+    }else{
+      // this.health.value = 'info'
+    }
+
+    const data = message;
+    // console.log('SEND!!!!!!!!!!!!!!', data);
+
+    this.send('out', data, {});
+  }
+
+  // --- PERSONAL HELPER FUNCIONS --- //
+
+  generateData(){
+      if (CONFIGURATION.paused.value === true) return;
+      this.pulseCounter++;
+      const pulse = {counter: this.pulseCounter, value: this.pulseCounter % 2 == 0, color: `hsla(${Math.random() * 360}, 80%, 50%, 1)`};
+      this.process('in', pulse, null, {}); // NOTE: you must use process directly as receive receives UI hooks, a made up port needs to use process directly.
+    }
+}
+
+
 
 
 class Component extends Branch {
@@ -107,16 +251,27 @@ class Component extends Branch {
     this.collectGarbage()
   }
 
-  connectable(source){
+  connectable(request){
+
   }
-  connect(source){
+
+  connect(){
+
   }
+
   receive(request){
+
   }
+
   disconnect(){
+
   }
+
 }
 
+class ConnectorAgent extends Agent {
+  localRate = new Signal(1); // 0-2 the local rate that affects global delay, lol!
+}
 
 class Connector extends Branch {
 
@@ -158,7 +313,6 @@ class Connector extends Branch {
 
   }
 
-
   stop(){
     console.info(this.id + ' agent stop!',)
     this.agent.stop()
@@ -166,151 +320,47 @@ class Connector extends Branch {
   }
 }
 
-class Modules extends Branch {
-
-}
-
-class Library extends Branch {
-  register(id, descriptor){
-
-    const tool = new Branch(id);
-    tool.content.value = descriptor
-    this.create(tool);
-  }
-}
 
 
-class ToneComponent extends Branch {
 
-}
 
-class TonePlayerComponent extends ToneComponent {
-  setup(){
-    this.content.value = new this.Tone.Player(this.settings.snapshot);
-    this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
-  }
-  connectable(req){
-    return req.source.content.value instanceof ToneComponent;
-  }
-  connect(source){
-    this.content.value.connect(source);
-  }
-  receive(request){
-    // unused, tone passes its own data
-  }
-  disconnect(){
-    this.discontent.value.connect(source);
-  }
-}
-class ToneDestinationComponent extends ToneComponent {
-  setup(){
-    this.content.value = new this.Tone.Destination(this.settings.snapshot);
-    this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
-  }
-  connectable(req){
-    return req.source.content.value instanceof ToneComponent;
-  }
-  connect(source){
-    this.content.value.connect(source);
-  }
-  receive(request){
-    // unused, tone passes its own data
-  }
-  disconnect(){
-    this.discontent.value.connect(source);
-  }
-}
-class ToneDistortionComponent extends ToneComponent {
-  setup(){
-    this.content.value = new this.Tone.Distortion(this.settings.snapshot);
-    this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
-  }
-  connectable(req){
-    return req.source.content.value instanceof ToneComponent;
-  }
-  connect(source){
-    this.content.value.connect(source);
-  }
-  receive(request){
-    // unused, tone passes its own data
-  }
-  disconnect(){
-    this.discontent.value.connect(source);
-  }
-}
-class ToneFeedbackDelayComponent extends ToneComponent {
-  setup(){
-    this.content.value = new this.Tone.FeedbackDelay(this.settings.snapshot);
-    this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
-  }
-  connectable(req){
-    return req.source.content.value instanceof ToneComponent;
-  }
-  connect(source){
-    this.content.value.connect(source);
-  }
-  receive(request){
-    // unused, tone passes its own data
-  }
-  disconnect(){
-    this.discontent.value.connect(source);
-  }
-}
 
-// Boot
-const application = new Application();
 
-// Module Registration
-const modules = new Modules('modules');
-const toneLibrary = new Library('tone-js');
-toneLibrary.register('player', TonePlayerComponent);
-toneLibrary.register('destination', ToneDestinationComponent);
-toneLibrary.register('distortion', ToneDistortionComponent);
-toneLibrary.register('feedback-delay', ToneFeedbackDelayComponent);
-
-modules.create(toneLibrary);
-application.create(modules);
-
-// Project Registration
-const project = new Project('main-project');
-application.create(project);
+const project = new Project('project');
+import UI from './src/UI.js';
+const ui = new UI(project);
 
 const mainLocation = new Location('main');
-project.create(mainLocation);
-
 const upperLocation = new Location('upper');
-project.create(upperLocation);
-
 const teeLocation = new Location('tee');
+
+project.create(mainLocation);
+project.create(upperLocation);
 project.create(teeLocation);
 
-
-
-
-
-project.load();
 {
-  // EXAMPLE project.load
 
-  mainLocation.createModule('distortion1', 'tone-js/distortion',         {left: 100, top: 100}, {distortion: 0.4});
-  mainLocation.createModule('feedback-delay1', 'tone-js/feedback-delay', {left: 100, top: 200}, {delayTime:0.125, feedback:0.5});
-  mainLocation.createModule('destination1', 'tone-js/destination',       {left: 100, top: 300}, {});
-  mainLocation.createModule('player1',      'tone-js/player',            {left: 100, top: 400}, { url: "https://tonejs.github.io/audio/berklee/gurgling_theremin_1.mp3", loop: true, autostart: true, } );
+  mainLocation.createComponent('beacon1', {title: 'Beacon Transmitter Agent', left: 100, top: 100, 'port-in': false, }, new DataBeacon({interval: 4333}) );
+  mainLocation.createComponent('beacon2', {title: 'Beacon Transmitter Agent', left: 100, top: 400, 'port-in': false, }, new DataBeacon({interval: 1000}) );
 
-  mainLocation.createConnection('distortion1:out', 'destination1:in');
-  mainLocation.createConnection('player1:out', 'distortion1:in');
-  mainLocation.createConnection('player1:out', 'feedback-delay1:in');
+  mainLocation.createComponent('merge1', {title: 'Data Merge', left: 500, top: 333 }, new DataMerge());
+  mainLocation.createConnection('beacon1:out', 'merge1:in');
+  mainLocation.createConnection('beacon2:out', 'merge1:in');
+
+  mainLocation.createComponent('dataSignal1', {title: 'Data Signal', left: 800, top: 333 }, new ReactiveVariable());
+  mainLocation.createConnection('merge1:out', 'dataSignal1:in');
+
+  mainLocation.createComponent('dataSignal2', {title: 'Beacon Transmitter Agent', left: 100, top: 777, 'port-in': false, });
+  mainLocation.createComponent('dataLog1', {title: 'Debug Display', left: 800, top: 777, 'port-out': false, });
+  mainLocation.createConnection('dataSignal2:out', 'dataLog1:in');
 
 }
+
+project.load();
 project.startup();
-
-
-
-//////// UI ////////
-import UI from './src/UI.js';
-const ui = new UI(application);
 ui.start(); // WARN: must come after the tree has fully loaded, otherwise the watcher will begin adding nodes, that are yet to be loaded.
 console.log(`Startup at ${new Date().toISOString()}`);
+
 // window.addEventListener('beforeunload', function(event) {
 //   //console.log('beforeunload was triggered!')
 //   // ui.stop();

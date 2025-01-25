@@ -135,6 +135,13 @@ export default class Settings {
       return this._data[key];
     }
   }
+  keys(){
+    return Object.keys(this._data);
+  }
+
+  get snapshot(){
+    return Object.fromEntries( this.keys().map(key=> [key, this.retrieve(key)]) );
+  }
 
   subscribe(listener) {
     this.listeners.push(listener);
