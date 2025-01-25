@@ -173,7 +173,7 @@ export default class Console extends HTMLElement {
         let [left, top] = scene.getCenterDropCoordinates();
         [left, top] = [left, top].map(o=>o*.5)
         const id = guid();//.substr(0,10);
-        application.project.commander.windowCreate({id, left, top, active:true});
+        application.source.commander.windowCreate({id, left, top, active:true});
       });
 
 
@@ -184,7 +184,7 @@ export default class Console extends HTMLElement {
       const deleteActiveButtonFunction = () => {
         const id = this.scene.active.value;
         this.scene.active.value = false;
-        application.project.commander.componentDelete({id});
+        application.source.commander.componentDelete({id});
 
       }
       deleteActiveButton.addEventListener("click", deleteActiveButtonFunction);
@@ -208,10 +208,10 @@ export default class Console extends HTMLElement {
       const mainSceneButton = this.container.querySelector('[name="main-scene"]');
 
       mainSceneButton.addEventListener("click", function (e) {
-        application.project.commander.sceneSelect({id:'main'});
+        application.source.commander.sceneSelect({id:'main'});
       });
 
-      application.project.activeLocation.subscribe(activeLocation=>{
+      application.source.activeLocation.subscribe(activeLocation=>{
         if(activeLocation==='main'){
           mainSceneButton.classList.remove(...Array.from(mainSceneButton.classList).filter(className => className.startsWith('btn-outline-')) )
           mainSceneButton.classList.add('btn-outline-secondary');

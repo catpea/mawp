@@ -50,25 +50,10 @@ export default class Agent {
   send(port, data, options){
     const eventName = `send:${port}`;
 
-  // NOTE: THIS SIMULATES NODE PROCESSING DELAY
-  // if(CONFIGURATION.simulation.value === true){
-  //   const durationOfSimulatedProcessingTime =  CONFIGURATION.computationDuration.value;
-  //   // console.log({durationOfSimulatedProcessingTime})
-  //   this.setTimeout(()=>{
-  //     this.emit(eventName, data, options);
-  //     this.emit('send', port, data, options);
-  //   }, durationOfSimulatedProcessingTime, 'simulation')
-
-
-  // }else{
-    // this.emit(eventName, data, options);
-    // this.emit('send', port, data, options);
-  // }
-
 
   if( this.forceRealtime == false && CONFIGURATION.simulation.value === true){
 
-      const scheduler = new Scheduler({ // schedule the arrival
+      const sendDelayScheduler = new Scheduler({ // schedule the arrival
         stop: ()=>{
           this.emit(eventName, data, options);
           this.emit('send', port, data, options);
@@ -77,7 +62,7 @@ export default class Agent {
         duration: CONFIGURATION.computationDuration,
         paused: CONFIGURATION.paused,
       });
-      this.gc = scheduler.start();
+      this.gc = sendDelayScheduler.start();
 
   }else{
       this.emit(eventName, data, options);

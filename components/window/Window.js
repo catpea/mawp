@@ -81,7 +81,7 @@ export default class Window extends ReactiveHTMLElement {
     this.dataset2.get('reference').subscribe(reference => {
       // Create Button
       if(reference) cardHeader.appendChild(lol.i({ name:'open-referenced-scene' ,class:'bi bi-arrow-right-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
-      const referencedScene = this.application.project.get(reference);
+      const referencedScene = this.application.source.get(reference);
       for( const element of referencedScene.children.filter(child=>child.dataset.get('incoming').value ) ){
         const portNode = lol['x-port']({ id: `port-${element.id}`, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
         const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
@@ -91,28 +91,23 @@ export default class Window extends ReactiveHTMLElement {
 
     // ADD AGENT SETTINGS
     //
-    if(this.agent){
+    if(1){
       // CONNECT WITH AGENT, the agent is unaware of existence of UI, but we can monitor its signals.
-      this.gc = this.agent.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
-
-      // this.gc = this.agent.health.subscribe(health=>this.changePortStyle('out', `solid-${health}`));
-
+      this.gc = this.source.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
       const flash = (port, indicator, normal) => {
-        // console.log('Message from ',  this.agent.id);
-
         this.changePortStyle(port, `solid-${indicator}`)
         this.setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
       };
-      this.gc = this.agent.on('receive', name=>flash(name, 'warning', 'primary'));
-      this.gc = this.agent.on('send', name=>flash(name, 'info', 'primary'));
+      this.gc = this.source.on('receive', name=>flash(name, 'warning', 'primary'));
+      this.gc = this.source.on('send', name=>flash(name, 'info', 'primary'));
 
 
     }
-    if(this.agent){
+    if(1){
 
-      for (const keyName of this.agent.settings.group('user')){
-        const keyType = this.agent.settings.type(keyName);
-        const valueSignal = this.agent.settings.get(keyName);
+      for (const keyName of this.source.settings.group('user')){
+        const keyType = this.source.settings.type(keyName);
+        const valueSignal = this.source.settings.get(keyName);
         const portNode = lol['x-port']({ id: `port-${keyName}`, dataset:{title:`${keyName}:${keyType}`, side: 'start', icon: 'box-arrow-in-right'} });
         const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
         listGroup.appendChild(listItem)
@@ -120,8 +115,8 @@ export default class Window extends ReactiveHTMLElement {
     };
 
     // TOOLBAR BUTTONS
-    cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
-    cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.windowRead({id:this.id}) }}))
+    cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
+    cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowRead({id:this.id}) }}))
 
     // SUBSCRIBE TO DIMENSIONS SPECIFIED IN DATASET
     this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');

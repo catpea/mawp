@@ -44,11 +44,12 @@ export default class Pipe extends ReactiveHTMLElement {
   }
 
   connected() {
-
+    console.log('from', this.dataset2.get('from').value);
+    console.log('to', this.dataset2.get('to').value);
     // console.log('pipe debug-delay', this.dataset2.get('debug-delay').value )
     // this.gc = this.agent.on('rx', name=> console.log(`Pipe got data, should play animation for ${this.dataset2.get('debug-delay').value}ms.`) );
 
-    this.gc = this.agent.on('receive', () => this.activateMarble() );
+    this.gc = this.source.on('receive', () => this.activateMarble() );
 
 
     // PROCESS DEPENDENCIES
@@ -179,7 +180,7 @@ export default class Pipe extends ReactiveHTMLElement {
       step,
       stop,
       next: ƒ => requestAnimationFrame(ƒ),
-      rate: this.agent.rate,
+      rate: this.source.rate,
       duration: CONFIGURATION.flowDuration,
       paused: CONFIGURATION.paused,
     };

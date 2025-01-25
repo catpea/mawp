@@ -210,20 +210,21 @@ export default class Scene extends HTMLElement {
   }
 
   getWindow(colonAddress) {
-    const [elementId, portId] = colonAddress.split(/\W/, 2);
+    const [elementId, portId] = colonAddress.split(/:/, 2);
+    console.log('getWindow', elementId, portId)
     const element = this.getElementById(elementId);
     return element;
   }
 
   getPort(colonAddress) {
-    const [elementId, portId] = colonAddress.split(/\W/, 2);
+    const [elementId, portId] = colonAddress.split(/:/, 2);
     const element = this.getElementById(elementId);
     const port = element.getPortElement(portId);
     return port;
   }
 
   getDecal(colonAddress) {
-    const [elementId, portId] = colonAddress.split(/\W/, 2);
+    const [elementId, portId] = colonAddress.split(/:/, 2);
     const element = this.getElementById(elementId);
     if (!element) {
       throw new Error(`Element ${elementId} not found`);

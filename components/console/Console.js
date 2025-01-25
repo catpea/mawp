@@ -46,13 +46,13 @@ export default class Console extends HTMLElement {
       const application = transcend(this, `x-application`);
       if(!application) throw new Error('Unable to locate applicaion!')
 
-       this.gc = application.project.commander.on('alert', o => {
+       this.gc = application.source.commander.on('alert', o => {
             this.publishAlert(o);
        });
 
        const debounceDelay = 300;
        const executedCommandTimeouts = new Map();
-       this.gc = application.project.commander.on('executed', o => {
+       this.gc = application.source.commander.on('executed', o => {
 
          let commandId = o.commandName;
          if(o.commandArguments && o.commandArguments.id) commandId = o.commandName + o.commandArguments.id
@@ -129,7 +129,7 @@ export default class Console extends HTMLElement {
         const commandName = formData.get('commandName');
         formData.delete('commandName');
         const commandAttributes = Object.fromEntries(formData);
-        application.project.commander[commandName](commandAttributes);
+        application.source.commander[commandName](commandAttributes);
         commandContainer.remove()
       });
 

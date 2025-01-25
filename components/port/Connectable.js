@@ -210,7 +210,7 @@ export default class Connectable {
       // cable.setAttribute('to', to);
       // this.system.getStage().appendChild(cable);
 
-      this.portComponent.application.project.commander.pipeCreate({from, to});
+      this.portComponent.application.source.commander.pipeCreate({from, to});
 
 
 

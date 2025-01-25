@@ -1,20 +1,20 @@
 import Signal from 'signal';
 import Branch from 'branch';
 import Commander from 'commander';
-import Agent from 'agent';
 import Scheduler from 'scheduler';
+
+import Setings from 'settings';
+import State from 'state';
+
 
 import CONFIGURATION from 'configuration';
 
 class Application extends Branch {
 
-}
-
-class Project extends Branch {
   Scene = Location;
   Component = Component;
   Connector = Connector;
-  BasicAgent = StandardAgent;
+  // BasicAgent = StandardAgent;
 
   commander;
   activeLocation = new Signal('main');
@@ -23,6 +23,10 @@ class Project extends Branch {
     super(...a)
     this.commander = new Commander(this);
   }
+
+}
+
+class Project extends Branch {
 
   // LIFECYCLE SYSTEM
 
@@ -45,15 +49,15 @@ class Project extends Branch {
     this.all.map(node=>node.stop?node.stop():null);
   }
 
-  #commandModules = new Map();
-  async getAgent(scopedName = '@core/standard-agent'){
-    const [scope, name] = scopedName.split('/');
-    if (this.#commandModules.has(name)) return this.#commandModules.get(name);
-    const agentPath = `./agents/${scope}/${name}/index.js`;
-    const AgentModule = await import(agentPath);
-    this.#commandModules.set(name, AgentModule.default);
-    return AgentModule.default;
-  }
+  // #commandModules = new Map();
+  // async getAgent(scopedName = '@core/standard-agent'){
+  //   const [scope, name] = scopedName.split('/');
+  //   if (this.#commandModules.has(name)) return this.#commandModules.get(name);
+  //   const agentPath = `./agents/${scope}/${name}/index.js`;
+  //   const AgentModule = await import(agentPath);
+  //   this.#commandModules.set(name, AgentModule.default);
+  //   return AgentModule.default;
+  // }
 }
 
 class Location extends Branch {
@@ -62,6 +66,22 @@ class Location extends Branch {
     const from = this.children.filter(child=>child.type==='pipe').filter(child=>child.dataset.get('from')!==undefined).filter(child=>child.dataset.get('from').value.startsWith(id+':'));
     const to = this.children.filter(child=>child.type==='pipe').filter(child=>child.dataset.get('to')!==undefined).filter(child=>child.dataset.get('to').value.startsWith(id+':'));
     return [...from, ...to];
+  }
+
+  // 'distortion1', 'tone-js/distortion',         {left: 100, top: 100}, {distortion: 0.4}
+  createModule(id, modulePath, dataset, settings){
+
+    const path = ['modules',...modulePath.split('/')];
+    const Component = application.get(...path).content.value;
+    // Initialize important objects
+    const component = new Component(id);
+    component.type = 'window';
+    // Assign options
+    Object.entries(dataset).filter(([key,val])=>val).forEach(([key,val])=>component.dataset.set(key,val))
+    // Add to stage
+    this.create(component);
+    console.dir(this.children)
+    return component;
   }
 
   createComponent(id, options, agent = new StandardAgent()){
@@ -91,6 +111,10 @@ class Location extends Branch {
 
 
 class Component extends Branch {
+  rate = new Signal(1); // speed of emitting signals
+  settings = new Setings();
+  health = new Signal('nominal'); // component health
+
 
   constructor(id) {
     super(id, 'window')
@@ -99,33 +123,77 @@ class Component extends Branch {
   }
 
   start(){
-    this.agent.start();
+    // this.agent.start();
   }
 
   stop(){
-    this.agent.stop();
+    // this.agent.stop();
     this.collectGarbage()
+  }
+
+  pipes(name){
+    return this.parent.filter(o=>o.type==='pipe'&&o.dataset.get('from').value===this.id + ':' + name);
   }
 
   connectable(source){
   }
   connect(source){
   }
-  receive(request){
+  receive(port, data, address, options){
+    this.emit('receive', port, data, address, options) // asap as data is received, (ex. trigger the ball rolling)
+    this.execute(port, data, address, options); // NOTE: process is under user's control
   }
   disconnect(){
+  }
+
+  execute(port, data, address, options){
+    console.warn('This method in meant to be overridden')
+    this.pipes('out').forEach(pipe=>pipe.receive('in', data, this.id+':out', options));
   }
 }
 
 
 class Connector extends Branch {
+  rate = new Signal(1); // speed of transmitting signals
+  health = new Signal('nominal'); // component health
 
   constructor(id) {
     super(id, 'pipe');
-    this.agent = new ConnectorAgent();
   }
 
   start(){
+
+    // const address = this.dataset.get('from').value.split(':');
+    // const [fromId, port] = address;
+    // const [toId, toPort] = this.dataset.get('to').value.split(':');
+    // const source      = this.parent.get(fromId);
+    // const destination = this.parent.get(toId);
+
+    // if(!source.agent) throw new Error('Agent is always required');
+    // if(!destination.agent) throw new Error('Agent is always required');
+    // if(!this.agent) throw new Error('Agent is always required');
+
+    // if(CONFIGURATION.simulation.value === true){
+    //   this.gc = source.agent.on(`send:${port}`, (data, options)=>{
+    //     this.agent.receive(toPort, data, address, options); // start the ball (uses rate sensitive scheduler)
+    //     const scheduler = new Scheduler({ // schedule the arrival
+    //       rate: this.agent.rate,
+    //       duration: CONFIGURATION.flowDuration,
+    //       paused: CONFIGURATION.paused,
+    //       stop: ()=>destination.agent.receive(toPort, data, address, options),
+    //     });
+    //     this.gc = scheduler.start();
+    //   });
+    // }else{
+    //   this.gc = source.agent.on(`send:${port}`, (data, options)=>[destination.agent, this.agent].forEach(agent=>agent.receive(toPort, data, address, options)));
+    // }
+  }
+
+  /**
+  * Pipe receive, when a pipe receives data, it passes it to the destination
+   */
+  // receive(port, data, address, options){
+  receive(data, options){
 
     const address = this.dataset.get('from').value.split(':');
     const [fromId, port] = address;
@@ -133,35 +201,22 @@ class Connector extends Branch {
     const source      = this.parent.get(fromId);
     const destination = this.parent.get(toId);
 
-    if(!source.agent) throw new Error('Agent is always required');
-    if(!destination.agent) throw new Error('Agent is always required');
-    if(!this.agent) throw new Error('Agent is always required');
 
-    if(CONFIGURATION.simulation.value === true){
-      this.gc = source.agent.on(`send:${port}`, (data, options)=>{
-        this.agent.receive(toPort, data, address, options); // start the ball (uses rate sensitive scheduler)
+      if(CONFIGURATION.simulation.value === true){
         const scheduler = new Scheduler({ // schedule the arrival
-          rate: this.agent.rate,
-          duration: CONFIGURATION.flowDuration,
-          paused: CONFIGURATION.paused,
-          stop: ()=>destination.agent.receive(toPort, data, address, options),
+        rate: this.rate,
+        duration: CONFIGURATION.flowDuration,
+        paused: CONFIGURATION.paused,
+        stop: ()=>destination.receive(toPort, data, address, options),
         });
         this.gc = scheduler.start();
-      });
     }else{
-      this.gc = source.agent.on(`send:${port}`, (data, options)=>[destination.agent, this.agent].forEach(agent=>agent.receive(toPort, data, address, options)));
+      destination.receive(toPort, data, address, options);
     }
-
-
-
-
 
   }
 
-
   stop(){
-    console.info(this.id + ' agent stop!',)
-    this.agent.stop()
     this.collectGarbage()
   }
 }
@@ -180,8 +235,28 @@ class Library extends Branch {
 }
 
 
-class ToneComponent extends Branch {
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import Tone from './extensions/tone/Tone.js';
+class ToneComponent extends Component {
+  Tone = Tone;
 }
 
 class TonePlayerComponent extends ToneComponent {
@@ -195,7 +270,7 @@ class TonePlayerComponent extends ToneComponent {
   connect(source){
     this.content.value.connect(source);
   }
-  receive(request){
+  execute(request){
     // unused, tone passes its own data
   }
   disconnect(){
@@ -213,7 +288,7 @@ class ToneDestinationComponent extends ToneComponent {
   connect(source){
     this.content.value.connect(source);
   }
-  receive(request){
+  execute(request){
     // unused, tone passes its own data
   }
   disconnect(){
@@ -231,7 +306,7 @@ class ToneDistortionComponent extends ToneComponent {
   connect(source){
     this.content.value.connect(source);
   }
-  receive(request){
+  execute(request){
     // unused, tone passes its own data
   }
   disconnect(){
@@ -249,13 +324,31 @@ class ToneFeedbackDelayComponent extends ToneComponent {
   connect(source){
     this.content.value.connect(source);
   }
-  receive(request){
+  execute(request){
     // unused, tone passes its own data
   }
   disconnect(){
     this.discontent.value.connect(source);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Boot
 const application = new Application();
@@ -266,7 +359,7 @@ const toneLibrary = new Library('tone-js');
 toneLibrary.register('player', TonePlayerComponent);
 toneLibrary.register('destination', ToneDestinationComponent);
 toneLibrary.register('distortion', ToneDistortionComponent);
-toneLibrary.register('feedback-delay', ToneFeedbackDelayComponent);
+toneLibrary.register('feedbackdelay', ToneFeedbackDelayComponent);
 
 modules.create(toneLibrary);
 application.create(modules);
@@ -292,14 +385,14 @@ project.load();
 {
   // EXAMPLE project.load
 
-  mainLocation.createModule('distortion1', 'tone-js/distortion',         {left: 100, top: 100}, {distortion: 0.4});
-  mainLocation.createModule('feedback-delay1', 'tone-js/feedback-delay', {left: 100, top: 200}, {delayTime:0.125, feedback:0.5});
-  mainLocation.createModule('destination1', 'tone-js/destination',       {left: 100, top: 300}, {});
-  mainLocation.createModule('player1',      'tone-js/player',            {left: 100, top: 400}, { url: "https://tonejs.github.io/audio/berklee/gurgling_theremin_1.mp3", loop: true, autostart: true, } );
+  mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 666, top: 333}, {distortion: 0.4});
+  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 666, top: 555}, {delayTime:0.125, feedback:0.5});
+  mainLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
+  mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: "https://tonejs.github.io/audio/berklee/gurgling_theremin_1.mp3", loop: true, autostart: true, } );
 
   mainLocation.createConnection('distortion1:out', 'destination1:in');
   mainLocation.createConnection('player1:out', 'distortion1:in');
-  mainLocation.createConnection('player1:out', 'feedback-delay1:in');
+  mainLocation.createConnection('player1:out', 'feedbackdelay1:in');
 
 }
 project.startup();

@@ -13,7 +13,7 @@ import Prompt from 'prompt';
 import Console from 'console';
 import Toolbar from 'toolbar';
 
-// REGISTRATION
+// WEB COMPONENT REGISTRATION
 
 // Structural
 customElements.define(`x-applicaion`, Application);
@@ -29,50 +29,54 @@ customElements.define(`x-toolbar`, Toolbar);
 customElements.define(`x-prompt`, Prompt);
 customElements.define(`x-console`, Console);
 
-
-
-
-
+// BRIDGE CLASS
+// it is a simple system that monitors selected scene:
+// start
+// watch
+// stop
+// addWebComponent
+// removeWebComponent
 
 export default class UI {
 
-  applicaion;
+  // PLEASE NOTE: UI is a class that goes on top of the server applicaion.
+  // on this level, web components have a .source that links back to the server data structure
 
-  xApplicaion;
-  xScene;
-
-  constructor(applicaion){
-    this.applicaion = applicaion;
+  source;
+  constructor(source){
+    this.source = source;
   }
 
   async start(){
+
+    // Create application, give it a scene and mount it.
+    this.application = document.createElement(`x-application`);
+    this.application.source = this.source;
+
+    this.scene = document.createElement(`x-scene`);
+    this.application.appendChild(this.scene);
+
     this.mountPoint = document.querySelector('.app');
-    this.xApplication = document.createElement(`x-application`);
-    this.xApplication.project = this.project;
-    this.xScene = document.createElement(`x-scene`);
-    this.xApplication.appendChild(this.xScene);
-    this.mountPoint.appendChild(this.xApplication);
-    this.xApplicaion.activeLocation.subscribe(v=>this.watch(v))
+    this.mountPoint.appendChild(this.application);
+
+    // monitor activeLocation in scene
+    this.source.activeLocation.subscribe(v=>this.watch(v))
   }
 
   removeWebComponent({id}){
-    this.xScene.getElementById(id).remove();
+    this.scene.getElementById(id).remove();
   }
 
-  addWebComponent(location){
-    const tagName = `x-${location.type}`;
+  addWebComponent(source){
+    const tagName = `x-${source.type}`;
     const component = document.createElement(tagName);
-    component.id = location.id;
-
-    // NOTE: here we inject server side project into uiser interface elements
-    component.project = this.project;
-
-    // NOTE: agent is transported here
-    component.agent = location.agent;
-
+    component.id = source.id;
+    component.source = source;
     // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
-    this.locationGarbageCollector = location.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
-    this.xApplication.querySelector('x-scene').appendChild(component);
+    this.locationGarbageCollector = source.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
+    this.scene.appendChild(component);
+    console.log('this.scene', this.scene.children);
+
     this.locationGarbageCollector = () => component.remove();
   }
 
@@ -81,20 +85,25 @@ export default class UI {
     this.collectGarbage();
   }
 
-
-
-
-  // =^o.O^= //
   watch(locationName){
+    if(!locationName) throw new Error('A watcher requires the name of a scene tp monitor')
+
     console.log(`Watching locationName: ${locationName}`)
+    // this.project.activeScene
     this.clearLocationGarbage()
 
     // MONITORING
-    this.locationGarbageCollector = this.project.watch('create', `/applicaion/main-project/${locationName}/*`, ({target})=> this.addWebComponent(target));
-    this.locationGarbageCollector = this.project.watch('delete', `/applicaion/main-project/${locationName}`, ({target})=> this.removeWebComponent(target));
+    this.locationGarbageCollector = this.source.watch('create', `main-project/${locationName}/*`, ({target})=> this.addWebComponent(target));
+    this.locationGarbageCollector = this.source.watch('delete', `main-project/${locationName}`, ({target})=> this.removeWebComponent(target));
 
     // INSTALLATION
-    const location = this.applicaion.get('project-main').get(locationName);
+    // const location = this.source.get(locationName);
+    console.info(locationName);
+    console.info(this.source.children);
+    console.info(this.source.get('main-project',   ));
+    console.info(this.source.get('main-project', locationName ));
+
+    const location = this.source.get('main-project', locationName);
     for(const child of location.children){
       this.addWebComponent(child)
     }
@@ -102,6 +111,15 @@ export default class UI {
 
   }
 
+
+
+
+
+
+
+
+  /// Internal
+  /////////////////////////////////////////////////////////////////////////////////////////////////
   // PER LOCATION GARBAGE
   #locationGarbage = [];
   clearLocationGarbage(){

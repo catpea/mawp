@@ -90,7 +90,7 @@ export default class Movable {
       this.finalCoordinate = { id: this.windowComponent.id, left: x, top: y };
 
       // WARN: you must use floating point numbers, otherwise motion is inaccurate
-      this.windowComponent.project.commander.windowMove(
+      this.windowComponent.source.root.commander.windowMove(
         { id: this.windowComponent.id, left: x, top: y }
       );
 

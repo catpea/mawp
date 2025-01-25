@@ -78,14 +78,17 @@ export default class Branch {
     return nodes;
   }
 
+  filter(f){
+    return this.children.filter(f);
+  }
 
   get(...path) {
-    if (this.children.length === 0) return null;
+    if (this.children.length === 0) throw new Error('Location is empty');
     const [currentId, ...remainingPath] = path;
     const node = this.children.find(child => child.id === currentId);
-    if (!node) return null;
+    if (!node) throw new Error('Failed to locate '+currentId);
     if (remainingPath.length === 0) return node;
-    return node.getNode(remainingPath);
+    return node.get(...remainingPath);
   }
 
   // PROPAGATING EMITTER SYSTEM //
