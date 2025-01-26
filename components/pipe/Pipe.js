@@ -44,13 +44,7 @@ export default class Pipe extends ReactiveHTMLElement {
   }
 
   connected() {
-    console.log('from', this.dataset2.get('from').value);
-    console.log('to', this.dataset2.get('to').value);
-    // console.log('pipe debug-delay', this.dataset2.get('debug-delay').value )
-    // this.gc = this.agent.on('rx', name=> console.log(`Pipe got data, should play animation for ${this.dataset2.get('debug-delay').value}ms.`) );
-
     this.gc = this.source.on('receive', () => this.activateMarble() );
-
 
     // PROCESS DEPENDENCIES
     const fromWindowStatusSignal = new Series(this.dataset2.get('from'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);

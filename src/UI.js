@@ -75,7 +75,6 @@ export default class UI {
     // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
     this.locationGarbageCollector = source.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
     this.scene.appendChild(component);
-    console.log('this.scene', this.scene.children);
 
     this.locationGarbageCollector = () => component.remove();
   }
@@ -97,12 +96,6 @@ export default class UI {
     this.locationGarbageCollector = this.source.watch('delete', `main-project/${locationName}`, ({target})=> this.removeWebComponent(target));
 
     // INSTALLATION
-    // const location = this.source.get(locationName);
-    console.info(locationName);
-    console.info(this.source.children);
-    console.info(this.source.get('main-project',   ));
-    console.info(this.source.get('main-project', locationName ));
-
     const location = this.source.get('main-project', locationName);
     for(const child of location.children){
       this.addWebComponent(child)

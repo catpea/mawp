@@ -11,17 +11,20 @@ import CONFIGURATION from 'configuration';
 
 class Application extends Branch {
 
-  Scene = Location;
-  Component = Component;
-  Connector = Connector;
-  // BasicAgent = StandardAgent;
-
   commander;
   activeLocation = new Signal('main');
 
   constructor(...a) {
     super(...a)
     this.commander = new Commander(this);
+  }
+
+  async start(){
+    this.all.filter(o=>o!==this).map(node=>node.start?node.start():null);
+  }
+
+  async stop(){
+    this.all.filter(o=>o!==this).map(node=>node.stop?node.stop():null);
   }
 
 }
@@ -37,17 +40,7 @@ class Project extends Branch {
     ///console.log('TODO...');
   }
 
-  async startup(){
-    // await Promise.all( this.all.filter(o=>o.onStart).map(o=>o.onStart()) )
-    // this.all.map(node=>node.emit('start'));
-    this.all.map(node=>node.start?node.start():null);
-  }
 
-  async shutdown(){
-    // await Promise.all(this.all.filter(o=>o.onStop).map(o=>o.onStop()))
-    // this.all.map(node => node.emit('stop'));
-    this.all.map(node=>node.stop?node.stop():null);
-  }
 
   // #commandModules = new Map();
   // async getAgent(scopedName = '@core/standard-agent'){
@@ -78,21 +71,10 @@ class Location extends Branch {
     component.type = 'window';
     // Assign options
     Object.entries(dataset).filter(([key,val])=>val).forEach(([key,val])=>component.dataset.set(key,val))
+    Object.entries(settings).filter(([key,val])=>val).forEach(([key,val])=>component.settings.set(key,val))
     // Add to stage
     this.create(component);
-    console.dir(this.children)
-    return component;
-  }
-
-  createComponent(id, options, agent = new StandardAgent()){
-    // Initialize important objects
-    const component = new Component(id);
-    component.agent = agent;
-    agent.id = 'agent-'+id;
-    // Assign options
-    Object.entries(options).filter(([key,val])=>val).forEach(([key,val])=>component.dataset.set(key,val))
-    // Add to stage
-    this.create(component);
+    // console.dir(this.children)
     return component;
   }
 
@@ -105,6 +87,8 @@ class Location extends Branch {
     connector.dataset.set('to', toAddress);
     // Add to stage
     this.create(connector);
+    connector.start(); // NOTE: this is a new component that has just been added, it must be manually started.
+
     return connector;
   }
 }
@@ -120,15 +104,6 @@ class Component extends Branch {
     super(id, 'window')
     this.dataset.set('port-in', true);
     this.dataset.set('port-out', true);
-  }
-
-  start(){
-    // this.agent.start();
-  }
-
-  stop(){
-    // this.agent.stop();
-    this.collectGarbage()
   }
 
   pipes(name){
@@ -163,31 +138,20 @@ class Connector extends Branch {
 
   start(){
 
-    // const address = this.dataset.get('from').value.split(':');
-    // const [fromId, port] = address;
-    // const [toId, toPort] = this.dataset.get('to').value.split(':');
-    // const source      = this.parent.get(fromId);
-    // const destination = this.parent.get(toId);
+    const address = this.dataset.get('from').value.split(':');
+    const [fromId, port] = address;
+    const [toId, toPort] = this.dataset.get('to').value.split(':');
+    const source      = this.parent.get(fromId);
+    const destination = this.parent.get(toId);
 
-    // if(!source.agent) throw new Error('Agent is always required');
-    // if(!destination.agent) throw new Error('Agent is always required');
-    // if(!this.agent) throw new Error('Agent is always required');
+    console.warn('Investigate time travel');
+    setTimeout(()=>{
+      if('connectSource' in destination) destination.connectSource(source);
+      if('connectDestination' in source) source.connectDestination(destination);
+    },1)
 
-    // if(CONFIGURATION.simulation.value === true){
-    //   this.gc = source.agent.on(`send:${port}`, (data, options)=>{
-    //     this.agent.receive(toPort, data, address, options); // start the ball (uses rate sensitive scheduler)
-    //     const scheduler = new Scheduler({ // schedule the arrival
-    //       rate: this.agent.rate,
-    //       duration: CONFIGURATION.flowDuration,
-    //       paused: CONFIGURATION.paused,
-    //       stop: ()=>destination.agent.receive(toPort, data, address, options),
-    //     });
-    //     this.gc = scheduler.start();
-    //   });
-    // }else{
-    //   this.gc = source.agent.on(`send:${port}`, (data, options)=>[destination.agent, this.agent].forEach(agent=>agent.receive(toPort, data, address, options)));
-    // }
   }
+
 
   /**
   * Pipe receive, when a pipe receives data, it passes it to the destination
@@ -217,6 +181,13 @@ class Connector extends Branch {
   }
 
   stop(){
+    const address = this.dataset.get('from').value.split(':');
+    const [fromId, port] = address;
+    const [toId, toPort] = this.dataset.get('to').value.split(':');
+    const source      = this.parent.get(fromId);
+    const destination = this.parent.get(toId);
+    if('disconnectSource' in destination) destination.disconnectSource(source);
+    if('disconnectDestination' in source) source.disconnectDestination(destination);
     this.collectGarbage()
   }
 }
@@ -259,76 +230,159 @@ class ToneComponent extends Component {
   Tone = Tone;
 }
 
+class ToneDestinationComponent extends ToneComponent {
+
+  connectable(req){
+    return req.source.content.value instanceof ToneComponent;
+  }
+
+  connectSource(source){
+    console.log('ToneDestinationComponent: connectSource', source)
+    source.content.value.toDestination()
+  }
+  disconnectSource(source){
+    this.Tone.disconnect(source.content.value);
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
 class TonePlayerComponent extends ToneComponent {
-  setup(){
+  start(){
+    console.warn('TonePlayerComponent Start')
     this.content.value = new this.Tone.Player(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
     return req.source.content.value instanceof ToneComponent;
   }
-  connect(source){
-    this.content.value.connect(source);
+  connectSource(source){
+    source.content.value.connect(this.content.value);
   }
-  execute(request){
-    // unused, tone passes its own data
-  }
-  disconnect(){
-    this.discontent.value.connect(source);
+  disconnectSource(source){
+    // this.Tone.disconnect(this.content.value, source.content.value);
+     this.Tone.disconnect(source.content.value, this.content.value);
   }
 }
-class ToneDestinationComponent extends ToneComponent {
-  setup(){
-    this.content.value = new this.Tone.Destination(this.settings.snapshot);
+
+
+
+
+
+
+
+
+
+class ToneSynthComponent extends ToneComponent {
+  start(){
+    this.content.value = new this.Tone.Synth(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
     return req.source.content.value instanceof ToneComponent;
   }
-  connect(source){
-    this.content.value.connect(source);
-  }
-  execute(request){
-    // unused, tone passes its own data
-  }
-  disconnect(){
-    this.discontent.value.connect(source);
-  }
+  // connectSource(source){
+  //   source.content.value.connect(this.content.value);
+  // }
+  // disconnectSource(source){
+  //   this.Tone.disconnect(source.content.value);
+  // }
 }
+
+
+
+
 class ToneDistortionComponent extends ToneComponent {
-  setup(){
+  start(){
+    console.log('Distortion Start!')
     this.content.value = new this.Tone.Distortion(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
     return req.source.content.value instanceof ToneComponent;
   }
-  connect(source){
-    this.content.value.connect(source);
+  connectSource(source){
+    source.content.value.connect(this.content.value);
   }
-  execute(request){
-    // unused, tone passes its own data
-  }
-  disconnect(){
-    this.discontent.value.connect(source);
+  disconnectSource(source){
+     this.Tone.disconnect(source.content.value, this.content.value);
+
   }
 }
+
+
+
+
+
 class ToneFeedbackDelayComponent extends ToneComponent {
-  setup(){
+  start(){
     this.content.value = new this.Tone.FeedbackDelay(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
     return req.source.content.value instanceof ToneComponent;
   }
-  connect(source){
-    this.content.value.connect(source);
+  connectSource(source){
+    source.content.value.connect(this.content.value);
   }
+  disconnectSource(source){
+     this.Tone.disconnect(source.content.value, this.content.value);
+
+  }
+}
+
+
+
+
+
+class TonePatternComponent extends ToneComponent {
+
+  connectable(req){
+    return req.source.content.value instanceof ToneComponent;
+  }
+
+  connectDestination(destination){ // when something is connected to you
+
+    const {values, pattern} = this.settings.snapshot;
+    this.content.value = new this.Tone.Pattern((time, note) => {
+      this.patternPayload(destination, time, note);
+    }, values, pattern);
+
+    this.content.value.start();
+    Tone.Transport.start();
+
+    console.log('Tone.Pattern: connectDestination',  destination.content.value)
+
+  }
+  patternPayload(destination, time, note){
+    if(this.content.value.state == 'stopped') return;
+      try{
+        destination.content.value.triggerAttackRelease(note, 0.1, time);
+      }catch(e){
+        console.info(e)
+      }
+  }
+
   execute(request){
     // unused, tone passes its own data
   }
-  disconnect(){
-    this.discontent.value.connect(source);
+  disconnectDestination(destination){
+    console.log('disconnectDestination', destination.id)
+    // this.content.value.cancel( Tone.now() );
+    // this.content.value.stop( Tone.now() );
+    this.content.value.stop(  );
+    console.log('disconnectDestination state:', this.content.value.state);
+
+     this.Tone.disconnect(destination.content.value, this.content.value);
+
   }
 }
 
@@ -340,13 +394,14 @@ class ToneFeedbackDelayComponent extends ToneComponent {
 
 
 
-
-
-
-
-
-
-
+class ToneLibrary extends Library {
+  start(){
+  document.body.addEventListener("mousedown", async () => {
+    await Tone.start();
+    console.log("audio is ready");
+  },true);
+  }
+}
 
 
 
@@ -355,11 +410,17 @@ const application = new Application();
 
 // Module Registration
 const modules = new Modules('modules');
-const toneLibrary = new Library('tone-js');
-toneLibrary.register('player', TonePlayerComponent);
+const toneLibrary = new ToneLibrary('tone-js');
+
 toneLibrary.register('destination', ToneDestinationComponent);
+
 toneLibrary.register('distortion', ToneDistortionComponent);
 toneLibrary.register('feedbackdelay', ToneFeedbackDelayComponent);
+
+toneLibrary.register('synth', ToneSynthComponent);
+toneLibrary.register('player', TonePlayerComponent);
+toneLibrary.register('pattern', TonePatternComponent);
+
 
 modules.create(toneLibrary);
 application.create(modules);
@@ -385,23 +446,27 @@ project.load();
 {
   // EXAMPLE project.load
 
-  mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 666, top: 333}, {distortion: 0.4});
-  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 666, top: 555}, {delayTime:0.125, feedback:0.5});
+  mainLocation.createModule('pattern1', 'tone-js/pattern',         {title:'pattern1', left: 66, top: 222}, {values:["C2", "D4", "E5", "A6"], pattern:"upDown",});
+  mainLocation.createModule('synth1', 'tone-js/synth',         {title:'synth1', left: 555, top: 222}, {values:["C2", "D4", "E5", "A6"], pattern:"upDown",});
+  // mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 888, top: 333}, {distortion: 0.4});
+  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:0.125, feedback:0.5});
   mainLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
-  mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: "https://tonejs.github.io/audio/berklee/gurgling_theremin_1.mp3", loop: true, autostart: true, } );
+  mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: "https://tonejs.github.io/audio/loop/chords.mp3", loop: true, autostart: true, } );
 
-  mainLocation.createConnection('distortion1:out', 'destination1:in');
-  mainLocation.createConnection('player1:out', 'distortion1:in');
-  mainLocation.createConnection('player1:out', 'feedbackdelay1:in');
+  // mainLocation.createConnection('pattern1:out', 'synth1:in');
+  mainLocation.createConnection('synth1:out', 'destination1:in');
+  // mainLocation.createConnection('distortion1:out', 'destination1:in');
+  // mainLocation.createConnection('player1:out', 'feedbackdelay1:in');
+  mainLocation.createConnection('feedbackdelay1:out', 'destination1:in');
 
 }
-project.startup();
 
 
 
 //////// UI ////////
 import UI from './src/UI.js';
 const ui = new UI(application);
+application.start();
 ui.start(); // WARN: must come after the tree has fully loaded, otherwise the watcher will begin adding nodes, that are yet to be loaded.
 console.log(`Startup at ${new Date().toISOString()}`);
 // window.addEventListener('beforeunload', function(event) {
