@@ -127,69 +127,117 @@ class Component extends Branch {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class DataRequest {
+  from = {id:null, port:null};
+  to = {id:null, port:null};
+  source = null;
+  destination = null;
+  constructor(context){
+    // TODO: unknown.. cache and make reactive...
+    Object.assign(this.from,
+      Object.fromEntries(
+        [context.dataset.get('from').value.split(':')].map( ([id,port])=>[['id',id],['port',port]]).flat()
+      )
+    );
+    Object.assign(this.to,
+      Object.fromEntries(
+        [context.dataset.get('to').value.split(':')].map( ([id,port])=>[['id',id],['port',port]]).flat()
+      )
+    );
+    this.source      = context.parent.get(this.from.id);
+    this.destination = context.parent.get(this.to.id);
+  }
+}
+
+class ConnectionRequest extends DataRequest {
+
+}
+class TransportationRequest extends DataRequest {
+  data = null;
+  options = null;
+  constructor(context, data, options){
+    super(context);
+    this.data = data;
+    this.options = options;
+  }
+}
 class Connector extends Branch {
+  #connectionRequest;
   rate = new Signal(1); // speed of transmitting signals
   health = new Signal('nominal'); // component health
-
   constructor(id) {
     super(id, 'pipe');
   }
 
-  start(){
-
-    const address = this.dataset.get('from').value.split(':');
-    const [fromId, port] = address;
-    const [toId, toPort] = this.dataset.get('to').value.split(':');
-    const source      = this.parent.get(fromId);
-    const destination = this.parent.get(toId);
-
-    console.warn('Investigate time travel');
-    setTimeout(()=>{
-      if('connectSource' in destination) destination.connectSource(source);
-      if('connectDestination' in source) source.connectDestination(destination);
-    }, 1)
-
-  }
-
-
   /**
   * Pipe receive, when a pipe receives data, it passes it to the destination
    */
-  // receive(port, data, address, options){
   receive(data, options){
-
-    const address = this.dataset.get('from').value.split(':');
-    const [fromId, port] = address;
-    const [toId, toPort] = this.dataset.get('to').value.split(':');
-    const source      = this.parent.get(fromId);
-    const destination = this.parent.get(toId);
-
-
+      const transportationRequest = new TransportationRequest(this, data, options);
       if(CONFIGURATION.simulation.value === true){
         const scheduler = new Scheduler({ // schedule the arrival
         rate: this.rate,
         duration: CONFIGURATION.flowDuration,
         paused: CONFIGURATION.paused,
-        stop: ()=>destination.receive(toPort, data, address, options),
+        stop: ()=>destination.receive(transportationRequest),
         });
         this.gc = scheduler.start();
-    }else{
-      destination.receive(toPort, data, address, options);
-    }
+      }else{
+        destination.receive(transportationRequest);
+      }
+  }
 
+
+  start(){
+    console.warn('Investigate time travel');
+    setTimeout(()=>{
+      this.#connectionRequest = new ConnectionRequest(this);
+      this.#connectionRequest.source.connect(this.#connectionRequest);
+    }, 1);
   }
 
   stop(){
-    const address = this.dataset.get('from').value.split(':');
-    const [fromId, port] = address;
-    const [toId, toPort] = this.dataset.get('to').value.split(':');
-    const source      = this.parent.get(fromId);
-    const destination = this.parent.get(toId);
-    if('disconnectSource' in destination) destination.disconnectSource(source);
-    if('disconnectDestination' in source) source.disconnectDestination(destination);
+    this.#connectionRequest.source.disconnect(this.#connectionRequest);
     this.collectGarbage()
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Modules extends Branch {
 
@@ -231,19 +279,13 @@ class ToneComponent extends Component {
 }
 
 class ToneDestinationComponent extends ToneComponent {
-
+  start(){
+    this.content.value = this.Tone.getDestination();
+    console.log('EEE ToneDestinationComponent',   this.content.value );
+  }
   connectable(req){
-    return req.source.content.value instanceof ToneComponent;
+    return req.destination instanceof ToneComponent;
   }
-
-  connectSource(source){
-    console.log('ToneDestinationComponent: connectSource', source)
-    source.content.value.toDestination()
-  }
-  disconnectSource(source){
-    this.Tone.disconnect(source.content.value);
-  }
-
 }
 
 
@@ -262,14 +304,13 @@ class TonePlayerComponent extends ToneComponent {
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
-    return req.source.content.value instanceof ToneComponent;
+    return req.destination instanceof ToneComponent;
   }
-  connectSource(source){
-    source.content.value.connect(this.content.value);
+  connect({destination}){
+    this.content.value.connect(destination.content.value)
   }
-  disconnectSource(source){
-    // this.Tone.disconnect(this.content.value, source.content.value);
-     this.Tone.disconnect(source.content.value, this.content.value);
+  disconnect({destination}){
+     this.Tone.disconnect(this.content.value, destination.content.value);
   }
 }
 
@@ -287,14 +328,14 @@ class ToneSynthComponent extends ToneComponent {
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
-    return req.source.content.value instanceof ToneComponent;
+    return req.destination instanceof ToneComponent;
   }
-  // connectSource(source){
-  //   source.content.value.connect(this.content.value);
-  // }
-  // disconnectSource(source){
-  //   this.Tone.disconnect(source.content.value);
-  // }
+  connect({destination}){
+    this.content.value.connect(destination.content.value)
+  }
+  disconnect({destination}){
+     this.Tone.disconnect(this.content.value, destination.content.value);
+  }
 }
 
 
@@ -307,14 +348,13 @@ class ToneDistortionComponent extends ToneComponent {
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
-    return req.source.content.value instanceof ToneComponent;
+    return req.destination instanceof ToneComponent;
   }
-  connectSource(source){
-    source.content.value.connect(this.content.value);
+  connect({destination}){
+    this.content.value.connect(destination.content.value)
   }
-  disconnectSource(source){
-     this.Tone.disconnect(source.content.value, this.content.value);
-
+  disconnect({destination}){
+     this.Tone.disconnect(this.content.value, destination.content.value);
   }
 }
 
@@ -328,14 +368,13 @@ class ToneFeedbackDelayComponent extends ToneComponent {
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
-    return req.source.content.value instanceof ToneComponent;
+    return req.destination instanceof ToneComponent;
   }
-  connectSource(source){
-    source.content.value.connect(this.content.value);
+  connect({destination}){
+    this.content.value.connect(destination.content.value)
   }
-  disconnectSource(source){
-     this.Tone.disconnect(source.content.value, this.content.value);
-
+  disconnect({destination}){
+     this.Tone.disconnect(this.content.value, destination.content.value);
   }
 }
 
@@ -347,10 +386,10 @@ class TonePatternComponent extends ToneComponent {
   l(...a){console.log(this.constructor.name, ...a)}
 
   connectable(req){
-    return req.source.content.value instanceof ToneComponent;
+    return req.destination instanceof ToneComponent;
   }
 
-  connectDestination(destination){ // when something is connected to you
+  connect({destination}){ // when something is connected to you
 
     // Prepare
     const {values, pattern} = this.settings.snapshot;
@@ -368,9 +407,10 @@ class TonePatternComponent extends ToneComponent {
     // unused, tone passes its own data
   }
 
-  disconnectDestination(destination){
+  disconnect({destination}){
     this.content.value.stop();
-    //WARNING: there is nothing to disconnect here, we are just feeding values up to destination
+    // WARNING: there is nothing to disconnect here,
+    // we are just feeding values up to destination, so we just stop doing so.
   }
 
   dispose(){
