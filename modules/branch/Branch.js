@@ -1,5 +1,7 @@
 import Dataset from 'dataset';
 import Signal from 'signal';
+import Settings from 'settings';
+import State from 'state';
 import guid from 'guid';
 
 export default class Branch {
@@ -8,12 +10,16 @@ export default class Branch {
   parent;
   children = [];
   content = new Signal();
+  content = new Signal();
+  content = new Signal();
 
   constructor(id, type) {
     this.initialize();
     this.id = id||guid();
     this.type = type||'node';
     this.dataset = new Dataset();
+    this.settings = new Settings();
+    this.state = new State();
   }
   // Second constructor
   initialize() { }
@@ -28,11 +34,15 @@ export default class Branch {
 
   remove(){
     this.stop();
+    this.dispose();
     this.parent.delete(this);
   }
 
   stop(){
-    this.collectGarbage();
+    this.collectGarbage(); // user should call collect garbage
+  }
+  dispose(){
+    // under user control
   }
 
   delete(node){

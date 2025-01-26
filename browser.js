@@ -74,7 +74,7 @@ class Location extends Branch {
     Object.entries(settings).filter(([key,val])=>val).forEach(([key,val])=>component.settings.set(key,val))
     // Add to stage
     this.create(component);
-    // console.dir(this.children)
+    // do not autostart, you are just creating, not starting - start is a different process, it can be triggered by commands or load scripts
     return component;
   }
 
@@ -87,8 +87,7 @@ class Location extends Branch {
     connector.dataset.set('to', toAddress);
     // Add to stage
     this.create(connector);
-    connector.start(); // NOTE: this is a new component that has just been added, it must be manually started.
-
+    // do not autostart, you are just creating, not starting - start is a different process, it can be triggered by commands or load scripts
     return connector;
   }
 }
@@ -148,7 +147,7 @@ class Connector extends Branch {
     setTimeout(()=>{
       if('connectSource' in destination) destination.connectSource(source);
       if('connectDestination' in source) source.connectDestination(destination);
-    },1)
+    }, 1)
 
   }
 
@@ -226,6 +225,7 @@ class Library extends Branch {
 
 
 import Tone from './extensions/tone/Tone.js';
+
 class ToneComponent extends Component {
   Tone = Tone;
 }
@@ -283,7 +283,7 @@ class TonePlayerComponent extends ToneComponent {
 
 class ToneSynthComponent extends ToneComponent {
   start(){
-    this.content.value = new this.Tone.Synth(this.settings.snapshot);
+    this.content.value = new this.Tone.PolySynth(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
   connectable(req){
@@ -344,6 +344,7 @@ class ToneFeedbackDelayComponent extends ToneComponent {
 
 
 class TonePatternComponent extends ToneComponent {
+  l(...a){console.log(this.constructor.name, ...a)}
 
   connectable(req){
     return req.source.content.value instanceof ToneComponent;
@@ -351,39 +352,31 @@ class TonePatternComponent extends ToneComponent {
 
   connectDestination(destination){ // when something is connected to you
 
+    // Prepare
     const {values, pattern} = this.settings.snapshot;
-    this.content.value = new this.Tone.Pattern((time, note) => {
-      this.patternPayload(destination, time, note);
-    }, values, pattern);
-
+    const callback = (time, note) => {
+      destination.content.value.triggerAttackRelease(note, 0.1, time);
+    };
+    // Create
+    if(!this.content.value) this.content.value = new this.Tone.Pattern(callback, values, pattern);
+    // Start
     this.content.value.start();
-    Tone.Transport.start();
-
-    console.log('Tone.Pattern: connectDestination',  destination.content.value)
-
   }
-  patternPayload(destination, time, note){
-    if(this.content.value.state == 'stopped') return;
-      try{
-        destination.content.value.triggerAttackRelease(note, 0.1, time);
-      }catch(e){
-        console.info(e)
-      }
-  }
+
 
   execute(request){
     // unused, tone passes its own data
   }
+
   disconnectDestination(destination){
-    console.log('disconnectDestination', destination.id)
-    // this.content.value.cancel( Tone.now() );
-    // this.content.value.stop( Tone.now() );
-    this.content.value.stop(  );
-    console.log('disconnectDestination state:', this.content.value.state);
-
-     this.Tone.disconnect(destination.content.value, this.content.value);
-
+    this.content.value.stop();
+    //WARNING: there is nothing to disconnect here, we are just feeding values up to destination
   }
+
+  dispose(){
+    this.content.value.dispose();
+  }
+
 }
 
 
@@ -396,11 +389,17 @@ class TonePatternComponent extends ToneComponent {
 
 class ToneLibrary extends Library {
   start(){
-  document.body.addEventListener("mousedown", async () => {
-    await Tone.start();
-    console.log("audio is ready");
-  },true);
-  }
+
+    const installTone = async () => {
+      // Tone.getTransport() returns the main timekeeper.
+      Tone.getTransport().start(); // All loops start when Transport is started
+      // Tone.getTransport().bpm.rampTo(800, 10); // ramp up to 800 bpm over 10 seconds
+      console.info("The main timekeeper has been:", Tone.getTransport().state);
+      document.body.removeEventListener("mousedown", installTone, true);
+    }
+    document.body.addEventListener("mousedown", installTone, true);
+
+  } // start
 }
 
 
@@ -446,18 +445,18 @@ project.load();
 {
   // EXAMPLE project.load
 
-  mainLocation.createModule('pattern1', 'tone-js/pattern',         {title:'pattern1', left: 66, top: 222}, {values:["C2", "D4", "E5", "A6"], pattern:"upDown",});
-  mainLocation.createModule('synth1', 'tone-js/synth',         {title:'synth1', left: 555, top: 222}, {values:["C2", "D4", "E5", "A6"], pattern:"upDown",});
+  mainLocation.createModule('pattern1', 'tone-js/pattern',         {title:'pattern1', left: 66, top: 222}, {values:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]], pattern:"upDown",});
+  mainLocation.createModule('synth1', 'tone-js/synth',         {title:'synth1', left: 555, top: 222}, {});
   // mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 888, top: 333}, {distortion: 0.4});
   mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:0.125, feedback:0.5});
   mainLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
   mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: "https://tonejs.github.io/audio/loop/chords.mp3", loop: true, autostart: true, } );
 
   // mainLocation.createConnection('pattern1:out', 'synth1:in');
-  mainLocation.createConnection('synth1:out', 'destination1:in');
+  mainLocation.createConnection('synth1:out', 'destination1:in', {autostart: false});
   // mainLocation.createConnection('distortion1:out', 'destination1:in');
   // mainLocation.createConnection('player1:out', 'feedbackdelay1:in');
-  mainLocation.createConnection('feedbackdelay1:out', 'destination1:in');
+  mainLocation.createConnection('feedbackdelay1:out', 'destination1:in', {autostart: false});
 
 }
 

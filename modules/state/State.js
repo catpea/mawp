@@ -1,4 +1,4 @@
-class Value {
+class Setting {
   #value;
   listeners;
   constructor(value) {
@@ -26,22 +26,26 @@ class Value {
   }
 }
 
-export default class State {
-  #snapshots = [];
-  #currentState;
+export default class Settings {
 
-  constructor(initialState = {}) {
-    this.#snapshots.push(JSON.stringify(initialState));
-    this.#currentState = initialState;
+  _data;
+  _types = new Map();
+  _groups = new Map();
+  _transformers = new Map([['Number',Number], ['String',String], ['Boolean',Boolean], ['URL',URL]]);
+
+  readOnly = false;
+
+  constructor(data = {}) {
+    this._data = data;
     this.listeners = [];
 
     return new Proxy(this, {
       set: (settings, key, value, proxy) => {
-        settings.set(key, value);
+        return settings.set(key, value);
       },
       get: (settings, key, value, proxy) => {
         if (key in settings) return settings[key];
-        return settings.get( key ).value; //NOTE: returning .value
+        return settings.retrieve( key ); //NOTE: returning .value
       },
     });
 
@@ -49,33 +53,99 @@ export default class State {
 
   // PUBLIC
 
-  get state(){
-    return this.#currentState;
+  /**
+   * Registers datatype sassociated with the specified key.
+   * @example
+   * settings.types = 'address:URL';
+   * @example
+   * settings.types = 'active:Boolean age:Number';
+   * @example
+   * settings.types = [['active','Boolean], ['age'],[Number]];
+   */
+  types(input){
+    console.log( 'XXXX set types', input);
+
+    if (typeof input === 'string') input = input.split(' ').map(o=>o.split(':')) //.map(([name, type])=>[type,this.#transformers[type]?this.#transformers[type]:null])); // convert 'a:string b:number' to [['a',String],['b',Number]]
+  console.log( 'XXXX set types 2', input);
+
+    for( const [name, type] of input ) {
+      console.log( 'XXXX FOR set types', name, type);
+
+      this._types.set(name, type);
+    }
+  }
+  type(key){
+    console.log(this._types, key, this._types.get(key));
+    return this._types.get(key);
+  }
+  /**
+   * Registers groups associated with the specified keys.
+   * @example
+   * settings.group('user', 'delay interval');
+   * @return {Set<string>} List of members in the group
+   */
+  group(name, members){
+
+    if(members){ // INITIALIZE WRITER
+      if (typeof members === 'string') members = members.split(' ');
+      const group = new Set(members);
+      this._groups.set(name, group);
+    }
+
+    return this._groups.get(name) || [];
+  }
+
+  /**
+   * Retrieves the value associated with the specified key, applying type transformations if specified.
+   * @param {string} key - The key of the setting to retrieve.
+   * @returns {*} The value of the setting, possibly transformed according to its type.
+   */
+  retrieve(key){
+    const value = this.get(key).value;
+
+    const type = this._types.get(key);
+    console.info('XXXXXX retrieve type =', type, )
+    if(!type) return value;
+    const transform = this._transformers.get(type);
+    console.info('XXXXXX retrieve transform', transform)
+    if(!transform) return value;
+
+    console.info('XXXXXX retrieve', type, transform, transform(value), key,  value)
+
+    return transform(value);
   }
 
   set(key, value) {
-    if (key in this.#currentState) {
-      if (this.#currentState[key].value == value) return;
-      this.#currentState[key].value = value;
+    if (this.readOnly) throw new Error("Dataset is read only.");
+    if (key in this._data) {
+      if (this._data[key].value == value) return;
+      this._data[key].value = value;
     } else {
-      this.#currentState[key] = new Value(value);
+      this._data[key] = new Setting(value);
     }
-    this.#notify(key, value);
-    return this.#currentState[key];
+    this.notify(key, value);
+    return true;
   }
 
   get(key) {
-    if (key in this.#currentState) {
-      return this.#currentState[key];
+    if (key in this._data) {
+      return this._data[key];
     } else {
-      this.#currentState[key] = new Value();
-      return this.#currentState[key];
+      this._data[key] = new Setting();
+      return this._data[key];
     }
+  }
+  keys(){
+    return Object.keys(this._data);
+  }
+
+  get snapshot(){
+    return Object.fromEntries( this.keys().map(key=> [key, this.retrieve(key)]) );
   }
 
   subscribe(listener) {
     this.listeners.push(listener);
-    for (const [key, value] of Object.entries(this.#currentState)) {
+    for (const [key, value] of Object.entries(this._data)) {
       listener(key, value.value); // NOTE: we are storing signals here
     }
     return () => this.unsubscribe(listener);
@@ -85,20 +155,9 @@ export default class State {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
 
-  snapshot(){
-    this.#snapshots.push(JSON.stringify(this.#currentState));
-  }
-  reset(){
-    this.#currentState = JSON.parse(this.#snapshots[0]);
-    this.#snapshots.splice(1);
-  }
-  undo(){
-    this.#currentState = JSON.parse(this.#snapshots.pop());
-  }
-
   // INTERNAL
 
-  #notify(key, value) {
+  notify(key, value) {
     //NOTE: notify sends in its own value which is not a signal
     this.listeners.forEach((listener) => listener(key, value));
   }
