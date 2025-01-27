@@ -176,7 +176,7 @@ export default class Connectable {
       // NOTE: using element.id, not dataset or cutom property
       const fromActor = this.portComponent.window;
       const fromValve = this.portComponent;
-      const from = [fromActor.id, fromValve.id.replace(/^port-/,'')].join(':');
+      const from = [fromActor.id, fromValve.id].join(':');
       //console.log({from});
 
       if (!fromActor) {
@@ -197,7 +197,7 @@ export default class Connectable {
         // did not detect a vale in the composed path.
         return;
       }
-      const to = [toActor.id, toValve.id.replace(/^port-/,'')].join(':');
+      const to = [toActor.id, toValve.id].join(':');
       //console.log({to});
 
 

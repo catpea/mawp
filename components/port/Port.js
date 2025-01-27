@@ -37,7 +37,7 @@ export default class Port extends HTMLElement {
       this.gc = connectable.start();
 
       // UPDATE PORT ID
-      this.dataset2.get('name').subscribe(v => portSticker.id = `port-${v}`);
+      this.dataset2.get('name').subscribe(v => portSticker.id = v);
       this.dataset2.get('title').subscribe(v => portLabel.textContent = v);
 
       // UPDATE START/END POSITION

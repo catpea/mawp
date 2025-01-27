@@ -65,12 +65,12 @@ export default class Window extends ReactiveHTMLElement {
 
     this.dataset2.get('port-in').subscribe(portEnabled => {
       if(portEnabled == 'true'){  console.log('FFF', {portEnabled})
-        const portNode = lol['x-port']({ id: `port-in`, dataset:{title:'In', side: 'start', icon: 'circle'} });
+        const portNode = lol['x-port']({ id: `in`, dataset:{title:'In', side: 'start', icon: 'circle'} });
         iolistItem.classList.remove('d-none');
         iolistItem.appendChild(portNode)
       }else{
-        console.log('FFF', iolistItem.querySelector('#port-in'))
-        const portNode = iolistItem.querySelector('#port-in');
+        console.log('FFF', iolistItem.querySelector('#in'))
+        const portNode = iolistItem.querySelector('#in');
         if(portNode) portNode.remove()
         if(listGroup.children.length === 0) listGroup.classList.add('d-none');
       }
@@ -78,12 +78,12 @@ export default class Window extends ReactiveHTMLElement {
     this.dataset2.get('port-out').subscribe(portEnabled => {
       console.log('FFF', {portEnabled})
       if(portEnabled == 'true'){
-        const portNode = lol['x-port']({ id: `port-out`, dataset:{title:'Out', side: 'end', icon: 'circle'} });
+        const portNode = lol['x-port']({ id: `out`, dataset:{title:'Out', side: 'end', icon: 'circle'} });
         iolistItem.classList.remove('d-none');
         iolistItem.appendChild(portNode)
       }else{
-        console.log('FFF', iolistItem.querySelector('#port-out'))
-        const portNode = iolistItem.querySelector('#port-out');
+        console.log('FFF', iolistItem.querySelector('#out'))
+        const portNode = iolistItem.querySelector('#out');
         if(portNode) portNode.remove()
         if(listGroup.children.length === 0) listGroup.classList.add('d-none');
       }
@@ -91,7 +91,7 @@ export default class Window extends ReactiveHTMLElement {
 
     for (const [key, data] of this.source.channels) {
       const dataset = Object.assign({ title:key, side: 'in', icon: 'circle' }, data.value)
-      const portNode = lol['x-port']({ id: `port-${key}`, dataset});
+      const portNode = lol['x-port']({ id: key, dataset});
       iolistItem.classList.remove('d-none');
       iolistItem.appendChild(portNode)
     }
@@ -105,7 +105,7 @@ export default class Window extends ReactiveHTMLElement {
       if(reference) cardHeader.appendChild(lol.i({ name:'open-referenced-scene' ,class:'bi bi-arrow-right-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
       const referencedScene = this.application.source.get(reference);
       for( const element of referencedScene.children.filter(child=>child.dataset.get('incoming').value ) ){
-        const portNode = lol['x-port']({ id: `port-${element.id}`, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
+        const portNode = lol['x-port']({ id: element.id, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
         const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
         listGroup.appendChild(listItem)
       }
@@ -130,7 +130,7 @@ export default class Window extends ReactiveHTMLElement {
       for (const keyName of this.source.settings.group('user')){
         const keyType = this.source.settings.type(keyName);
         const valueSignal = this.source.settings.get(keyName);
-        const portNode = lol['x-port']({ id: `port-${keyName}`, dataset:{title:`${keyName}:${keyType}`, side: 'start', icon: 'box-arrow-in-right'} });
+        const portNode = lol['x-port']({ id: keyName, dataset:{title:`${keyName}:${keyType}`, side: 'start', icon: 'box-arrow-in-right'} });
         const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
         listGroup.appendChild(listItem)
       }
@@ -195,7 +195,7 @@ export default class Window extends ReactiveHTMLElement {
   }
 
   getPortElement(id) {
-    return this.shadowRoot.querySelector(`#port-${id}`);
+    return this.shadowRoot.getElementById(id);
   }
   changePortStyle(portId, newStyle){
     const portElement = this.getPortElement(portId);
