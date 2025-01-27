@@ -111,9 +111,10 @@ class Component extends Branch {
     return this.parent.filter(o=>o.type==='pipe'&&o.dataset.get('from').value===this.id + ':' + name);
   }
 
-  connectable(source){
+  connectable(){
+    return true; //TODO: this should be false by default
   }
-  connect(source){
+  connect(){
   }
   receive(port, data, address, options){
     this.emit('receive', port, data, address, options) // asap as data is received, (ex. trigger the ball rolling)
@@ -207,13 +208,23 @@ class Connector extends Branch {
   start(){
     console.warn('Investigate time travel');
     setTimeout(()=>{
-      this.#connectionRequest = new ConnectionRequest(this);
-      this.#connectionRequest.source.connect(this.#connectionRequest);
+      const request = new ConnectionRequest(this);
+      const isConnectable = request.source.connectable(request);
+
+      if(isConnectable){
+        //NOTE: if request is denied, it is not stored so that stop is not called.
+        request.source.connect(request);
+        this.#connectionRequest = request;
+      }else{
+        console.warn('NOT CONNECTABLE!');
+        this.remove()
+      }
+
     }, 1);
   }
 
   stop(){
-    this.#connectionRequest.source.disconnect(this.#connectionRequest);
+    if(this.#connectionRequest) this.#connectionRequest.source.disconnect(this.#connectionRequest);
     this.collectGarbage()
   }
 }
@@ -284,16 +295,14 @@ class ToneDestinationComponent extends ToneComponent {
 
   initialize() {
     super.initialize()
-    this.channels.set('in', {icon: 'soundwave'});
+    this.channels.set('in', {icon: 'megaphone'});
   }
 
   start(){
     this.content.value = this.Tone.getDestination();
     console.log('EEE ToneDestinationComponent',   this.content.value );
   }
-  connectable(req){
-    return req.destination instanceof ToneComponent;
-  }
+
 }
 
 
@@ -316,8 +325,11 @@ class TonePlayerComponent extends ToneComponent {
     this.content.value = new this.Tone.Player(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
-  connectable(req){
-    return req.destination instanceof ToneComponent;
+  connectable({from, source, to, destination}){
+    // WARNING: VERY BASIC TEST
+    const isCorrectInstance = destination instanceof ToneComponent;
+    const isCompatiblePorts = ((to.port==from.port)||(from.port=='out'&&to.port=='in'));
+    return [isCorrectInstance,isCompatiblePorts].every(o=>o);
   }
   connect({destination}){
     this.content.value.connect(destination.content.value)
@@ -345,8 +357,11 @@ class ToneSynthComponent extends ToneComponent {
     this.content.value = new this.Tone.PolySynth(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
-  connectable(req){
-    return req.destination instanceof ToneComponent;
+  connectable({from, source, to, destination}){
+    // WARNING: VERY BASIC TEST
+    const isCorrectInstance = destination instanceof ToneComponent;
+    const isCompatiblePorts = ((to.port==from.port)||(from.port=='out'&&to.port=='in'));
+    return [isCorrectInstance,isCompatiblePorts].every(o=>o);
   }
   connect({destination}){
     this.content.value.connect(destination.content.value)
@@ -372,8 +387,11 @@ class ToneDistortionComponent extends ToneComponent {
     this.content.value = new this.Tone.Distortion(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
-  connectable(req){
-    return req.destination instanceof ToneComponent;
+  connectable({from, source, to, destination}){
+    // WARNING: VERY BASIC TEST
+    const isCorrectInstance = destination instanceof ToneComponent;
+    const isCompatiblePorts = ((to.port==from.port)||(from.port=='out'&&to.port=='in'));
+    return [isCorrectInstance,isCompatiblePorts].every(o=>o);
   }
   connect({destination}){
     this.content.value.connect(destination.content.value)
@@ -398,8 +416,11 @@ class ToneFeedbackDelayComponent extends ToneComponent {
     this.content.value = new this.Tone.FeedbackDelay(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
   }
-  connectable(req){
-    return req.destination instanceof ToneComponent;
+  connectable({from, source, to, destination}){
+    // WARNING: VERY BASIC TEST
+    const isCorrectInstance = destination instanceof ToneComponent;
+    const isCompatiblePorts = ((to.port==from.port)||(from.port=='out'&&to.port=='in'));
+    return [isCorrectInstance,isCompatiblePorts].every(o=>o);
   }
   connect({destination}){
     this.content.value.connect(destination.content.value)
@@ -418,12 +439,14 @@ class TonePatternComponent extends ToneComponent {
   initialize() {
     super.initialize()
     this.channels.set('events', {side:'out', icon:'music-note'});
-    this.channels.set('debug', {side:'out', icon:'bug'});
     this.settings.types('values:Array pattern:String');
 
   }
-  connectable(req){
-    return req.destination instanceof ToneComponent;
+  connectable({from, source, to, destination}){
+    // WARNING: VERY BASIC TEST
+    const isCorrectInstance = destination instanceof ToneComponent;
+    const isCompatiblePorts = ((to.port==from.port)||(from.port=='out'&&to.port=='in'));
+    return [isCorrectInstance,isCompatiblePorts].every(o=>o);
   }
 
   connect({destination}){ // when something is connected to you
@@ -445,7 +468,8 @@ class TonePatternComponent extends ToneComponent {
   }
 
   disconnect({destination}){
-    this.content.value.stop();
+    // if( this.content?.value)
+      this.content.value.stop();
     // WARNING: there is nothing to disconnect here,
     // we are just feeding values up to destination, so we just stop doing so.
   }

@@ -3,7 +3,7 @@ MAWP
 
 ## TODO
 
--receive function
+- receive function
 - resize windows
 - "lol" library, on has no garbage collection
 - clear selection on scene change
