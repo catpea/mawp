@@ -60,43 +60,29 @@ export default class Window extends ReactiveHTMLElement {
     this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
 
     // CREATE STANDARD PORTS
-    const iolistItem = lol.li({class:'list-group-item bg-transparent d-none'});
-    listGroup.appendChild(iolistItem);
-
-    this.dataset2.get('port-in').subscribe(portEnabled => {
-      if(portEnabled == 'true'){  console.log('FFF', {portEnabled})
-        const portNode = lol['x-port']({ id: `in`, dataset:{title:'In', side: 'start', icon: 'circle'} });
-        iolistItem.classList.remove('d-none');
+    // IN AND OUT PORTS, special handling required
+    const ioPortMap = this.source.channels.filter(([name])=>name=='in'||name=='out');
+    if(ioPortMap.length){
+      // NOTE: in/out ports share a lingle list-group-item
+      const iolistItem = lol.li({class:'list-group-item bg-transparent'});
+      listGroup.appendChild(iolistItem);
+      for (const [key, data] of ioPortMap) {
+        const dataset = Object.assign({ title:key, side: 'in', icon: 'circle', style:'data' }, data.value)
+        const portNode = lol['x-port']({ id: key, dataset});
         iolistItem.appendChild(portNode)
-      }else{
-        console.log('FFF', iolistItem.querySelector('#in'))
-        const portNode = iolistItem.querySelector('#in');
-        if(portNode) portNode.remove()
-        if(listGroup.children.length === 0) listGroup.classList.add('d-none');
       }
-    });
-    this.dataset2.get('port-out').subscribe(portEnabled => {
-      console.log('FFF', {portEnabled})
-      if(portEnabled == 'true'){
-        const portNode = lol['x-port']({ id: `out`, dataset:{title:'Out', side: 'end', icon: 'circle'} });
-        iolistItem.classList.remove('d-none');
-        iolistItem.appendChild(portNode)
-      }else{
-        console.log('FFF', iolistItem.querySelector('#out'))
-        const portNode = iolistItem.querySelector('#out');
-        if(portNode) portNode.remove()
-        if(listGroup.children.length === 0) listGroup.classList.add('d-none');
-      }
-    });
+    }
 
-    for (const [key, data] of this.source.channels) {
-      const dataset = Object.assign({ title:key, side: 'in', icon: 'circle' }, data.value)
+    for (const [key, data] of this.source.channels.filter(([name])=>name!=='in'&&name!=='out')) {
+      const iolistItem = lol.li({class:'list-group-item bg-transparent'});
+      listGroup.appendChild(iolistItem);
+      const dataset = Object.assign({ title:key, side: 'in', icon: 'circle', style:'event' }, data.value)
       const portNode = lol['x-port']({ id: key, dataset});
-      iolistItem.classList.remove('d-none');
       iolistItem.appendChild(portNode)
     }
-    this.gc = this.source.channels.subscribe((channel, channelConfiguration) => {
 
+    this.gc = this.source.channels.subscribe((channel, channelConfiguration) => {
+      console.warn('Channel update has been ignored', {channel, channelConfiguration})
     });
 
     // ADD PIPES FROM REFERENCED SCENE
@@ -111,9 +97,6 @@ export default class Window extends ReactiveHTMLElement {
       }
     });
 
-    // ADD AGENT SETTINGS
-    //
-    if(1){
       // CONNECT WITH AGENT, the agent is unaware of existence of UI, but we can monitor its signals.
       this.gc = this.source.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
       const flash = (port, indicator, normal) => {
@@ -123,18 +106,18 @@ export default class Window extends ReactiveHTMLElement {
       this.gc = this.source.on('receive', name=>flash(name, 'warning', 'primary'));
       this.gc = this.source.on('send', name=>flash(name, 'info', 'primary'));
 
-
-    }
-    if(1){
-
-      for (const keyName of this.source.settings.group('user')){
+      for (const [keyName, data] of this.source.settings ){
         const keyType = this.source.settings.type(keyName);
         const valueSignal = this.source.settings.get(keyName);
-        const portNode = lol['x-port']({ id: keyName, dataset:{title:`${keyName}:${keyType}`, side: 'start', icon: 'box-arrow-in-right'} });
+
+        console.log('THIS.SOURCE.SETTINGS', keyName, keyType, valueSignal);
+        const dataset = Object.assign({ title:`${keyName}:${keyType}`, side: 'in', icon: 'key', style:'setting' }, valueSignal);
+
+        const portNode = lol['x-port']({ id: keyName, dataset });
+        // const portNode = lol['span']({ id: keyName, textContent:`${keyName}:${keyType}`  });
         const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
         listGroup.appendChild(listItem)
       }
-    };
 
     // TOOLBAR BUTTONS
     cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))

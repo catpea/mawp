@@ -139,6 +139,9 @@ export default class List {
     values() {
       return [...this._data.values()];
     }
+    filter(f){
+      return [...this._data].filter(f);
+    }
 
     get snapshot() {
       const entries = [...this._data.entries()].map(([key, setting]) => [key, this.retrieve(key)]);

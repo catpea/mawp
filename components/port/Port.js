@@ -134,6 +134,10 @@ export default class Port extends HTMLElement {
 
 class CardStyles {
   static styles = {
+    'data': ['text-bg-primary'],
+    'event': ['text-bg-success'],
+    'setting': ['text-bg-info'],
+
     'solid-primary': ['text-bg-primary'],
     'solid-secondary': ['text-bg-secondary'],
     'solid-success': ['text-bg-success'],

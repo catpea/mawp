@@ -309,6 +309,7 @@ class TonePlayerComponent extends ToneComponent {
   initialize() {
     super.initialize()
     this.channels.set('out', {side:'out', icon: 'soundwave'});
+    this.settings.types('url:String loop:Boolean autostart:Boolean');
   }
   start(){
     console.warn('TonePlayerComponent Start')
@@ -363,6 +364,8 @@ class ToneDistortionComponent extends ToneComponent {
     super.initialize()
     this.channels.set('in', {icon: 'soundwave'});
     this.channels.set('out', {side:'out', icon: 'soundwave'});
+    this.settings.types('distortion:Float');
+
   }
   start(){
     console.log('Distortion Start!')
@@ -389,6 +392,7 @@ class ToneFeedbackDelayComponent extends ToneComponent {
     super.initialize()
     this.channels.set('in', {icon: 'soundwave'});
     this.channels.set('out', {side:'out', icon: 'soundwave'});
+    this.settings.types('delayTime:String feedback:Number');
   }
   start(){
     this.content.value = new this.Tone.FeedbackDelay(this.settings.snapshot);
@@ -414,6 +418,9 @@ class TonePatternComponent extends ToneComponent {
   initialize() {
     super.initialize()
     this.channels.set('events', {side:'out', icon:'music-note'});
+    this.channels.set('debug', {side:'out', icon:'bug'});
+    this.settings.types('values:Array pattern:String');
+
   }
   connectable(req){
     return req.destination instanceof ToneComponent;
