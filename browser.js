@@ -3,6 +3,7 @@ import Branch from 'branch';
 import Commander from 'commander';
 import Scheduler from 'scheduler';
 
+import List from 'list';
 import Setings from 'settings';
 import State from 'state';
 
@@ -95,14 +96,15 @@ class Location extends Branch {
 
 class Component extends Branch {
   rate = new Signal(1); // speed of emitting signals
-  settings = new Setings();
   health = new Signal('nominal'); // component health
 
 
   constructor(id) {
     super(id, 'window')
-    this.dataset.set('port-in', true);
-    this.dataset.set('port-out', true);
+  }
+
+  initialize(){
+    this.channels = new List();
   }
 
   pipes(name){
@@ -279,6 +281,12 @@ class ToneComponent extends Component {
 }
 
 class ToneDestinationComponent extends ToneComponent {
+
+  initialize() {
+    super.initialize()
+    this.channels.set('in', {icon: 'soundwave'});
+  }
+
   start(){
     this.content.value = this.Tone.getDestination();
     console.log('EEE ToneDestinationComponent',   this.content.value );
@@ -298,6 +306,10 @@ class ToneDestinationComponent extends ToneComponent {
 
 
 class TonePlayerComponent extends ToneComponent {
+  initialize() {
+    super.initialize()
+    this.channels.set('out', {side:'out', icon: 'soundwave'});
+  }
   start(){
     console.warn('TonePlayerComponent Start')
     this.content.value = new this.Tone.Player(this.settings.snapshot);
@@ -323,6 +335,11 @@ class TonePlayerComponent extends ToneComponent {
 
 
 class ToneSynthComponent extends ToneComponent {
+  initialize() {
+    super.initialize()
+    this.channels.set('out', {side:'out', icon: 'soundwave'});
+    this.channels.set('events', {allow: (o)=> o instanceof this.tone.ToneEvent, icon:'music-note' });
+  }
   start(){
     this.content.value = new this.Tone.PolySynth(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
@@ -342,6 +359,11 @@ class ToneSynthComponent extends ToneComponent {
 
 
 class ToneDistortionComponent extends ToneComponent {
+  initialize() {
+    super.initialize()
+    this.channels.set('in', {icon: 'soundwave'});
+    this.channels.set('out', {side:'out', icon: 'soundwave'});
+  }
   start(){
     console.log('Distortion Start!')
     this.content.value = new this.Tone.Distortion(this.settings.snapshot);
@@ -363,6 +385,11 @@ class ToneDistortionComponent extends ToneComponent {
 
 
 class ToneFeedbackDelayComponent extends ToneComponent {
+  initialize() {
+    super.initialize()
+    this.channels.set('in', {icon: 'soundwave'});
+    this.channels.set('out', {side:'out', icon: 'soundwave'});
+  }
   start(){
     this.content.value = new this.Tone.FeedbackDelay(this.settings.snapshot);
     this.gc = this.settings.subscribe(()=>this.content.value.set(this.settings.snapshot));
@@ -384,7 +411,10 @@ class ToneFeedbackDelayComponent extends ToneComponent {
 
 class TonePatternComponent extends ToneComponent {
   l(...a){console.log(this.constructor.name, ...a)}
-
+  initialize() {
+    super.initialize()
+    this.channels.set('events', {side:'out', icon:'music-note'});
+  }
   connectable(req){
     return req.destination instanceof ToneComponent;
   }
@@ -485,9 +515,9 @@ project.load();
 {
   // EXAMPLE project.load
 
-  mainLocation.createModule('pattern1', 'tone-js/pattern',         {title:'pattern1', left: 66, top: 222}, {values:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]], pattern:"upDown",});
-  mainLocation.createModule('synth1', 'tone-js/synth',         {title:'synth1', left: 555, top: 222}, {});
-  // mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 888, top: 333}, {distortion: 0.4});
+  mainLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]], pattern:"upDown",});
+  mainLocation.createModule('synth1', 'tone-js/synth',                   {title:'synth1', left: 555, top: 222}, {});
+  mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 1111, top: 666}, {distortion: 0.2});
   mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:0.125, feedback:0.5});
   mainLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
   mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: "https://tonejs.github.io/audio/loop/chords.mp3", loop: true, autostart: true, } );

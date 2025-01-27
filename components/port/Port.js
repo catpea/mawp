@@ -42,7 +42,7 @@ export default class Port extends HTMLElement {
 
       // UPDATE START/END POSITION
       this.dataset2.get('side').subscribe(v => {
-        if (v === 'start') {
+        if (v === 'in') {
           portLabel.classList.remove('float-end');
           portLabel.classList.add('float-start');
           portSticker.classList.remove('start-100')

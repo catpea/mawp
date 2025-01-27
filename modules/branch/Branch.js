@@ -14,13 +14,16 @@ export default class Branch {
   content = new Signal();
 
   constructor(id, type) {
-    this.initialize();
     this.id = id||guid();
     this.type = type||'node';
     this.dataset = new Dataset();
     this.settings = new Settings();
     this.state = new State();
+
+    this.initialize();
+
   }
+
   // Second constructor
   initialize() { }
 

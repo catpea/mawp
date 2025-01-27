@@ -62,19 +62,41 @@ export default class Window extends ReactiveHTMLElement {
     // CREATE STANDARD PORTS
     const iolistItem = lol.li({class:'list-group-item bg-transparent d-none'});
     listGroup.appendChild(iolistItem);
+
     this.dataset2.get('port-in').subscribe(portEnabled => {
-      if(portEnabled == 'true'){
+      if(portEnabled == 'true'){  console.log('FFF', {portEnabled})
         const portNode = lol['x-port']({ id: `port-in`, dataset:{title:'In', side: 'start', icon: 'circle'} });
         iolistItem.classList.remove('d-none');
         iolistItem.appendChild(portNode)
+      }else{
+        console.log('FFF', iolistItem.querySelector('#port-in'))
+        const portNode = iolistItem.querySelector('#port-in');
+        if(portNode) portNode.remove()
+        if(listGroup.children.length === 0) listGroup.classList.add('d-none');
       }
     });
     this.dataset2.get('port-out').subscribe(portEnabled => {
+      console.log('FFF', {portEnabled})
       if(portEnabled == 'true'){
         const portNode = lol['x-port']({ id: `port-out`, dataset:{title:'Out', side: 'end', icon: 'circle'} });
         iolistItem.classList.remove('d-none');
         iolistItem.appendChild(portNode)
+      }else{
+        console.log('FFF', iolistItem.querySelector('#port-out'))
+        const portNode = iolistItem.querySelector('#port-out');
+        if(portNode) portNode.remove()
+        if(listGroup.children.length === 0) listGroup.classList.add('d-none');
       }
+    });
+
+    for (const [key, data] of this.source.channels) {
+      const dataset = Object.assign({ title:key, side: 'in', icon: 'circle' }, data.value)
+      const portNode = lol['x-port']({ id: `port-${key}`, dataset});
+      iolistItem.classList.remove('d-none');
+      iolistItem.appendChild(portNode)
+    }
+    this.gc = this.source.channels.subscribe((channel, channelConfiguration) => {
+
     });
 
     // ADD PIPES FROM REFERENCED SCENE
