@@ -1,6 +1,6 @@
 import Dataset from 'dataset';
 import Signal from 'signal';
-import List from 'list';
+import Signals from 'signals';
 import State from 'state';
 import guid from 'guid';
 
@@ -17,7 +17,7 @@ export default class Branch {
     this.id = id||guid();
     this.type = type||'node';
     this.dataset = new Dataset();
-    this.settings = new List();
+    this.settings = new Signals();
     this.state = new State();
 
     this.initialize();
