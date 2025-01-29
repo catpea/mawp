@@ -546,7 +546,7 @@ project.load();
   mainLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:{type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{type:'Enum', options:[{value:'upDown', textContent:'upDown'}, {value:'downUp', textContent:'downUp'}], data:"upDown"},});
   mainLocation.createModule('synth1', 'tone-js/synth',                   {title:'synth1', left: 555, top: 222}, {});
   mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 1111, top: 666}, {distortion: {type:'Float', data:0.2, min:0, max:1, step:0.1}});
-  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:{data:0.125}, feedback:{data:0.5}});
+  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:{type:'Float', data:0.125}, feedback:{type:'Float', data:0.5}});
   mainLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
   mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: {type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {type:'Boolean', data:true}, autostart: {type:'Boolean', data:true}, } );
 

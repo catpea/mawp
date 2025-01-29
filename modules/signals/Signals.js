@@ -86,6 +86,8 @@ export default class Signals {
     return result;
   }
 
+
+
   set(path, value) {
     const { object, property, depth } = this.lookup(path);
 
@@ -182,7 +184,13 @@ export default class Signals {
     console.log('getData response', response);
     return response;
   }
-
+  getList() {
+    const response1 =  Object.entries(this.data.value);
+    console.log('WWW test', response1);
+    const response =  Object.entries(this.data.value).map(([k,v])=>[k,v]) ;
+    console.log('WWW response', response);
+    return response;
+  }
   static fromEntries(entries) {
     const signals = new Signals();
 

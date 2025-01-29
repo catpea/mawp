@@ -111,10 +111,12 @@ export default class Window extends ReactiveHTMLElement {
 
 
 
+      console.log('WWW',  this.source.settings.getList() )
+      if(1){
+            for (const [keyName, options] of this.source.settings.getList() ){
 
-      if(0){
-            for (const [keyName, data] of this.source.settings ){
-              const keyType = this.source.settings.type(keyName);
+
+              const keyType = options.type.value;
               const valueSignal = this.source.settings.get(keyName);
 
               console.log('THIS.SOURCE.SETTINGS', keyName, keyType, valueSignal);
