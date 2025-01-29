@@ -106,18 +106,33 @@ export default class Window extends ReactiveHTMLElement {
       this.gc = this.source.on('receive', name=>flash(name, 'warning', 'primary'));
       this.gc = this.source.on('send', name=>flash(name, 'info', 'primary'));
 
-      for (const [keyName, data] of this.source.settings ){
-        const keyType = this.source.settings.type(keyName);
-        const valueSignal = this.source.settings.get(keyName);
 
-        console.log('THIS.SOURCE.SETTINGS', keyName, keyType, valueSignal);
-        const dataset = Object.assign({ title:`${keyName}:${keyType}`, side: 'in', icon: 'key', style:'setting' }, valueSignal);
 
-        const portNode = lol['x-port']({ id: keyName, dataset });
-        // const portNode = lol['span']({ id: keyName, textContent:`${keyName}:${keyType}`  });
-        const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
-        listGroup.appendChild(listItem)
+
+
+
+
+      if(0){
+            for (const [keyName, data] of this.source.settings ){
+              const keyType = this.source.settings.type(keyName);
+              const valueSignal = this.source.settings.get(keyName);
+
+              console.log('THIS.SOURCE.SETTINGS', keyName, keyType, valueSignal);
+              const dataset = Object.assign({ title:`${keyName}:${keyType}`, side: 'in', icon: 'key', style:'setting' }, valueSignal);
+
+              const portNode = lol['x-port']({ id: keyName, dataset });
+              // const portNode = lol['span']({ id: keyName, textContent:`${keyName}:${keyType}`  });
+              const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
+              listGroup.appendChild(listItem)
+            }
       }
+
+
+
+
+
+
+
 
     // TOOLBAR BUTTONS
     cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))

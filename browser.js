@@ -348,6 +348,7 @@ class TonePlayerComponent extends ToneComponent {
 class ToneSynthComponent extends ToneComponent {
   initialize() {
     super.initialize()
+    this.channels.set('events', {side:'in', icon:'music-note'});
     this.channels.set('out', {side:'out', icon: 'soundwave'});
      //TODO: this.channels.set('events', {allow: (o)=> o instanceof this.tone.ToneEvent, icon:'music-note' });
   }
@@ -445,7 +446,9 @@ class TonePatternComponent extends ToneComponent {
   connect({destination}){ // when something is connected to you
 
     // Prepare
-    const {values, pattern} = this.settings.getData();
+    const toneOptions = this.settings.getData();
+    console.log('toneOptions', toneOptions)
+    const {values, pattern} = toneOptions;
     const callback = (time, note) => {
       destination.content.value.triggerAttackRelease(note, 0.1, time);
     };
@@ -540,7 +543,7 @@ project.load();
 {
   // EXAMPLE project.load
 
-  mainLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:{type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]]}, pattern:{type:'Enum', options:[{value:'upDown', textContent:'upDown'}, {value:'downUp', textContent:'downUp'}], data:"upDown"},});
+  mainLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:{type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{type:'Enum', options:[{value:'upDown', textContent:'upDown'}, {value:'downUp', textContent:'downUp'}], data:"upDown"},});
   mainLocation.createModule('synth1', 'tone-js/synth',                   {title:'synth1', left: 555, top: 222}, {});
   mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 1111, top: 666}, {distortion: {type:'Float', data:0.2, min:0, max:1, step:0.1}});
   mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:{data:0.125}, feedback:{data:0.5}});

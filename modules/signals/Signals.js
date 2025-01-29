@@ -26,136 +26,11 @@ class Signal {
   }
 }
 
-// class Signals_OLD {
-//   constructor(initialData = {}) {
-//     this.data = new Signal({});
-//     if (Object.keys(initialData).length > 0) {
-//       this.merge(initialData);
-//     }
-//   }
-
-//   lookup(path) {
-//     if (!path) return { object: this.data, property: 'value' };
-
-//     const segments = path.split(".");
-//     let current = this.data;
-
-//     // Navigate through the path, creating signals as needed
-//     for (let i = 0; i < segments.length - 1; i++) {
-//       const segment = segments[i];
-//       if (!current.value[segment] || !(current.value[segment] instanceof Signal)) {
-//         current.value[segment] = new Signal({});
-//       }
-//       current = current.value[segment];
-//     }
-
-//     return {
-//       object: current,
-//       property: segments[segments.length - 1]
-//     };
-//   }
-
-//   set(path, value) {
-//     const { object, property } = this.lookup(path);
-//     if (!object.value[property] || !(object.value[property] instanceof Signal)) {
-//       object.value[property] = new Signal(value);
-//     } else {
-//       object.value[property].value = value;
-//     }
-//   }
-
-//   get(path) {
-//     const { object, property } = this.lookup(path);
-//     if (!object.value[property]) return undefined;
-//     return object.value[property] instanceof Signal ?
-//       object.value[property].value :
-//       object.value[property];
-//   }
-
-//   has(path) {
-//     const { object, property } = this.lookup(path);
-//     return object.value.hasOwnProperty(property);
-//   }
-
-//   delete(path) {
-//     const { object, property } = this.lookup(path);
-//     if (object.value && object.value.hasOwnProperty(property)) {
-//       delete object.value[property];
-//     }
-//   }
-
-//   merge(path, patch = {}) {
-//     if (typeof path === 'object') {
-//       patch = path;
-//       path = '';
-//     }
-
-//     const { object, property } = this.lookup(path);
-
-//     // If we're at root level
-//     if (!path) {
-//       Object.entries(patch).forEach(([key, value]) => {
-//         this.set(key, value);
-//       });
-//       return;
-//     }
-
-//     // If the property doesn't exist or isn't a Signal, create it
-//     if (!object.value[property] || !(object.value[property] instanceof Signal)) {
-//       object.value[property] = new Signal({});
-//     }
-
-//     // Merge the patch with existing values
-//     const currentValue = object.value[property].value;
-//     object.value[property].value = { ...currentValue, ...patch };
-//   }
-
-//   // Comprehensive diagnostics method
-//   static diagnostics() {
-//     console.log("Running Signals Diagnostics...");
-//     const signals = new Signals();
-
-//     // Test basic set and get
-//     signals.set("test", 123);
-//     console.assert(signals.get("test") === 123, "Basic set/get failed");
-
-//     // Test nested set and get
-//     signals.set("nested.value", 456);
-//     console.assert(signals.get("nested.value") === 456, "Nested set/get failed");
-
-//     // Test deep nesting
-//     signals.set("deep.nesting.test", "deep");
-//     console.assert(signals.get("deep.nesting.test") === "deep", "Deep nesting failed");
-
-//     // Test has method
-//     console.assert(signals.has("test"), "Has method failed for existing path");
-//     console.assert(!signals.has("nonexistent"), "Has method failed for non-existing path");
-
-//     // Test delete method
-//     signals.delete("test");
-//     console.assert(!signals.has("test"), "Delete method failed");
-
-//     // Test merge at root
-//     signals.merge({ a: 1, b: 2 });
-//     console.assert(signals.get("a") === 1 && signals.get("b") === 2, "Root merge failed");
-
-//     // Test merge at path
-//     signals.merge("nested", { x: 10, y: 20 });
-//     console.assert(signals.get("nested.x") === 10 && signals.get("nested.y") === 20, "Path merge failed");
-
-//     // Test signal value getter
-//     const nestedSignal = signals.lookup("nested").object;
-//     console.assert(nestedSignal instanceof Signal, "Signal instantiation failed");
-//     console.assert(typeof nestedSignal.value === "object", "Signal value getter failed");
-
-//     console.log("Diagnostics completed successfully!");
-//     return true;
-//   }
-// }
-
-
 export default class Signals {
-  constructor(initialData = {}) {
+  depth = 2;
+
+  constructor(initialData = {}, options={}) {
+    if(options.depth) this.depth = options.depth;
     this.data = new Signal({});
     if (Object.keys(initialData).length > 0) {
       this.merge(initialData);
@@ -179,14 +54,44 @@ export default class Signals {
 
     return {
       object: current,
-      property: segments[segments.length - 1]
+      property: segments[segments.length - 1],
+      depth: segments.length,
     };
   }
 
+
+  convert(obj, limit=Infinity, depth=1) {
+
+
+    // Create a new object to hold the Signal values
+    let result = {};
+
+    // Iterate over the object properties
+    for (let key in obj) {
+      // Check if the value is an object
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        // Recursively convert nested object
+        if(depth >= limit){
+          console.log(`Depth ${depth} was greater than ${limit} no more recursion for ${key} assigning`, obj[key])
+          result[key] = new Signal(obj[key]);
+        }else{
+          result[key] = this.convert(obj[key], limit, depth + 1);
+        }
+
+      } else {
+        // If the value is not an object, wrap it in a Signal
+        result[key] = new Signal(obj[key]);
+      }
+    }
+    return result;
+  }
+
   set(path, value) {
-    const { object, property } = this.lookup(path);
+    const { object, property, depth } = this.lookup(path);
+
     if (!object.value[property] || !(object.value[property] instanceof Signal)) {
-      object.value[property] = new Signal(value);
+      console.log('SET',path, depth, property, value)
+      object.value[property] = value;//new Signal(value);
     } else {
       object.value[property].value = value;
     }
@@ -195,9 +100,14 @@ export default class Signals {
   get(path) {
     const { object, property } = this.lookup(path);
     if (!object.value[property]) return undefined;
-    return object.value[property] instanceof Signal ?
-      object.value[property].value :
-      object.value[property];
+
+    // BE STABLE DON'T DEREFERENCE
+    // return object.value[property] instanceof Signal ?
+    //   object.value[property].value :
+    //   object.value[property];
+
+    return object.value[property];
+
   }
 
   has(path) {
@@ -218,7 +128,7 @@ export default class Signals {
       path = '';
     }
 
-    const { object, property } = this.lookup(path);
+    patch = this.convert(patch, this.depth);
 
     // If we're at root level
     if (!path) {
@@ -227,6 +137,8 @@ export default class Signals {
       });
       return;
     }
+
+    const { object, property } = this.lookup(path);
 
     // If the property doesn't exist or isn't a Signal, create it
     if (!object.value[property] || !(object.value[property] instanceof Signal)) {
@@ -261,6 +173,14 @@ export default class Signals {
 
     collectEntries(this.data.value);
     return result;
+  }
+
+  getData(){
+    const response1 =  Object.entries(this.data.value);
+    console.log('getData test', response1);
+    const response = Object.fromEntries(Object.entries(this.data.value).map(([k,v])=>[k,v.data.value]));
+    console.log('getData response', response);
+    return response;
   }
 
   static fromEntries(entries) {
