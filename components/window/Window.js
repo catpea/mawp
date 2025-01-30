@@ -1,4 +1,5 @@
 import Signal from 'signal';
+import Forms from 'forms';
 import lol from 'lol';
 
 import Movable from './Movable.js';
@@ -8,6 +9,8 @@ import ReactiveHTMLElement from '../ReactiveHTMLElement.js';
 export default class Window extends ReactiveHTMLElement {
 
   initialize() {
+    this.Forms = new Forms({gc: this.gc});
+
     this.sizeSignal = new Signal([0,0]);
     this.attachShadow({ mode: 'open' });
     const localStyle = `
@@ -29,7 +32,7 @@ export default class Window extends ReactiveHTMLElement {
 
 
     // adding a class to our container for the sake of clarity
-    cardNode.classList.add('card', 'text-center', 'm-4', 'shadow', 'position-absolute');
+    cardNode.classList.add('card', 'm-4', 'shadow', 'position-absolute');
 
     // creating the inner HTML of the editable list element
     cardNode.innerHTML = `
@@ -94,44 +97,25 @@ export default class Window extends ReactiveHTMLElement {
       }
     });
 
-      // CONNECT WITH AGENT, the agent is unaware of existence of UI, but we can monitor its signals.
-      this.gc = this.source.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
-      const flash = (port, indicator, normal) => {
-        this.changePortStyle(port, `solid-${indicator}`)
-        this.setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
-      };
-      this.gc = this.source.on('receive', name=>flash(name, 'warning', 'primary'));
-      this.gc = this.source.on('send', name=>flash(name, 'info', 'primary'));
+    // CONNECT WITH AGENT, the agent is unaware of existence of UI, but we can monitor its signals.
+    this.gc = this.source.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
+    const flash = (port, indicator, normal) => {
+      this.changePortStyle(port, `solid-${indicator}`)
+      this.setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
+    };
+    this.gc = this.source.on('receive', name=>flash(name, 'warning', 'primary'));
+    this.gc = this.source.on('send', name=>flash(name, 'info', 'primary'));
 
+    for (const [name, options] of this.source.settings.getSettingsList() ){
+        const keyType = options.type.value;
+        // const valueSignal = this.source.settings.get(name);
+        const dataset = Object.assign({ side: 'in', icon: 'key', style:'setting' });
+        const portNode = lol['x-port']({ id: name, dataset });
+        const inputField = this.Forms.buildField({name,...options});
+        const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
 
-
-
-
-
-      console.log('WWW',  this.source.settings.getSettingsList() )
-      if(1){
-            for (const [keyName, options] of this.source.settings.getSettingsList() ){
-
-
-              const keyType = options.type.value;
-              const valueSignal = this.source.settings.get(keyName);
-
-              console.log('THIS.SOURCE.SETTINGS', keyName, keyType, valueSignal);
-              const dataset = Object.assign({ title:`${keyName}:${keyType}`, side: 'in', icon: 'key', style:'setting' }, valueSignal);
-
-              const portNode = lol['x-port']({ id: keyName, dataset });
-              // const portNode = lol['span']({ id: keyName, textContent:`${keyName}:${keyType}`  });
-              const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
-              listGroup.appendChild(listItem)
-            }
-      }
-
-
-
-
-
-
-
+        listGroup.appendChild(listItem)
+    }
 
     // TOOLBAR BUTTONS
     cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))

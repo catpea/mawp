@@ -321,7 +321,10 @@ class TonePlayerComponent extends ToneComponent {
   start(){
     console.warn('TonePlayerComponent Start')
     this.content.value = new this.Tone.Player(this.settings.getConfigurationObject());
-    //TODO: subscribe to value changes
+    for (const [name, options] of this.settings.getSettingsList() ){
+        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    }
   }
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
@@ -354,7 +357,10 @@ class ToneSynthComponent extends ToneComponent {
   }
   start(){
     this.content.value = new this.Tone.PolySynth(this.settings.getConfigurationObject());
-    //TODO: subscribe to value changes
+    for (const [name, options] of this.settings.getSettingsList() ){
+        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    }
   }
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
@@ -382,7 +388,10 @@ class ToneDistortionComponent extends ToneComponent {
   start(){
     console.log('Distortion Start!')
     this.content.value = new this.Tone.Distortion(this.settings.getConfigurationObject());
-    //TODO: subscribe to value changes
+    for (const [name, options] of this.settings.getSettingsList() ){
+        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    }
   }
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
@@ -410,7 +419,10 @@ class ToneFeedbackDelayComponent extends ToneComponent {
   }
   start(){
     this.content.value = new this.Tone.FeedbackDelay(this.settings.getConfigurationObject());
-    //TODO: subscribe to value changes
+    for (const [name, options] of this.settings.getSettingsList() ){
+        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    }
   }
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
@@ -436,6 +448,12 @@ class TonePatternComponent extends ToneComponent {
     super.initialize()
     this.channels.set('events', {side:'out', icon:'music-note'});
   }
+  start(){
+    for (const [name, options] of this.settings.getSettingsList() ){
+        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        this.gc = options.data.subscribe(v=>this.content?.value?this.content.value[name]=v:0);
+    }
+  }
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
     const isCorrectInstance = destination instanceof ToneComponent;
@@ -454,7 +472,7 @@ class TonePatternComponent extends ToneComponent {
     };
     // Create
     if(!this.content.value) this.content.value = new this.Tone.Pattern(callback, values, pattern);
-    //TODO: subscribe to value changes
+
     // Start
     this.content.value.start();
   }
@@ -538,17 +556,16 @@ project.create(teeLocation);
 
 
 
-
 project.load();
 {
   // EXAMPLE project.load
 
-  mainLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:{type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{type:'Enum', options:[{value:'upDown', textContent:'upDown'}, {value:'downUp', textContent:'downUp'}], data:"upDown"},});
+  mainLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:{label:'Tonal Values', type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{label: 'Arpeggio Pattern', type:'Enum', options:[{value:'up', textContent:'up'},  {value:'down', textContent:'down'},  {value:'upDown', textContent:'upDown'},  {value:'downUp', textContent:'downUp'},  {value:'alternateUp', textContent:'alternateUp'},  {value:'alternateDown', textContent:'alternateDown'},  {value:'random', textContent:'random'},  {value:'randomOnce', textContent:'randomOnce'},  {value:'randomWalk', textContent:'randomWalk'},], data:"upDown"},});
   mainLocation.createModule('synth1', 'tone-js/synth',                   {title:'synth1', left: 555, top: 222}, {});
-  mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 1111, top: 666}, {distortion: {type:'Float', data:0.2, min:0, max:1, step:0.1}});
-  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:{type:'Float', data:0.125}, feedback:{type:'Float', data:0.5}});
+  mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 1111, top: 666}, {distortion: {label:'Distortion Ammount', type:'Float', data:0.2, min:0, max:1, step:0.01}});
+  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:{label:'Delay Time', type:'Text', data:0.125,}, feedback:{label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01}});
   mainLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
-  mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: {type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {type:'Boolean', data:true}, autostart: {type:'Boolean', data:true}, } );
+  mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: {label:'Audio URL', type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {label:'Loop', type:'Boolean', data:true}, autostart: {label:'Autostart', type:'Boolean', data:true}, } );
 
   // mainLocation.createConnection('pattern1:out', 'synth1:in');
   mainLocation.createConnection('synth1:out', 'destination1:in', {autostart: false});
