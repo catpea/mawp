@@ -177,20 +177,7 @@ export default class Signals {
     return result;
   }
 
-  getData(){
-    const response1 =  Object.entries(this.data.value);
-    console.log('getData test', response1);
-    const response = Object.fromEntries(Object.entries(this.data.value).map(([k,v])=>[k,v.data.value]));
-    console.log('getData response', response);
-    return response;
-  }
-  getList() {
-    const response1 =  Object.entries(this.data.value);
-    console.log('WWW test', response1);
-    const response =  Object.entries(this.data.value).map(([k,v])=>[k,v]) ;
-    console.log('WWW response', response);
-    return response;
-  }
+
   static fromEntries(entries) {
     const signals = new Signals();
 

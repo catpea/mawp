@@ -1,8 +1,5 @@
 import Signal from 'signal';
-import Dataset from 'dataset';
-
 import lol from 'lol';
-import transcend from 'transcend';
 
 import Movable from './Movable.js';
 import Focusable from './Focusable.js';
@@ -111,9 +108,9 @@ export default class Window extends ReactiveHTMLElement {
 
 
 
-      console.log('WWW',  this.source.settings.getList() )
+      console.log('WWW',  this.source.settings.getSettingsList() )
       if(1){
-            for (const [keyName, options] of this.source.settings.getList() ){
+            for (const [keyName, options] of this.source.settings.getSettingsList() ){
 
 
               const keyType = options.type.value;

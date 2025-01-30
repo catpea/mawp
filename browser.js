@@ -320,7 +320,7 @@ class TonePlayerComponent extends ToneComponent {
   }
   start(){
     console.warn('TonePlayerComponent Start')
-    this.content.value = new this.Tone.Player(this.settings.getData());
+    this.content.value = new this.Tone.Player(this.settings.getConfigurationObject());
     //TODO: subscribe to value changes
   }
   connectable({from, source, to, destination}){
@@ -353,7 +353,7 @@ class ToneSynthComponent extends ToneComponent {
      //TODO: this.channels.set('events', {allow: (o)=> o instanceof this.tone.ToneEvent, icon:'music-note' });
   }
   start(){
-    this.content.value = new this.Tone.PolySynth(this.settings.getData());
+    this.content.value = new this.Tone.PolySynth(this.settings.getConfigurationObject());
     //TODO: subscribe to value changes
   }
   connectable({from, source, to, destination}){
@@ -381,7 +381,7 @@ class ToneDistortionComponent extends ToneComponent {
   }
   start(){
     console.log('Distortion Start!')
-    this.content.value = new this.Tone.Distortion(this.settings.getData());
+    this.content.value = new this.Tone.Distortion(this.settings.getConfigurationObject());
     //TODO: subscribe to value changes
   }
   connectable({from, source, to, destination}){
@@ -409,7 +409,7 @@ class ToneFeedbackDelayComponent extends ToneComponent {
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    this.content.value = new this.Tone.FeedbackDelay(this.settings.getData());
+    this.content.value = new this.Tone.FeedbackDelay(this.settings.getConfigurationObject());
     //TODO: subscribe to value changes
   }
   connectable({from, source, to, destination}){
@@ -446,7 +446,7 @@ class TonePatternComponent extends ToneComponent {
   connect({destination}){ // when something is connected to you
 
     // Prepare
-    const toneOptions = this.settings.getData();
+    const toneOptions = this.settings.getConfigurationObject();
     console.log('toneOptions', toneOptions)
     const {values, pattern} = toneOptions;
     const callback = (time, note) => {
