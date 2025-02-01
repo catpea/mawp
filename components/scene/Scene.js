@@ -2,6 +2,7 @@ import Signal from "signal";
 import lol from "lol";
 
 import Pannable from "./Pannable.js";
+import Constructible from "./Constructible.js";
 
 export default class Scene extends HTMLElement {
   active = new Signal(false);
@@ -90,10 +91,13 @@ export default class Scene extends HTMLElement {
           <svg class="illustration illustration-foreground"></svg>
         </div>
 
-         <x-toolbar></x-toolbar><!--
-        <x-prompt></x-prompt>
-        <x-console></x-console>
--->
+        <x-toolbar></x-toolbar>
+
+        <!--
+          <x-prompt></x-prompt>
+          <x-console></x-console>
+        -->
+
         <span class="position-absolute top-0 start-50 dtranslate-middle opacity-0">
           pan=<small name="debug-panX"></small>x<small name="debug-panY"></small> scale=<small name="debug-scale"></small> active=<small name="debug-active"></small>
         </span>
@@ -104,6 +108,10 @@ export default class Scene extends HTMLElement {
 
     const pannable = new Pannable(this);
     this.gc = pannable.start();
+
+    const constructible = new Constructible(this);
+    this.gc = constructible.start();
+
   }
 
   // fires after the element has been attached to the DOM

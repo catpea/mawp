@@ -64,7 +64,6 @@ export default class Pannable {
   onMouseMove(event) {
 
     if (this.#isPanning) {
-      //console.log("Pannable onMouseMove!", event.target);
       this.sceneComponent.panX.value = this.#startPanX + (event.clientX - this.#startMousePos.x);
       this.sceneComponent.panY.value = this.#startPanY + (event.clientY - this.#startMousePos.y);
       this.updateTransform();
@@ -72,13 +71,10 @@ export default class Pannable {
   }
 
   onMouseUp(event) {
-    // console.log("Pannable onMouseUp!", event.target);
-
     this.#isPanning = false;
   }
 
   onWheel(event) {
-
     console.log("Pannable onWheel Target", event.originalTarget.tagName, event.target.tagName);
 
     let allow = true;
