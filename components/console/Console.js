@@ -35,7 +35,6 @@ export default class Console extends HTMLElement {
         <div class="console">
         </div>
       `;
-      this.appendChild(container);
       shadow.appendChild(container);
 
     }

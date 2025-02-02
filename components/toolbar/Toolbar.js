@@ -72,7 +72,7 @@ export default class Console extends HTMLElement {
             </div>
 
             <div class="btn-group-vertical mb-2">
-             <button name="create-window" type="button" class="btn btn-outline-secondary d-none" title="create window"><i class="bi bi-plus-circle"></i></button>
+             <!-- <button name="create-window" type="button" class="btn btn-outline-secondary d-none" title="create window"><i class="bi bi-plus-circle"></i></button> -->
               <button name="delete-active" type="button" class="btn btn-outline-secondary" title="delete selected"><i class="bi bi-x-circle"></i></button>
             </div>
               <!--
@@ -169,13 +169,13 @@ export default class Console extends HTMLElement {
 
 
 
-      const createWindowButton = this.container.querySelector('[name="create-window"]');
-      createWindowButton.addEventListener("click", function (e) {
-        let [left, top] = scene.getCenterDropCoordinates();
-        [left, top] = [left, top].map(o=>o*.5)
-        const id = guid();//.substr(0,10);
-        application.source.commander.windowCreate({id, left, top, active:true});
-      });
+      // const createWindowButton = this.container.querySelector('[name="create-window"]');
+      // createWindowButton.addEventListener("click", function (e) {
+      //   let [left, top] = scene.getCenterDropCoordinates();
+      //   [left, top] = [left, top].map(o=>o*.5)
+      //   const id = guid();//.substr(0,10);
+      //   application.source.commander.windowCreate({id, left, top, active:true});
+      // });
 
 
 

@@ -106,16 +106,19 @@ export default class Scene extends HTMLElement {
 
     shadow.appendChild(this.container);
 
+
+
+  }
+
+  // fires after the element has been attached to the DOM
+  connectedCallback() {
+
     const pannable = new Pannable(this);
     this.gc = pannable.start();
 
     const constructible = new Constructible(this);
     this.gc = constructible.start();
 
-  }
-
-  // fires after the element has been attached to the DOM
-  connectedCallback() {
     this.panX.subscribe(v => this.container.querySelector('[name="debug-panX"]').textContent = Number.parseFloat(v).toFixed(0));
     this.panY.subscribe(v => this.container.querySelector('[name="debug-panY"]').textContent = Number.parseFloat(v).toFixed(0));
     this.scale.subscribe(v => this.container.querySelector('[name="debug-scale"]').textContent = Number.parseFloat(v).toFixed(2));

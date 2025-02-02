@@ -54,6 +54,8 @@ export default class UI {
     this.application.source = this.source;
 
     this.scene = document.createElement(`x-scene`);
+    this.scene.source = this.source;
+
     this.application.appendChild(this.scene);
 
     this.mountPoint = document.querySelector('.app');

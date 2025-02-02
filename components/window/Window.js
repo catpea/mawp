@@ -36,7 +36,7 @@ export default class Window extends ReactiveHTMLElement {
 
     // creating the inner HTML of the editable list element
     cardNode.innerHTML = `
-      <div class="card-header cursor-default user-select-none">
+      <div class="card-header cursor-default user-select-none px-2">
         <span class="card-title"></span>
       </div>
       <ul class="list-group list-group-flush">
@@ -118,8 +118,8 @@ export default class Window extends ReactiveHTMLElement {
     }
 
     // TOOLBAR BUTTONS
-    cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
-    cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowRead({id:this.id}) }}))
+    cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-danger float-end cursor-pointer', on:{ click:()=> this.application.source.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
+    // cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowRead({id:this.id}) }}))
 
     // SUBSCRIBE TO DIMENSIONS SPECIFIED IN DATASET
     this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');

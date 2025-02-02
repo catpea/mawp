@@ -65,13 +65,18 @@ class Location extends Branch {
   createModule(id, modulePath, dataset, settings){
 
     const path = ['modules',...modulePath.split('/')];
-    const Component = application.get(...path).content.value;
+    const module = application.get(...path);
+    const Component = module.content.value;
     // Initialize important objects
     const component = new Component(id);
     component.type = 'window';
+
     // Assign options
-    Object.entries(dataset).filter(([key,val])=>val).forEach(([key,val])=>component.dataset.set(key,val))
-    component.settings.merge(settings);
+    if(!dataset.title) dataset.title = module.settings.name;
+    Object.entries(dataset).filter(([key,val])=>val).forEach(([key,val])=>component.dataset.set(key,val));
+
+    component.settings.merge({...Component.defaults, ...settings});
+
     // Add to stage
     this.create(component);
     // do not autostart, you are just creating, not starting - start is a different process, it can be triggered by commands or load scripts
@@ -256,10 +261,11 @@ class Modules extends Branch {
 }
 
 class Library extends Branch {
-  register(id, descriptor){
-
+  register(id, content){
     const tool = new Branch(id);
-    tool.content.value = descriptor
+    tool.content.value = content
+    tool.settings.name = content.caption;
+    tool.settings.description = content.description;
     this.create(tool);
   }
 }
@@ -290,7 +296,11 @@ class ToneComponent extends Component {
   Tone = Tone;
 }
 
+
 class ToneDestinationComponent extends ToneComponent {
+  static caption = 'Destination';
+  static description = 'A master output linked to the AudioDestinationNode (your speakers), offering volume control, muting, and the application of master effects, all managed through the global Tone.js Context.';
+  static defaults = {};
 
   initialize() {
     super.initialize()
@@ -301,19 +311,14 @@ class ToneDestinationComponent extends ToneComponent {
     this.content.value = this.Tone.getDestination();
     console.log('EEE ToneDestinationComponent',   this.content.value );
   }
-
 }
 
 
-
-
-
-
-
-
-
-
 class TonePlayerComponent extends ToneComponent {
+  static caption = 'Player';
+  static description = 'A versatile sample player for playing audio files, supporting various playback features like looping and playback rate adjustment.';
+  static defaults = { url: {label:'Audio URL', type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {label:'Loop', type:'Boolean', data:true}, autostart: {label:'Autostart', type:'Boolean', data:true}, };
+
   initialize() {
     super.initialize()
     this.channels.set('out', {side:'out', icon: 'soundwave'});
@@ -341,14 +346,11 @@ class TonePlayerComponent extends ToneComponent {
 }
 
 
-
-
-
-
-
-
-
 class ToneSynthComponent extends ToneComponent {
+  static caption = 'Synth';
+  static description = 'A sound synthesizer that generates audio signals configurable through various synthesizer settings.';
+  static defaults = {};
+
   initialize() {
     super.initialize()
     this.channels.set('events', {side:'in', icon:'music-note'});
@@ -377,9 +379,11 @@ class ToneSynthComponent extends ToneComponent {
 }
 
 
-
-
 class ToneDistortionComponent extends ToneComponent {
+  static caption = 'Distortion';
+  static description = 'A waveform alteration effect that adds harmonic distortion, which can enhance the sound by adding complexity and warmth.';
+  static defaults = {distortion: {label:'Distortion Ammount', type:'Float', data:0.2, min:0, max:1, step:0.01}};
+
   initialize() {
     super.initialize()
     this.channels.set('in', {icon: 'soundwave'});
@@ -408,10 +412,11 @@ class ToneDistortionComponent extends ToneComponent {
 }
 
 
-
-
-
 class ToneFeedbackDelayComponent extends ToneComponent {
+  static caption = 'Feedback Delay';
+  static description = 'A sound delay effect where the output is fed back into the input, creating a repetitive, echo-like effect.';
+  static defaults = {delayTime:{label:'Delay Time', type:'Text', data:0.125,}, feedback:{label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01}};
+
   initialize() {
     super.initialize()
     this.channels.set('in', {icon: 'soundwave'});
@@ -439,10 +444,12 @@ class ToneFeedbackDelayComponent extends ToneComponent {
 }
 
 
-
-
-
 class TonePatternComponent extends ToneComponent {
+  static caption = 'Pattern';
+  static description = 'A sequencer for playing musical patterns, with customizable values and patterns to control the rhythm and order of playback.';
+  static defaults = {values:{label:'Tonal Values', type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{label: 'Arpeggio Pattern', type:'Enum', options:[{value:'up', textContent:'up'},  {value:'down', textContent:'down'},  {value:'upDown', textContent:'upDown'},  {value:'downUp', textContent:'downUp'},  {value:'alternateUp', textContent:'alternateUp'},  {value:'alternateDown', textContent:'alternateDown'},  {value:'random', textContent:'random'},  {value:'randomOnce',
+    textContent:'randomOnce'},  {value:'randomWalk', textContent:'randomWalk'},], data:"upDown"},};
+
   l(...a){console.log(this.constructor.name, ...a)}
   initialize() {
     super.initialize()
@@ -490,10 +497,14 @@ class TonePatternComponent extends ToneComponent {
   }
 
   dispose(){
-    this.content.value.dispose();
+    // NOTE: this component is only started when connected, thus, we must check if there is anything to dispose.
+    this.content?.value?.dispose();
   }
-
 }
+
+
+
+
 
 
 
@@ -525,19 +536,53 @@ const application = new Application();
 
 // Module Registration
 const modules = new Modules('modules');
-const toneLibrary = new ToneLibrary('tone-js');
 
-toneLibrary.register('destination', ToneDestinationComponent);
+const toneLibrary = new ToneLibrary('tone-js');
+toneLibrary.settings.name = 'Tone.js Components';
+modules.create(toneLibrary);
 
 toneLibrary.register('distortion', ToneDistortionComponent);
 toneLibrary.register('feedbackdelay', ToneFeedbackDelayComponent);
-
 toneLibrary.register('synth', ToneSynthComponent);
-toneLibrary.register('player', TonePlayerComponent);
 toneLibrary.register('pattern', TonePatternComponent);
+toneLibrary.register('player', TonePlayerComponent);
+toneLibrary.register('destination', ToneDestinationComponent);
+
+// const signalsLibrary = new ToneLibrary('js-signals');
+// signalsLibrary.settings.name = 'Signal Toolbox';
+// modules.create(signalsLibrary);
+// signalsLibrary.register('signal', {}, 'Signal');
+// signalsLibrary.register('muffler', {}, 'Muffler');
+// signalsLibrary.register('transformer', {}, 'Transformer');
+// signalsLibrary.register('defer', {}, 'Defer');
+// signalsLibrary.register('debounce', {}, 'Debounce');
+
+// const observablesLibrary = new ToneLibrary('js-observables');
+// observablesLibrary.settings.name = 'Observable Toolkit';
+// modules.create(observablesLibrary);
+// observablesLibrary.register('combine-latest', {}, 'combineLatest');
+
+// const eventEmitterLibrary = new ToneLibrary('event-emitter');
+// eventEmitterLibrary.settings.name = 'Event Emitter';
+// modules.create(eventEmitterLibrary);
+
+// const webStreamsLibrary = new ToneLibrary('web-streams');
+// webStreamsLibrary.settings.name = 'WebStream Tools';
+// modules.create(webStreamsLibrary);
 
 
-modules.create(toneLibrary);
+
+
+
+
+
+
+
+
+
+
+
+
 application.create(modules);
 
 // Project Registration

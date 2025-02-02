@@ -68,6 +68,13 @@ export default class ReactiveHTMLElement extends HTMLElement {
     }
   }
 
+  // WORKING WITH TEMPLATES
+  assignText(object, element){
+    for(const [name, value] of Object.entries(object)){
+      element.querySelectorAll(`[name=${name}]`).forEach(e=>e.textContent = value)
+    }
+  }
+
   // WORKING WITH STYLES
   styles(userCSS){
       const styles = [...document.adoptedStyleSheets];
@@ -77,6 +84,25 @@ export default class ReactiveHTMLElement extends HTMLElement {
         styles.push(localCss)
       }
       this.shadowRoot.adoptedStyleSheets = styles;
+  }
+
+  // EVENTS
+  /**
+   * Attaches an event listener to an element and removes it immediately which seems to be incorrect.
+   * This needs correction, typically wanting to manage both adding and removal at different times.
+   *
+   * @param {HTMLElement} element - The HTML element to which the event listener will be attached.
+   * @param {string} event - The name of the event.
+   * @param {Function} listener - The callback function that handles the event.
+   * @throws {Error} if any of the parameters are not provided.
+   */
+  listenTo(element, event, listener){
+    if (!element || !event || !listener) {
+      throw new Error('All arguments (element, event, listener) must be provided');
+    }
+    const boundListener = listener.bind(this);
+    element.addEventListener(event, boundListener);
+    return ()=>element.removeEventListener(event, boundListener);
   }
 
   // HELPFUL GETTER METHODS
