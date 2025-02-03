@@ -10,8 +10,6 @@ export default class Branch {
   parent;
   children = [];
   content = new Signal();
-  content = new Signal();
-  content = new Signal();
 
   constructor(id, type) {
     this.id = id||guid();

@@ -41,6 +41,7 @@ export default class List {
 
       return new Proxy(this, {
         set: (settings, key, value) => {
+          if (key in settings) return settings[key] = value;
           return settings.set(key, value);
         },
         get: (settings, key) => {
@@ -157,7 +158,7 @@ export default class List {
     }
 
     unsubscribe(listener) {
-      this.listeners = this._listeners.filter(l => l !== listener);
+      this._listeners = this._listeners.filter(l => l !== listener);
     }
 
     // INTERNAL
