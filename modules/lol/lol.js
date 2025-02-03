@@ -45,7 +45,10 @@ function elementCreator(elementName, attributes, children) {
     switch (key) {
       // Special class handling
       case 'class':
-        element.classList.add(...value.split(' '));
+        if(Array.isArray(value)) value = value.join(' ');
+        const payload = value.split(' ').filter(o=>o);
+        console.log('LOL', payload)
+        element.classList.add(...payload);
         break;
 
       // Special ID handling

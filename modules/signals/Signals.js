@@ -1,6 +1,7 @@
 class Signal {
   #value;
   listeners;
+
   constructor(value) {
     this.#value = value;
     this.listeners = [];
@@ -27,6 +28,7 @@ class Signal {
 }
 
 export default class Signals {
+  data;
   depth = 2;
 
   constructor(initialData = {}, options={}) {
@@ -52,13 +54,14 @@ export default class Signals {
       current = current.value[segment];
     }
 
-    return {
+    const response = {
       object: current,
       property: segments[segments.length - 1],
       depth: segments.length,
     };
+    console.log('PPP', path, response)
+    return response;
   }
-
 
   convert(obj, limit=Infinity, depth=1) {
 
@@ -86,8 +89,6 @@ export default class Signals {
     return result;
   }
 
-
-
   set(path, value) {
     const { object, property, depth } = this.lookup(path);
 
@@ -109,7 +110,6 @@ export default class Signals {
     //   object.value[property];
 
     return object.value[property];
-
   }
 
   has(path) {

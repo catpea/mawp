@@ -3,9 +3,15 @@ import lol from "lol";
 
 import Pannable from "./Pannable.js";
 import Constructible from "./Constructible.js";
+import Switchable from "./Switchable.js";
 
 export default class Scene extends HTMLElement {
+
   active = new Signal(false);
+
+  mouseX = new Signal(0);
+  mouseY = new Signal(0);
+
   panX = new Signal(0);
   panY = new Signal(0);
   scale = new Signal(1);
@@ -20,7 +26,9 @@ export default class Scene extends HTMLElement {
         position: relative;
         touch-action: none;
         user-select: none;
+
         /* dimensions set programatically */
+        height: 100vh;
       }
 
         .content {
@@ -98,8 +106,8 @@ export default class Scene extends HTMLElement {
           <x-console></x-console>
         -->
 
-        <span class="position-absolute top-0 start-50 dtranslate-middle opacity-0">
-          pan=<small name="debug-panX"></small>x<small name="debug-panY"></small> scale=<small name="debug-scale"></small> active=<small name="debug-active"></small>
+        <span class="position-absolute top-0 start-50 opacity-25">
+          mouse=<small name="debug-mouseX">?</small>x<small name="debug-mouseY">?</small> pan=<small name="debug-panX">?</small>x<small name="debug-panY">?</small> scale=<small name="debug-scale">?</small> active=<small name="debug-active"></small>
         </span>
 
     `;
@@ -119,40 +127,48 @@ export default class Scene extends HTMLElement {
     const constructible = new Constructible(this);
     this.gc = constructible.start();
 
+    const switchable = new Switchable(this);
+    this.gc = switchable.start();
+
+    this.mouseX.subscribe(v => this.container.querySelector('[name="debug-mouseX"]').textContent = Number.parseFloat(v).toFixed(0));
+    this.mouseY.subscribe(v => this.container.querySelector('[name="debug-mouseY"]').textContent = Number.parseFloat(v).toFixed(0));
+
     this.panX.subscribe(v => this.container.querySelector('[name="debug-panX"]').textContent = Number.parseFloat(v).toFixed(0));
     this.panY.subscribe(v => this.container.querySelector('[name="debug-panY"]').textContent = Number.parseFloat(v).toFixed(0));
     this.scale.subscribe(v => this.container.querySelector('[name="debug-scale"]').textContent = Number.parseFloat(v).toFixed(2));
     this.active.subscribe(v => this.container.querySelector('[name="debug-active"]').textContent = v);
 
+
+      const contentMouseElement = this;
+      const mouseTracker = (event) => {
+        const [x,y] = this.transform(event.offsetX, event.offsetY);
+        this.mouseX.value = x;
+        this.mouseY.value = y;
+      }
+      contentMouseElement.addEventListener("mousemove", mouseTracker);
+      this.gc = () => contentMouseElement.removeEventListener("mousemove", mouseTracker);
+
+
+
     this.status.value = "ready";
-    this.adjustNestedElementHeight()
-    window.addEventListener('resize', this.adjustNestedElementHeight.bind(this));
-    window.addEventListener('load', this.adjustNestedElementHeight.bind(this));
+
+    let useForceHeight = false;
+    if(useForceHeight){
+      // Force Fill To The Screen Height - POC;
+      window.addEventListener('resize', this.adjustNestedElementHeight.bind(this));
+      window.addEventListener('load', this.adjustNestedElementHeight.bind(this));
+      this.adjustNestedElementHeight();
+    }
 
     this.addEventListener("mousedown", this.clearFocusHandler.bind(this));
     this.gc = () => this.removeEventListener("mousedown", this.clearFocusHandler.bind(this));
-
   }
+
   adjustNestedElementHeight() {
-
-      // let vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-      let viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-
-      // Get the nested element and its parent container
-      const sceneTop = this.getBoundingClientRect().top;
-
-      // // Get the computed styles of the container to account for padding and border
-      // const containerStyles = window.getComputedStyle(container);
-      // console.log('WWW', containerStyles);
-
-      // const containerPaddingTop = parseFloat(containerStyles.paddingTop);
-      // const containerPaddingBottom = parseFloat(containerStyles.paddingBottom);
-
-      // Calculate the available height for the nested element
-      const availableHeight = viewportHeight - sceneTop;
-      //console.log({viewportHeight, sceneTop, availableHeight})
-      // Set the height of the nested element
-      this.style.height = `${availableHeight}px`;
+    let viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+    const sceneTop = this.getBoundingClientRect().top;
+    const availableHeight = viewportHeight - sceneTop;
+    this.style.height = `${availableHeight}px`;
   }
 
 
@@ -211,6 +227,11 @@ export default class Scene extends HTMLElement {
 
   // QUESTIONABLE BUT USEFUL UTILITY FUNCTIONS
 
+  get toolbar() {
+    return this.shadowRoot.querySelector("x-toolbar");
+  }
+
+
   get drawingSurfaces() {
     return this.shadowRoot.querySelectorAll("svg.illustration");
   }
@@ -219,6 +240,8 @@ export default class Scene extends HTMLElement {
     const response = this.querySelector(`[id=${id}]`);
     return response;
   }
+
+
 
   getWindow(colonAddress) {
     const [elementId, portId] = colonAddress.split(/:/, 2);
@@ -339,14 +362,10 @@ export default class Scene extends HTMLElement {
 
 
   transformByRect(x, y){
-
-    let {
-      x: elementX,
-      y: elementY,
-    } = this.getBoundingClientRect();
-
+    let { x: elementX, y: elementY, } = this.getBoundingClientRect();
     x = x - elementX;
     y = y - elementY;
+    // console.log('OOO transformByRect', {elementX, elementY});
     return [x, y];
   }
   // transformByScroll(x, y){
@@ -362,6 +381,7 @@ export default class Scene extends HTMLElement {
     const scale = this.scale.value;
     x = x / scale;
     y = y / scale;
+    // console.log('OOO transformByScale', {scale});
     return [x, y];
   }
   transformByPan(x, y){
@@ -373,6 +393,8 @@ export default class Scene extends HTMLElement {
 
     x = x - panX;
     y = y - panY;
+    // console.log('OOO transformByPan', {panX, panY});
+
     return [x, y];
   }
   transform(x, y){

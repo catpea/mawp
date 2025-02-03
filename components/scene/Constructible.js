@@ -12,7 +12,6 @@ import ReactiveHTMLElement from '../ReactiveHTMLElement.js';
 
 class Instruments extends ReactiveHTMLElement {
   selected = new Signal(); // the item selected for user reveiew
-  source; // set by Constructible
   request; // stores coordinates
 
   constructor() {
@@ -83,7 +82,8 @@ class Instruments extends ReactiveHTMLElement {
     const instrumentsCategories = document.createElement('ul');
     instrumentsCategories.classList.add('list-unstyled', 'ps-0');
     // Add Modules
-    const categories = this.source.root.get('modules');
+    // const categories = this.source.root.get('modules');
+    const categories = this.application.source.get('modules');
     for(const parent of categories.children){
         const instrumentsCategory = document.createElement('li');
         instrumentsCategory.classList.add('mb-1');
@@ -139,6 +139,8 @@ export default class Constructible {
     this.sceneComponent = sceneComponent;
     //NOTE: we are adding to shadow root, beneath .content
     this.targetElement = this.sceneComponent.shadowRoot; //.querySelector(".content");
+    this.positioningElement = this.sceneComponent.shadowRoot.querySelector(".content");
+
     this.onContextMenu = this.onContextMenu.bind(this);
   }
 
@@ -146,13 +148,12 @@ export default class Constructible {
     this.sceneComponent.addEventListener("contextmenu", this.onContextMenu);
     // NOTE: installing the modal instrumentbox
     this.instruments = document.createElement('x-instruments');
-    this.instruments.source = this.sceneComponent.source;
     this.targetElement.appendChild(this.instruments);
     return () => this.stop();
   }
 
   stop() {
-    this.targetElement.removeEventListener("contextmenu", this.onContextMenu);
+    this.sceneComponent.removeEventListener("contextmenu", this.onContextMenu);
     this.instruments.remove();
   }
 

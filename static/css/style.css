@@ -1,3 +1,9 @@
+.app { opacity: 1; transition: opacity 0.3s; }
+.utilities { opacity: 1;}
+
+
+
+
 .cursor-default {
     cursor: default;
 }

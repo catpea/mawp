@@ -32,7 +32,7 @@ export default class Window extends ReactiveHTMLElement {
 
 
     // adding a class to our container for the sake of clarity
-    cardNode.classList.add('card', 'm-4', 'shadow', 'position-absolute');
+    cardNode.classList.add('card', 'shadow', 'position-absolute');
 
     // creating the inner HTML of the editable list element
     cardNode.innerHTML = `
@@ -73,6 +73,7 @@ export default class Window extends ReactiveHTMLElement {
       }
     }
 
+    // NON-STANDARD PORTS
     for (const [key, data] of this.source.channels.filter(([name])=>name!=='in'&&name!=='out')) {
       const iolistItem = lol.li({class:'list-group-item bg-transparent'});
       listGroup.appendChild(iolistItem);
@@ -97,7 +98,7 @@ export default class Window extends ReactiveHTMLElement {
       }
     });
 
-    // CONNECT WITH AGENT, the agent is unaware of existence of UI, but we can monitor its signals.
+    // HEALTH signals.
     this.gc = this.source.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
     const flash = (port, indicator, normal) => {
       this.changePortStyle(port, `solid-${indicator}`)
@@ -106,15 +107,47 @@ export default class Window extends ReactiveHTMLElement {
     this.gc = this.source.on('receive', name=>flash(name, 'warning', 'primary'));
     this.gc = this.source.on('send', name=>flash(name, 'info', 'primary'));
 
-    for (const [name, options] of this.source.settings.getSettingsList() ){
-        const keyType = options.type.value;
-        // const valueSignal = this.source.settings.get(name);
-        const dataset = Object.assign({ side: 'in', icon: 'key', style:'setting' });
-        const portNode = lol['x-port']({ id: name, dataset });
-        const inputField = this.Forms.buildField({name,...options});
-        const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
 
-        listGroup.appendChild(listItem)
+    // PRINT SETTINGS
+    for (const [name, options] of this.source.settings.getSettingsList() ){
+      const keyType = options.type.value;
+      // const valueSignal = this.source.settings.get(name);
+      const dataset = Object.assign({ side: 'in', icon: 'key', style:'setting' });
+      const portNode = lol['x-port']({ id: name, dataset });
+      const inputField = this.Forms.buildField({name,...options});
+      const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
+      listGroup.appendChild(listItem)
+    }
+
+    // SELF EDITABILITY - SETTING PUMP
+    if(this.source.constructor.name == 'SceneSettingComponent'){
+      const options = new Signal([]); // Format example [ { value:'up', textContent:'Up' } ]
+      const configuration = {
+        type: new Signal('Enum'),
+        label: new Signal('Setting Name'),
+        data: new Signal(),
+        name: 'setting',
+        options,
+      };
+      // Populate options with "local variables" or Settings.
+      const sceneName = this.application.source.activeLocation.value;
+      const currentScene = this.application.source.get('main-project', sceneName);
+      //
+      this.gc = currentScene.settings.data.subscribe(v=>{
+        const variableNames = Object.keys(v); // Take the names of settings object
+        const formOptions = [];
+        for( const variableName of variableNames){
+          const value = variableName;
+          const textContent = variableName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+          const formOption = { value, textContent };
+          formOptions.push(formOption);
+        }
+        // update signal
+        options.value = formOptions;
+      });
+      const inputField = this.Forms.buildField(configuration);
+      const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
+      listGroup.appendChild(listItem)
     }
 
     // TOOLBAR BUTTONS

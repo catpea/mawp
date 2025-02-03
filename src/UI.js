@@ -54,7 +54,9 @@ export default class UI {
     this.application.source = this.source;
 
     this.scene = document.createElement(`x-scene`);
-    this.scene.source = this.source;
+    // this.scene.source = this.source;
+    // this.source.activeLocation.subscribe(v=> )
+    // const currentScene = this.source.get('main-project', this.source.activeLocation.value);
 
     this.application.appendChild(this.scene);
 

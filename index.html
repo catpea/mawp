@@ -28,10 +28,12 @@
         "list": "./modules/list/List.js",
         "signals": "./modules/signals/Signals.js",
 
+        "gui": "./modules/gui/gui.js",
         "lol": "./modules/lol/lol.js",
+        "forms": "./modules/forms/Forms.js",
+
         "commando": "./modules/commando/index.js",
         "transcend": "./modules/transcend/transcend.js",
-        "forms": "./modules/forms/Forms.js",
         "signal": "./modules/signal/Signal.js",
         "series": "./modules/series/Series.js",
 
@@ -45,38 +47,45 @@
     }
     </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>">
+    <script type="module" src="browser.js"></script>
+    <script src="static/js/bootstrap.bundle.min.js"></script>
     <style>
+    .app { opacity: 0; }
+    .utilities { opacity: 0; }
+
     body { background-color: #212529; }
     </style>
-    <script type="module" src="browser.js"></script>
-        <script src="static/js/bootstrap.bundle.min.js"></script>
   </head>
   <body>
-    <!-- <div class="app"></div> -->
 
-    <div class="toast-container position-fixed top-0 end-0 p-3">
-      <div id="liveToast" class="toast text-bg-warning" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-          <strong class="me-auto">How To Use</strong>
-          <small>Hello!</small>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    <div class="utilities">
+
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="liveToast" class="toast text-bg-warning hide" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                <strong class="me-auto">How To Use</strong>
+                <small>Hello!</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Right-click on the background to open the toolbox!
+                </div>
+            </div>
         </div>
-        <div class="toast-body">
-            Right-click on the background to open the toolbox!
-        </div>
-      </div>
+        <script>
+        const toastTrigger = document.getElementById('liveToastBtn')
+        const toastLiveExample = document.getElementById('liveToast')
+        const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
+        toastBootstrap.show()
+        </script>
+
     </div>
 
-<script>
-const toastTrigger = document.getElementById('liveToastBtn')
-const toastLiveExample = document.getElementById('liveToast')
 
 
-  const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
-   toastBootstrap.show()
+    <div class="app"></div>
 
-</script>
-
+    <!--
     <div class="container-fluid h-100">
         <div class="row d-none">
             <div class="col">
@@ -191,11 +200,11 @@ const toastLiveExample = document.getElementById('liveToast')
 
 
             </aside>
-            <main class="col-12 app position-relative bg-dark">
+            <main class="col-12 app position-relative bg-dark p-0 m-0">
                 <div class="app"></div>
             </main>
         </div>
-    </div>
+    </div> -->
 
   </body>
 </html>

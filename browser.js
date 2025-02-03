@@ -289,7 +289,6 @@ class Library extends Branch {
 
 
 
-
 import Tone from './extensions/tone/Tone.js';
 
 class ToneComponent extends Component {
@@ -531,22 +530,161 @@ class ToneLibrary extends Library {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+class SceneComponent extends Component {
+  // All items from the signal category inherit this
+  // Something = Something;
+}
+
+
+class SceneNoteComponent extends SceneComponent {
+  static caption = 'Note';
+  static description = 'Leave a note on the scene.';
+  static defaults = {text:{label:'Message', type:'Text', data: 'Life cycle management is incomplete, so there are some odd behaviours.'}};
+
+  initialize(){
+    super.initialize()
+  }
+
+    start(){}
+
+}
+
+class SceneToastComponent extends SceneComponent {
+  static caption = 'Toast';
+  static description = 'Show a message.';
+  static defaults = {};
+
+  initialize(){
+    super.initialize()
+    this.channels.set('text', {side:'in', icon:'activity'});
+  }
+
+  start(){}
+
+
+  connect(){}
+
+  execute(){}
+
+  disconnect(){}
+
+  dispose(){}
+
+}
+
+class SceneSettingComponent extends SceneComponent {
+  static caption = 'Scene Setting';
+  static description = 'Monitor a scene setting, and pass the value along if it changes.';
+  static defaults = {};
+
+  initialize(){
+    super.initialize()
+    this.channels.set('value', {side:'out', icon:'activity'});
+  }
+
+  start(){}
+
+  // am I connectable to destination
+  connectable(req){return true;}
+
+
+  connect(){}
+
+  execute(){}
+
+  disconnect(){}
+
+  dispose(){}
+
+
+}
+
+
+// class SignalComponent extends Component {
+//   // All items from the signal category inherit this
+//   // Something = Something;
+// }
+
+
+// class SignalSettingComponent extends SignalComponent {
+//   static caption = 'Scene Setting';
+//   static description = 'A setting accesses .settings in the scene it is stored in';
+//   static defaults = {};
+
+//   initialize(){
+//     super.initialize()
+//     this.channels.set('value', {side:'out', icon:'activity'});
+//   }
+
+//   start(){}
+
+//   connectable(){}
+
+//   connect(){}
+
+//   execute(){}
+
+//   disconnect(){}
+
+//   dispose(){}
+
+
+// }
+
+
+
+
+
+
+
+
+
 // Boot
 const application = new Application();
 
 // Module Registration
 const modules = new Modules('modules');
 
+
+
+
+
+
+const sceneLibrary = new Library('js-signals');
+sceneLibrary.settings.name = 'Scene Tools';
+modules.create(sceneLibrary);
+sceneLibrary.register('note',   SceneNoteComponent);
+sceneLibrary.register('toast',   SceneToastComponent);
+sceneLibrary.register('setting', SceneSettingComponent);
+
+// const signalsLibrary = new Library('js-signals');
+// signalsLibrary.settings.name = 'Signal Toolbox';
+// modules.create(signalsLibrary);
+// signalsLibrary.register('signal', {}, 'Signal');
+// signalsLibrary.register('setting', SignalSettingComponent, 'Setting');
+
+
 const toneLibrary = new ToneLibrary('tone-js');
 toneLibrary.settings.name = 'Tone.js Components';
 modules.create(toneLibrary);
-
-toneLibrary.register('distortion', ToneDistortionComponent);
+toneLibrary.register('distortion',    ToneDistortionComponent);
 toneLibrary.register('feedbackdelay', ToneFeedbackDelayComponent);
-toneLibrary.register('synth', ToneSynthComponent);
-toneLibrary.register('pattern', TonePatternComponent);
-toneLibrary.register('player', TonePlayerComponent);
-toneLibrary.register('destination', ToneDestinationComponent);
+toneLibrary.register('synth',         ToneSynthComponent);
+toneLibrary.register('pattern',       TonePatternComponent);
+toneLibrary.register('player',        TonePlayerComponent);
+toneLibrary.register('destination',   ToneDestinationComponent);
 
 // const signalsLibrary = new ToneLibrary('js-signals');
 // signalsLibrary.settings.name = 'Signal Toolbox';
@@ -590,12 +728,15 @@ const project = new Project('main-project');
 application.create(project);
 
 const mainLocation = new Location('main');
+mainLocation.settings.merge({title: 'Main'});
 project.create(mainLocation);
 
-const upperLocation = new Location('upper');
-project.create(upperLocation);
+const musicLocation = new Location('music');
+musicLocation.settings.merge({title: 'Music'});
+project.create(musicLocation);
 
 const teeLocation = new Location('tee');
+teeLocation.settings.merge({title: 'Tee Example'});
 project.create(teeLocation);
 
 
@@ -603,20 +744,29 @@ project.create(teeLocation);
 
 project.load();
 {
+  mainLocation.createModule('note1', 'js-signals/note', {title:'Note', left: 66, top: 88}, {} );
+  mainLocation.createModule('setting1', 'js-signals/setting', {title:'Scene Setting', left: 333, top: 222}, {} );
+  mainLocation.createModule('toast1', 'js-signals/toast', {title:'Toast', left: 777, top: 444}, {});
+
+  mainLocation.createConnection('setting1:value', 'toast1:text', {autostart: false});
+
+
+  }
+{
   // EXAMPLE project.load
 
-  mainLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:{label:'Tonal Values', type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{label: 'Arpeggio Pattern', type:'Enum', options:[{value:'up', textContent:'up'},  {value:'down', textContent:'down'},  {value:'upDown', textContent:'upDown'},  {value:'downUp', textContent:'downUp'},  {value:'alternateUp', textContent:'alternateUp'},  {value:'alternateDown', textContent:'alternateDown'},  {value:'random', textContent:'random'},  {value:'randomOnce', textContent:'randomOnce'},  {value:'randomWalk', textContent:'randomWalk'},], data:"upDown"},});
-  mainLocation.createModule('synth1', 'tone-js/synth',                   {title:'synth1', left: 555, top: 222}, {});
-  mainLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 1111, top: 666}, {distortion: {label:'Distortion Ammount', type:'Float', data:0.2, min:0, max:1, step:0.01}});
-  mainLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:{label:'Delay Time', type:'Text', data:0.125,}, feedback:{label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01}});
-  mainLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
-  mainLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: {label:'Audio URL', type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {label:'Loop', type:'Boolean', data:true}, autostart: {label:'Autostart', type:'Boolean', data:true}, } );
+  musicLocation.createModule('pattern1', 'tone-js/pattern',               {title:'pattern1', left: 66, top: 222}, {values:{label:'Tonal Values', type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{label: 'Arpeggio Pattern', type:'Enum', options:[{value:'up', textContent:'up'},  {value:'down', textContent:'down'},  {value:'upDown', textContent:'upDown'},  {value:'downUp', textContent:'downUp'},  {value:'alternateUp', textContent:'alternateUp'},  {value:'alternateDown', textContent:'alternateDown'},  {value:'random', textContent:'random'},  {value:'randomOnce', textContent:'randomOnce'},  {value:'randomWalk', textContent:'randomWalk'},], data:"upDown"},});
+  musicLocation.createModule('synth1', 'tone-js/synth',                   {title:'synth1', left: 555, top: 222}, {});
+  musicLocation.createModule('distortion1', 'tone-js/distortion',         {title:'distortion1', left: 1111, top: 666}, {distortion: {label:'Distortion Ammount', type:'Float', data:0.2, min:0, max:1, step:0.01}});
+  musicLocation.createModule('feedbackdelay1', 'tone-js/feedbackdelay',   {title:'feedbackdelay1', left: 555, top: 444}, {delayTime:{label:'Delay Time', type:'Text', data:0.125,}, feedback:{label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01}});
+  musicLocation.createModule('destination1', 'tone-js/destination',       {title:'destination1', left: 1111, top: 77}, {});
+  musicLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: {label:'Audio URL', type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {label:'Loop', type:'Boolean', data:true}, autostart: {label:'Autostart', type:'Boolean', data:true}, } );
 
   // mainLocation.createConnection('pattern1:out', 'synth1:in');
-  mainLocation.createConnection('synth1:out', 'destination1:in', {autostart: false});
+  musicLocation.createConnection('synth1:out', 'destination1:in', {autostart: false});
   // mainLocation.createConnection('distortion1:out', 'destination1:in');
   // mainLocation.createConnection('player1:out', 'feedbackdelay1:in');
-  mainLocation.createConnection('feedbackdelay1:out', 'destination1:in', {autostart: false});
+  musicLocation.createConnection('feedbackdelay1:out', 'destination1:in', {autostart: false});
 
 }
 

@@ -2,6 +2,7 @@ import Signal from 'signal';
 import lol from 'lol';
 import transcend from 'transcend';
 import guid from 'guid';
+import gui from 'gui';
 import CONFIGURATION from 'configuration';
 
 export default class Console extends HTMLElement {
@@ -12,19 +13,20 @@ export default class Console extends HTMLElement {
 
       const localStyle = `
 
-        .toolbar-container {
+        .horizontal-menu {
+         	position: absolute;
+          top: 1rem;
+          left: 5rem;
+          gap: 1em;
+        }
+
+        .vertical-menu {
          	position: absolute;
           top: 1rem;
           left: 1rem;
         }
 
-        .application-speed-container {
 
-         	position: absolute;
-          top: 1rem;
-          left: 5rem;
-          width: 10rem;
-        }
 
         .my-vertical {
           pointer-events: none;
@@ -48,28 +50,32 @@ export default class Console extends HTMLElement {
       const shadow = this.attachShadow({ mode: 'open' });
       shadow.adoptedStyleSheets = [...document.adoptedStyleSheets, localCss];
 
-      this.container = lol.div({   });
-      this.container.innerHTML = `
-        <div class="position-relative">
+      this.horizontal = lol.div({class:'horizontal-menu d-flex flex-row'});
+      this.vertical = lol.div({class:'vertical-menu'});
+      this.container = lol.div({class:'position-relative'}, this.horizontal, this.vertical);
 
-          <div class="application-speed-container d-none">
+      shadow.appendChild(this.container);
+
+
+      let speedControl = false;
+      if(speedControl) this.horizontal.appendChild(lol.div({innerHTML:`
+          <div class="application-speed" style="min-width: 200px;">
             <label for="application-speed" class="form-label d-none"><small>Speed: <span name="application-speed-label">100%</span></small></label>
             <input name="application-speed" type="range" min="0" max="1" step="0.01" value="1" class="form-range" id="application-speed">
           </div>
+      `}));
 
-          <div class="toolbar-container">
-          <div class="btn-toolbar my-vertical">
+      this.vertical.appendChild(lol.div({innerHTML:`
+        <div class="btn-toolbar my-vertical">
+          <div class="btn-group-vertical mb-2 d-none" role="group" aria-label="First group">
+            <button name="application-play" type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-play"></i></button>
+            <button name="application-pause" type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-pause"></i></button>
+            <!--
 
-            <div class="btn-group-vertical mb-2 d-none" role="group" aria-label="First group">
-
-              <button name="application-play" type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-play"></i></button>
-              <button name="application-pause" type="button" class="btn btn-outline-secondary" title="Send Start"><i class="bi bi-pause"></i></button>
-
-              <!--
-              <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Stop"><i class="bi bi-stop"></i></button>
-              <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Kill"><i class="bi bi-capsule"></i></button>
-              -->
-            </div>
+            <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Stop"><i class="bi bi-stop"></i></button>
+            <button type="button" class="btn btn-outline-secondary opacity-25" title="Send Kill"><i class="bi bi-capsule"></i></button>
+            -->
+          </div>
 
             <div class="btn-group-vertical mb-2">
              <!-- <button name="create-window" type="button" class="btn btn-outline-secondary d-none" title="create window"><i class="bi bi-plus-circle"></i></button> -->
@@ -102,35 +108,31 @@ export default class Console extends HTMLElement {
 
 
           </div>
-          </div>
-        </div>
-      `;
-
-
-
-      // this.appendChild(this.container);
-      shadow.appendChild(this.container);
+      `}));
 
     }
 
     connectedCallback() {
 
+
+
+
       const application = transcend(this, `x-application`);
       const scene = transcend(this, `x-scene`);
       if(!application) throw new Error('Unable to locate applicaion!')
 
-
-      const applicationSpeedRangeInput = this.container.querySelector('[name="application-speed"]');
-      const applicationSpeedLabel = this.container.querySelector('[name="application-speed-label"]');
-      // CONFIGURATION.rate.subscribe(v=>applicationSpeedLabel.textContent = `${100*v}% (${parseInt(CONFIGURATION.flowDuration.value)}ms/${parseInt(CONFIGURATION.computationDuration.value)}ms)`);
-      CONFIGURATION.rate.subscribe(v=>applicationSpeedLabel.textContent = `${(100*v).toFixed(0)}%`);
-      const applicationSpeedRangeInputHandler = function(event){
-        CONFIGURATION.rate.value =    1 * event.target.value;
-      }.bind(this);
-      applicationSpeedRangeInput.addEventListener("input", applicationSpeedRangeInputHandler)
-      this.gc = ()=> applicationSpeedRangeInput.removeEventListener("input", applicationSpeedRangeInputHandler)
-      applicationSpeedRangeInput.value = CONFIGURATION.rate.value;
-
+      if(0){
+        const applicationSpeedRangeInput = this.container.querySelector('[name="application-speed"]');
+        const applicationSpeedLabel = this.container.querySelector('[name="application-speed-label"]');
+        // CONFIGURATION.rate.subscribe(v=>applicationSpeedLabel.textContent = `${100*v}% (${parseInt(CONFIGURATION.flowDuration.value)}ms/${parseInt(CONFIGURATION.computationDuration.value)}ms)`);
+        CONFIGURATION.rate.subscribe(v=>applicationSpeedLabel.textContent = `${(100*v).toFixed(0)}%`);
+        const applicationSpeedRangeInputHandler = function(event){
+          CONFIGURATION.rate.value =    1 * event.target.value;
+        }.bind(this);
+        applicationSpeedRangeInput.addEventListener("input", applicationSpeedRangeInputHandler)
+        this.gc = ()=> applicationSpeedRangeInput.removeEventListener("input", applicationSpeedRangeInputHandler)
+        applicationSpeedRangeInput.value = CONFIGURATION.rate.value;
+      }
 
 
 
