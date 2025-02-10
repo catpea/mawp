@@ -8,8 +8,8 @@ export default class WindowCreate extends Command {
     const scene = this.project.get(this.project.activeLocation.value);
     const Agent = await this.project.getAgent(agent);
     const component = scene.createComponent(id, {title, reference, left, top, style, active }, new Agent());
-    component.start();
-
+    await component.state.initialize();
+    await component.state.start();
   }
 
 }

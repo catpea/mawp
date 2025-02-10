@@ -74,7 +74,7 @@ export default class Prompt extends HTMLElement {
 
     }
 
-    connectedCallback() {
+    connected() {
 
 
       const application = transcend(this, `x-application`);

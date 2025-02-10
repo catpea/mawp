@@ -59,7 +59,6 @@ class Switcher extends ReactiveHTMLElement {
     const buttonCaptionElement = this.container.querySelector('[name=caption]');
     this.application.source.activeLocation.subscribe(sceneName=>{
       const node = this.application.source.get('main-project', sceneName);
-      console.log('PPPP', node)
       buttonCaptionElement.textContent = node.settings.get('title').value + ' Scene';
     });
 
@@ -67,10 +66,6 @@ class Switcher extends ReactiveHTMLElement {
     const project = this.application.source.get('main-project');
 
     for(const scene of project.children){
-      // let disabled = '';
-      // console.log('BBB', scene.id, this.application.source.activeLocation)
-      // if(scene.id==this.application.source.activeLocation.value) disabled='disabled';
-      // if(scene.id!==this.application.source.activeLocation.value){
         const click =e=> this.application.source.activeLocation.value = scene.id;
         sceneList.appendChild(lol.li({}, lol.button({class:'dropdown-item', on:{click}}, scene.settings.get('title').value)))
       // }

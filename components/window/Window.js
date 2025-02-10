@@ -42,6 +42,8 @@ export default class Window extends ReactiveHTMLElement {
       <ul class="list-group list-group-flush">
       </ul>
       <div class="card-footer text-body-secondary" style="font-size: .75rem">
+        <span class="card-state opacity-50"></span>
+
       </div>
     `;
 
@@ -52,39 +54,83 @@ export default class Window extends ReactiveHTMLElement {
     const cardFooter = this.shadowRoot.querySelector('.card-footer');
     const listGroup = this.shadowRoot.querySelector('.list-group');
     const cardTitle = this.shadowRoot.querySelector('.card-header .card-title');
+    const cardState = this.shadowRoot.querySelector('.card-footer .card-state');
 
     this.dataset2.get('date').subscribe(v => cardFooter.textContent = v);
     this.dataset2.get('title').subscribe(v => cardTitle.textContent = v);
+    this.source.state.name.subscribe(v => cardState.textContent = v);
     this.dataset2.get('note').subscribe(v => cardFooter.textContent = v);
     this.dataset2.get('zindex').subscribe(v => cardNode.style.zIndex = v);
     this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
 
     // CREATE STANDARD PORTS
-    // IN AND OUT PORTS, special handling required
-    const ioPortMap = this.source.channels.filter(([name])=>name=='in'||name=='out');
-    if(ioPortMap.length){
-      // NOTE: in/out ports share a lingle list-group-item
-      const iolistItem = lol.li({class:'list-group-item bg-transparent'});
-      listGroup.appendChild(iolistItem);
-      for (const [key, data] of ioPortMap) {
-        const dataset = Object.assign({ title:key, side: 'in', icon: 'circle', style:'data' }, data.value)
+    //
+    const channelMaker = (key, data, iolistItem = lol.li({class:'list-group-item bg-transparent'})) => {
+
+      const dataset = Object.assign({ title:key, side: 'in', icon: 'circle', style:'event' }, data)
+
+      const existingPort = listGroup.querySelector(`x-port[id=${key}]`);
+
+      if(existingPort){
+        for (const [k,v] of Object.entries(dataset) ){
+          existingPort.dataset2.set(k,v);
+        }
+      }
+
+      if(!existingPort){
+        listGroup.appendChild(iolistItem);
         const portNode = lol['x-port']({ id: key, dataset});
         iolistItem.appendChild(portNode)
       }
+
     }
 
-    // NON-STANDARD PORTS
-    for (const [key, data] of this.source.channels.filter(([name])=>name!=='in'&&name!=='out')) {
-      const iolistItem = lol.li({class:'list-group-item bg-transparent'});
-      listGroup.appendChild(iolistItem);
-      const dataset = Object.assign({ title:key, side: 'in', icon: 'circle', style:'event' }, data.value)
-      const portNode = lol['x-port']({ id: key, dataset});
-      iolistItem.appendChild(portNode)
-    }
+    // // CHANNELS
+    // // IN AND OUT PORTS, special handling required
+    // // CREATE A SHARED iolistItem
+    // const ioPortMap = this.source.channels.filter(([name])=>name=='in'||name=='out');
+    // if(ioPortMap.length){
+    //   // NOTE: in/out ports share a lingle list-group-item
+    //   const  = lol.li({class:'list-group-item bg-transparent'});
+    //   listGroup.appendChild(iolistItem);
+    //   for (const [channelName, channelConfiguration] of ioPortMap) {
+    //     channelMaker(channelName, channelConfiguration.value, iolistItem);
+    //   }
+    // }
+    // // NOW APPEND NON IO ITEMS
+    // for (const [channelName, channelConfiguration] of this.source.channels.filter(([name])=>name!=='in'&&name!=='out')) {
+    //   channelMaker(channelName, channelConfiguration.value);
+    // }
+    // // UPDATE ITEMS, NOTE: this will run once, but it is the same valeus, and they will be ignored.
+    // this.gc = this.source.channels.subscribe((channelName, channelConfiguration) => {
+    //   channelMaker(channelName, channelConfiguration);
+    // });
+    // // TODO: REWRITE THIS to just rely on subscribe, testing is the item is in or out, and have them share an iolistItem, for the rest append an item
 
-    this.gc = this.source.channels.subscribe((channel, channelConfiguration) => {
-      console.warn('Channel update has been ignored', {channel, channelConfiguration})
+
+    // CHANNELS
+    let iolistItem = null;
+
+    // Set up the subscription to handle all channel updates
+    this.gc = this.source.channels.subscribe((channelName, channelConfiguration) => {
+
+      // Check if this is the first IO port we're encountering
+      if ((channelName === 'in' || channelName === 'out') && !iolistItem) {
+        // Create the shared list item for IO ports
+        iolistItem = lol.li({class: 'list-group-item bg-transparent'});
+        listGroup.appendChild(iolistItem);
+      }
+
+      // Determine which container to use
+      //NOTE: undefined will cause channelMaker to create a new list item
+      const container = (channelName === 'in' || channelName === 'out') ? iolistItem : undefined;
+
+      // Create or update the channel
+      channelMaker(channelName, channelConfiguration, container);
     });
+
+
+
 
     // ADD PIPES FROM REFERENCED SCENE
     this.dataset2.get('reference').subscribe(reference => {
@@ -195,9 +241,7 @@ export default class Window extends ReactiveHTMLElement {
     this.status.value = 'ready';
   }
 
-  disconnected() {
-    this.status.value = 'unloaded'; // ALERT THE PIPES
-  }
+
 
   #handleResizeMutation(entries) {
     for (let entry of entries) {

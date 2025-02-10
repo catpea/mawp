@@ -1,164 +1,129 @@
-class Setting {
-  #value;
+class State {
+  #activeState;
   listeners;
   constructor(value) {
-    this.#value = value;
+    this.#activeState = value;
     this.listeners = [];
   }
   subscribe(listener) {
     this.listeners.push(listener);
-    if (this.#value !== undefined) listener(this.#value);
+    if (this.#activeState !== undefined) listener(this.#activeState);
     return () => this.unsubscribe(listener);
   }
   unsubscribe(listener) {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
-  notify() {
-    this.listeners.forEach((listener) => listener(this.#value));
+  notify(previousState) {
+    this.listeners.forEach((listener) =>
+      listener(this.#activeState, previousState),
+    );
   }
-  set value(v) {
-    if (this.#value == v) return;
-    this.#value = v;
-    this.notify();
+  set value(requestedState) {
+    const previousState = this.#activeState;
+    if (previousState == requestedState) return;
+    this.#activeState = requestedState;
+    this.notify(previousState);
   }
   get value() {
-    return this.#value;
+    return this.#activeState;
   }
 }
 
-export default class Settings {
+export default class StateMachine {
+  constructor(actionMap) {
+    this.actionMap = actionMap;
+    this.name = new State("uninitialized"); // superposition
 
-  _data;
-  _types = new Map();
-  _groups = new Map();
-  _transformers = new Map([['Number',Number], ['String',String], ['Boolean',Boolean], ['URL',URL]]);
+    // Define valid state transitions
+    this.transitions = {
+      uninitialized: ["initialized"],
 
-  readOnly = false;
-
-  constructor(data = {}) {
-    this._data = data;
-    this.listeners = [];
-
-    return new Proxy(this, {
-      set: (settings, key, value, proxy) => {
-        return settings.set(key, value);
-      },
-      get: (settings, key, value, proxy) => {
-        if (key in settings) return settings[key];
-        return settings.retrieve( key ); //NOTE: returning .value
-      },
-    });
-
+      initialized: ["started"],
+      started: ["paused", "stopped"],
+      paused: ["started", "stopped"],
+      stopped: ["started", "disposed"],
+      disposed: [], // No valid transitions from disposed state
+    };
   }
 
-  // PUBLIC
-
-  /**
-   * Registers datatype sassociated with the specified key.
-   * @example
-   * settings.types = 'address:URL';
-   * @example
-   * settings.types = 'active:Boolean age:Number';
-   * @example
-   * settings.types = [['active','Boolean], ['age'],[Number]];
-   */
-  types(input){
-    console.log( 'XXXX set types', input);
-
-    if (typeof input === 'string') input = input.split(' ').map(o=>o.split(':')) //.map(([name, type])=>[type,this.#transformers[type]?this.#transformers[type]:null])); // convert 'a:string b:number' to [['a',String],['b',Number]]
-  console.log( 'XXXX set types 2', input);
-
-    for( const [name, type] of input ) {
-      console.log( 'XXXX FOR set types', name, type);
-
-      this._types.set(name, type);
-    }
+  // Helper to validate state transitions
+  canTransitionTo(newState) {
+    const validTransitions = this.transitions[this.name.value];
+    return validTransitions.includes(newState);
   }
-  type(key){
-    console.log(this._types, key, this._types.get(key));
-    return this._types.get(key);
-  }
-  /**
-   * Registers groups associated with the specified keys.
-   * @example
-   * settings.group('user', 'delay interval');
-   * @return {Set<string>} List of members in the group
-   */
-  group(name, members){
 
-    if(members){ // INITIALIZE WRITER
-      if (typeof members === 'string') members = members.split(' ');
-      const group = new Set(members);
-      this._groups.set(name, group);
+  // Helper to handle state changes
+  changeState(newState) {
+    if (!this.canTransitionTo(newState)) {
+      throw new Error(
+        `Invalid state transition: ${this.name.value} -> ${newState}`,
+      );
     }
 
-    return this._groups.get(name) || [];
+    const prevState = this.name.value;
+    this.name.value = newState;
+
+    // Emit state change event (could be enhanced with proper event emitter)
+    console.log(`State changed: ${prevState} -> ${this.name.value}`);
   }
 
-  /**
-   * Retrieves the value associated with the specified key, applying type transformations if specified.
-   * @param {string} key - The key of the setting to retrieve.
-   * @returns {*} The value of the setting, possibly transformed according to its type.
-   */
-  retrieve(key){
-    const value = this.get(key).value;
-
-    const type = this._types.get(key);
-    console.info('XXXXXX retrieve type =', type, )
-    if(!type) return value;
-    const transform = this._transformers.get(type);
-    console.info('XXXXXX retrieve transform', transform)
-    if(!transform) return value;
-
-    console.info('XXXXXX retrieve', type, transform, transform(value), key,  value)
-
-    return transform(value);
+  // Get current state
+  getState() {
+    return this.name.value;
   }
 
-  set(key, value) {
-    if (this.readOnly) throw new Error("Dataset is read only.");
-    if (key in this._data) {
-      if (this._data[key].value == value) return;
-      this._data[key].value = value;
-    } else {
-      this._data[key] = new Setting(value);
-    }
-    this.notify(key, value);
-    return true;
-  }
-
-  get(key) {
-    if (key in this._data) {
-      return this._data[key];
-    } else {
-      this._data[key] = new Setting();
-      return this._data[key];
+  initialize() {
+    if (this.name.value === "uninitialized") {
+      this.actionMap.initialize();
+      this.changeState("initialized");
+    }else{
+      throw new Error('Will not change state from uninitialized as conditions are unmet')
     }
   }
-  keys(){
-    return Object.keys(this._data);
-  }
 
-  get snapshot(){
-    return Object.fromEntries( this.keys().map(key=> [key, this.retrieve(key)]) );
-  }
-
-  subscribe(listener) {
-    this.listeners.push(listener);
-    for (const [key, value] of Object.entries(this._data)) {
-      listener(key, value.value); // NOTE: we are storing signals here
+  // Public state change methods
+  start() {
+    if (this.name.value === "initialized" || this.name.value === "paused") {
+      this.actionMap.start();
+      this.changeState("started");
+    }else{
+      throw new Error('Will not change state to started as conditions are unmet')
     }
-    return () => this.unsubscribe(listener);
   }
 
-  unsubscribe(listener) {
-    this.listeners = this.listeners.filter((l) => l !== listener);
+  pause() {
+    if (this.name.value === "started") {
+      this.actionMap.pause();
+      this.changeState("paused");
+    }else{
+      throw new Error('Will not change state to paused as conditions are unmet')
+    }
   }
 
-  // INTERNAL
+  resume() {
+    if (this.name.value === "paused") {
+      this.actionMap.resume();
+      this.changeState("started");
+    }else{
+      throw new Error('Will not change state to started as conditions are unmet')
+    }
+  }
 
-  notify(key, value) {
-    //NOTE: notify sends in its own value which is not a signal
-    this.listeners.forEach((listener) => listener(key, value));
+  stop() {
+    if (this.name.value === "started" || this.name.value === "paused") {
+      this.actionMap.stop();
+      this.changeState("stopped");
+    }else{
+      throw new Error('Will not change state to stopped as conditions are unmet')
+    }
+  }
+
+  dispose() {
+    if (this.name.value === "stopped") {
+      this.actionMap.dispose();
+      this.changeState("disposed");
+    }else{
+      throw new Error('Will not change state to disposed as conditions are unmet')
+    }
   }
 }

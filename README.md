@@ -3,6 +3,8 @@ MAWP
 
 ## TODO
 
+- style guard: ensure user methods are not called directly but via state machine
+- switch all to ReactiveHTMLElement for consistemt garbage collection
 - receive function
 - resize windows
 - "lol" library, on has no garbage collection
@@ -12,7 +14,7 @@ MAWP
 - live update (signal) inner pipes, test by adding upper to upper and watch it live
 - Save load files
 - enable pipe connections
--  add an editor modal
+- add an editor modal
 
 ## Server
 - server.js

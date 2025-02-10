@@ -7,7 +7,8 @@ export default class WindowCreate extends Command {
   async execute({ id=guid(), path, configuration=null, title=null, reference=null, top=null, left=null, style, active=false, agent='@core/standard-agent' }) {
 
     const component = this.getLocation().createModule(id, path, {title, left, top}, configuration);
-    component.start(); //NOTE: newly created components must be started
+    await component.state.initialize(); //NOTE: newly created components must be initialized
+    await component.state.start(); //NOTE: newly created components must be started
 
   }
 
