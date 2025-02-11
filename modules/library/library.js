@@ -300,9 +300,7 @@ class Source {
       id: timeoutGuid,
       ts: new Date().toISOString(),
       subscription: () => {
-        console.log(
-          "agent stop automatic garbage collect clearTimeout(timeoutId)",
-        );
+        //console.log( "agent stop automatic garbage collect clearTimeout(timeoutId)", );
         clearTimeout(timeoutId);
       },
     });
@@ -342,7 +340,7 @@ export class Application extends Source {
   }
 
   start() {
-    console.info('Application Start')
+    //console.info('Application Start')
     this.all .filter((o) => o !== this) .map((node) => (node.state.initialize()));
     this.all .filter((o) => o !== this) .map((node) => (node.state.start()));
   }
@@ -432,6 +430,14 @@ export class Component extends Source {
 
   constructor(id) {
     super(id, "window");
+
+    // NOTE: this is where we convent static ports to channels, a port is an idea, a channel is the real thing
+    if(this.constructor.ports){
+      for( const [name, value] of Object.entries(this.constructor.ports)){
+        this.channels.set(name, value);
+      }
+    }
+
   }
 
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT

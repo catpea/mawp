@@ -47,7 +47,7 @@ function elementCreator(elementName, attributes, children) {
       case 'class':
         if(Array.isArray(value)) value = value.join(' ');
         const payload = value.split(' ').filter(o=>o);
-        console.log('LOL', payload)
+        //console.log('LOL', payload)
         element.classList.add(...payload);
         break;
 

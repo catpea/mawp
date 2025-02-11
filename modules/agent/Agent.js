@@ -184,7 +184,7 @@ export default class Agent {
     timeoutFunction();
     }, timeoutDuration);
     this.#garbage.push( {type, id:timeoutGuid, ts:(new Date()).toISOString(), subscription: ()=>{
-      console.log('agent stop automatic garbage collect clearTimeout(timeoutId)')
+      // console.log('agent stop automatic garbage collect clearTimeout(timeoutId)')
       clearTimeout(timeoutId);
     }} );
   }

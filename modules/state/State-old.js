@@ -63,19 +63,19 @@ export default class Settings {
    * settings.types = [['active','Boolean], ['age'],[Number]];
    */
   types(input){
-    console.log( 'XXXX set types', input);
+    //console.log( 'XXXX set types', input);
 
     if (typeof input === 'string') input = input.split(' ').map(o=>o.split(':')) //.map(([name, type])=>[type,this.#transformers[type]?this.#transformers[type]:null])); // convert 'a:string b:number' to [['a',String],['b',Number]]
-  console.log( 'XXXX set types 2', input);
+    //console.log( 'XXXX set types 2', input);
 
     for( const [name, type] of input ) {
-      console.log( 'XXXX FOR set types', name, type);
+      //console.log( 'XXXX FOR set types', name, type);
 
       this._types.set(name, type);
     }
   }
   type(key){
-    console.log(this._types, key, this._types.get(key));
+    //console.log(this._types, key, this._types.get(key));
     return this._types.get(key);
   }
   /**
@@ -104,13 +104,13 @@ export default class Settings {
     const value = this.get(key).value;
 
     const type = this._types.get(key);
-    console.info('XXXXXX retrieve type =', type, )
+    //console.info('XXXXXX retrieve type =', type, )
     if(!type) return value;
     const transform = this._transformers.get(type);
-    console.info('XXXXXX retrieve transform', transform)
+    //console.info('XXXXXX retrieve transform', transform)
     if(!transform) return value;
 
-    console.info('XXXXXX retrieve', type, transform, transform(value), key,  value)
+    //console.info('XXXXXX retrieve', type, transform, transform(value), key,  value)
 
     return transform(value);
   }

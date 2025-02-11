@@ -9,7 +9,7 @@ import ReactiveHTMLElement from '../ReactiveHTMLElement.js';
 export default class Window extends ReactiveHTMLElement {
 
   initialize() {
-    this.Forms = new Forms({gc: this.gc});
+    this.Forms = new Forms({component:this});
 
     this.sizeSignal = new Signal([0,0]);
     this.attachShadow({ mode: 'open' });
@@ -165,36 +165,7 @@ export default class Window extends ReactiveHTMLElement {
       listGroup.appendChild(listItem)
     }
 
-    // SELF EDITABILITY - SETTING PUMP
-    if(this.source.constructor.name == 'SceneSettingComponent'){
-      const options = new Signal([]); // Format example [ { value:'up', textContent:'Up' } ]
-      const configuration = {
-        type: new Signal('Enum'),
-        label: new Signal('Setting Name'),
-        data: new Signal(),
-        name: 'setting',
-        options,
-      };
-      // Populate options with "local variables" or Settings.
-      const sceneName = this.application.source.activeLocation.value;
-      const currentScene = this.application.source.get('main-project', sceneName);
-      //
-      this.gc = currentScene.settings.data.subscribe(v=>{
-        const variableNames = Object.keys(v); // Take the names of settings object
-        const formOptions = [];
-        for( const variableName of variableNames){
-          const value = variableName;
-          const textContent = variableName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
-          const formOption = { value, textContent };
-          formOptions.push(formOption);
-        }
-        // update signal
-        options.value = formOptions;
-      });
-      const inputField = this.Forms.buildField(configuration);
-      const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
-      listGroup.appendChild(listItem)
-    }
+
 
     // TOOLBAR BUTTONS
     cardHeader.appendChild(lol.i({ name:'remove-component' ,class:'bi bi-x-circle text-danger float-end cursor-pointer', on:{ click:()=> this.application.source.commander.windowDelete({id:this.id}) && this.scene.clearFocus() }}))
@@ -222,7 +193,7 @@ export default class Window extends ReactiveHTMLElement {
     this.gc = this.dataset2.get('active').subscribe(v => {
       const id = this.id;
       if(!newlyCreated) return;
-      console.log({id, newlyCreated, v});
+      //console.log({id, newlyCreated, v});
       if(v==='true') this.scene.setFocus(this);
       newlyCreated = false;
     });

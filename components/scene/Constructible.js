@@ -62,7 +62,7 @@ class Instruments extends ReactiveHTMLElement {
     this.modal = new bootstrap.Modal(this.container, {});
     const createButton = shadow.getElementById('create-button');
     this.selected.subscribe(v=>createButton.disabled=v.path?false:true);
-    this.selected.subscribe(v=>console.log('TTT createButton.disabled', v.path?false:true));
+    //this.selected.subscribe(v=>console.log('TTT createButton.disabled', v.path?false:true));
     this.gc = this.listenTo(createButton, 'click', ()=>this.addComponent({path: this.selected.value.path, ...this.request}));
     const moduleDescription = shadow.getElementById('module-description');
     this.gc = this.selected.subscribe(v=>{
@@ -121,7 +121,7 @@ class Instruments extends ReactiveHTMLElement {
   };
 
   async addComponent(options){
-    console.warn('addComponent', options)
+    //console.warn('addComponent', options)
     const application = transcend(this, `x-application`);
     await application.source.commander.componentCreate(options);
     this.modal.hide();
@@ -161,7 +161,7 @@ export default class Constructible {
     event.preventDefault();
     const [x,y] = this.sceneComponent.transform(event.clientX, event.clientY);
     this.#mouseCoordinates = {x, y};
-    console.log(event, this.#mouseCoordinates );
+    //console.log(event, this.#mouseCoordinates );
 
      const svgSurface = this.sceneComponent.drawingSurfaces[1];
      if(!this.svgMarkerDot) this.svgMarkerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');

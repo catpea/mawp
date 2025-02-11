@@ -64,7 +64,7 @@ export default class StateMachine {
     this.name.value = newState;
 
     // Emit state change event (could be enhanced with proper event emitter)
-    console.log(`State changed: ${prevState} -> ${this.name.value}`);
+    //console.log(`State changed: ${prevState} -> ${this.name.value}`);
   }
 
   // Get current state

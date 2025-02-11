@@ -18,7 +18,7 @@ class ToneDestinationComponent extends ToneComponent {
 
   start(){
     this.content.value = this.Tone.getDestination();
-    console.log('EEE ToneDestinationComponent',   this.content.value );
+    //console.log('EEE ToneDestinationComponent',   this.content.value );
   }
 }
 
@@ -32,10 +32,10 @@ class TonePlayerComponent extends ToneComponent {
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    console.warn('TonePlayerComponent Start')
+    //console.warn('TonePlayerComponent Start')
     this.content.value = new this.Tone.Player(this.settings.getConfigurationObject());
     for (const [name, options] of this.settings.getSettingsList() ){
-        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
         this.gc = options.data.subscribe(v=>this.content.value[name]);
     }
   }
@@ -100,10 +100,10 @@ class ToneDistortionComponent extends ToneComponent {
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    console.log('Distortion Start!')
+    //console.log('Distortion Start!')
     this.content.value = new this.Tone.Distortion(this.settings.getConfigurationObject());
     for (const [name, options] of this.settings.getSettingsList() ){
-        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
         this.gc = options.data.subscribe(v=>this.content.value[name]);
     }
   }
@@ -134,7 +134,7 @@ class ToneFeedbackDelayComponent extends ToneComponent {
   start(){
     this.content.value = new this.Tone.FeedbackDelay(this.settings.getConfigurationObject());
     for (const [name, options] of this.settings.getSettingsList() ){
-        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
         this.gc = options.data.subscribe(v=>this.content.value[name]);
     }
   }
@@ -167,7 +167,7 @@ class TonePatternComponent extends ToneComponent {
 
   start(){
     for (const [name, options] of this.settings.getSettingsList() ){
-        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
+        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
         this.gc = options.data.subscribe(v=>this.content?.value?this.content.value[name]=v:0);
     }
   }
@@ -182,7 +182,7 @@ class TonePatternComponent extends ToneComponent {
 
     // Prepare
     const toneOptions = this.settings.getConfigurationObject();
-    console.log('toneOptions', toneOptions)
+    //console.log('toneOptions', toneOptions)
     const {values, pattern} = toneOptions;
     const callback = (time, note) => {
       destination.content.value.triggerAttackRelease(note, 0.1, time);

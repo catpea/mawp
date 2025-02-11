@@ -87,7 +87,7 @@ export default class Prompt extends HTMLElement {
         const formData = new FormData(commandForm);
         const commandLine = formData.get('commandLine');
 
-        console.warn('commando(commandLine)', commando(commandLine));
+        //console.warn('commando(commandLine)', commando(commandLine));
 
         for( const { commandName, commandArguments } of commando(commandLine)){
           await application.source.commander[commandName](commandArguments);

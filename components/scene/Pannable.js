@@ -75,7 +75,7 @@ export default class Pannable {
   }
 
   onWheel(event) {
-    console.log("Pannable onWheel Target", event.originalTarget.tagName, event.target.tagName);
+    //console.log("Pannable onWheel Target", event.originalTarget.tagName, event.target.tagName);
 
     let allow = true;
     if (event.originalTarget !== this.sceneComponent) allow = false;

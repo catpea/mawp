@@ -1,7 +1,7 @@
 import { Library, Component } from 'library';
 
 
-class SceneComponent extends Component {
+class SystemTool extends Component {
   // All items from this module category inherit from this class;
 
   // EXAMPLE 1: external class sharing
@@ -12,13 +12,43 @@ class SceneComponent extends Component {
 }
 
 
-class SceneNoteComponent extends SceneComponent {
+class Note extends SystemTool {
   static caption = 'Note';
   static description = 'Leave a note on the scene.';
-  static defaults = {text:{label:'Message', type:'Text', data: 'Preparing to add more building blocks.'}};
+  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''}};
 }
 
-class SceneToastComponent extends SceneComponent {
+class Fetch extends SystemTool {
+  static caption = 'Note';
+  static description = 'Leave a note on the scene.';
+  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''}};
+  static ports = {out:{side:'out', icon:'activity'}};
+}
+
+class Queue extends SystemTool {
+  static caption = 'Note';
+  static description = 'Leave a note on the scene.';
+  static defaults = {};
+  static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
+}
+
+class Manager extends SystemTool {
+  static caption = 'Note';
+  static description = 'Leave a note on the scene.';
+  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''},  loop: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, setting: {type:'Scene', label:'Transformer', text:'Transformer will only list scenes with "Scene Input" and "Scene Output" blocks. Allowing for _transformation_ of data.'}};
+  static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
+}
+
+class Files extends SystemTool {
+  static caption = 'Note';
+  static description = 'Leave a note on the scene.';
+  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''}};
+  static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
+}
+
+
+
+class Toast extends SystemTool {
 
   // Identity & Configuration
   static caption = 'Toast';
@@ -43,20 +73,22 @@ class SceneToastComponent extends SceneComponent {
 
 }
 
-class SceneSettingComponent extends SceneComponent {
+
+
+
+class Setting extends SystemTool {
   static caption = 'Scene Setting';
   static description = 'Monitor a scene setting, and pass the value along if it changes.';
-  static defaults = {};
+  static defaults = {setting: {label:'setting', type:'Setting'}};
+  static ports = {out:{side:'out', icon:'activity'}};
 
   initialize(){
-    this.channels.set('value', {side:'out', icon:'activity'});
   }
 
   start(){}
 
   // am I connectable to destination
   connectable(req){return true;}
-
 
   connect(){}
 
@@ -74,12 +106,16 @@ class SceneSettingComponent extends SceneComponent {
 
 export default function install(){
 
-  const library = new Library('scene-tools');
+  const library = new Library('system-tools');
   library.settings.name = 'Scene Tools';
 
-  library.register('note',   SceneNoteComponent);
-  library.register('toast',   SceneToastComponent);
-  library.register('setting', SceneSettingComponent);
+  library.register('note',    Note);
+  library.register('fetch',   Fetch);
+  library.register('queue',   Queue);
+  library.register('manager', Manager);
+  library.register('files',   Files);
+  library.register('toast',   Toast);
+  library.register('setting', Setting);
 
   return library;
 

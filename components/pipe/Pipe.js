@@ -29,7 +29,7 @@ export default class Pipe extends ReactiveHTMLElement {
           break;
         case "ready": // windows reported ready state
           // be a pipe that updated its x1y1 and x2y2
-          console.log('Pipe in ready mode!');
+          //console.log('Pipe in ready mode!');
 
           break;
         case "unloaded": // one of the windows was unloaded (removed)

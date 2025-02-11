@@ -59,7 +59,7 @@ export default class Signals {
       property: segments[segments.length - 1],
       depth: segments.length,
     };
-    console.log('PPP', path, response)
+    //console.log('PPP', path, response)
     return response;
   }
 
@@ -75,7 +75,7 @@ export default class Signals {
       if (typeof obj[key] === 'object' && obj[key] !== null) {
         // Recursively convert nested object
         if(depth >= limit){
-          console.log(`Depth ${depth} was greater than ${limit} no more recursion for ${key} assigning`, obj[key])
+          //console.log(`Depth ${depth} was greater than ${limit} no more recursion for ${key} assigning`, obj[key])
           result[key] = new Signal(obj[key]);
         }else{
           result[key] = this.convert(obj[key], limit, depth + 1);
@@ -93,7 +93,7 @@ export default class Signals {
     const { object, property, depth } = this.lookup(path);
 
     if (!object.value[property] || !(object.value[property] instanceof Signal)) {
-      console.log('SET',path, depth, property, value)
+      //console.log('SET',path, depth, property, value)
       object.value[property] = value;//new Signal(value);
     } else {
       object.value[property].value = value;

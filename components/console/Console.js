@@ -55,7 +55,7 @@ export default class Console extends HTMLElement {
 
          let commandId = o.commandName;
          if(o.commandArguments && o.commandArguments.id) commandId = o.commandName + o.commandArguments.id
-         console.info(commandId)
+         //console.info(commandId)
          if (executedCommandTimeouts.has(commandId)) {
            clearTimeout(executedCommandTimeouts.get(commandId));
          }
@@ -124,7 +124,7 @@ export default class Console extends HTMLElement {
       commandForm.addEventListener("submit", function (e) {
         e.preventDefault();
         const formData = new FormData(commandForm);
-        console.dir(...formData)
+        //console.dir(...formData)
         const commandName = formData.get('commandName');
         formData.delete('commandName');
         const commandAttributes = Object.fromEntries(formData);

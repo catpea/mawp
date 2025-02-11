@@ -1,18 +1,21 @@
+import Signal from 'signal';
+
 import guid from 'guid';
 import lol from 'lol';
 
 export default class Forms {
 
-  constructor({ gc }) {
-    this.gc = gc;
+  constructor({ component }) {
+    this.component = component;
   }
 
 
   buildField(options){
 
     let container;
+    const type = options.type?options.type.value:'text';
 
-    switch(options.type) {
+    switch(type) {
 
       case "code-editor":
         container = this.launchModal(options);
@@ -30,6 +33,18 @@ export default class Forms {
         container = this.makeCustomComponent(options)
         break;
 
+      case "Text":
+        container = this.makeText(options)
+        break;
+
+      case "Setting":
+        container = this.makeSettingsList(options)
+        break;
+
+      case "Scene":
+        container = this.makeSceneList(options)
+        break;
+
       case "beat-sequencer":
         container = this.makeModalForm(options)
         break;
@@ -41,6 +56,73 @@ export default class Forms {
     return container;
   }
 
+  makeText(configuration){
+    let container = lol.div({ type:configuration.type.value, class: 'mb-1'});
+      if(configuration.title) container.appendChild(lol.h5({class: 'card-title lead', textContent: configuration.title.value}));
+      if(configuration.subtitle) container.appendChild(lol.h6({class: 'card-subtitle mb-3 text-body-secondary', textContent: configuration.subtitle.value}));
+      if(configuration.text) container.appendChild(lol.p({class: 'card-text', textContent: configuration.text.value}));
+      if(configuration.data) container.appendChild(lol.p({class: 'card-text', textContent: configuration.data.value}));
+      if(configuration.subtext) container.appendChild(lol.p({class: 'card-subtext mb-2 text-body-secondary', style:{fontSize: '.72rem'}, textContent: configuration.subtext.value}));
+    return container;
+  }
+
+  makeSettingsList(conf){
+    const { id=guid(), label, name, value, data, type="text", text} = conf;
+    const options = new Signal([]); // Format example [ { value:'up', textContent:'Up' } ]
+    const enumInput = {
+      type: new Signal('Enum'),
+      label: new Signal('Setting Name'),
+      data: new Signal(),
+      name: 'setting',
+      options,
+    };
+    // Populate options with "local variables" or Settings.
+    const sceneName = this.component.application.source.activeLocation.value;
+    const currentScene = this.component.application.source.get('main-project', sceneName);
+    //
+    this.gc = currentScene.settings.data.subscribe(v=>{
+      const variableNames = Object.keys(v); // Take the names of settings object
+      const formOptions = [];
+      for( const variableName of variableNames){
+        const value = variableName;
+        const textContent = variableName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+        const formOption = { value, textContent };
+        formOptions.push(formOption);
+      }
+      // update signal
+      options.value = formOptions;
+    });
+    const element = this.makeInputElement(enumInput);
+    return element;
+  }
+
+
+  makeSceneList(conf){
+    const { id=guid(), label, name, value, data, type="text", text} = conf;
+    const options = new Signal([]); // Format example [ { value:'up', textContent:'Up' } ]
+    const enumInput = Object.assign({
+      data: new Signal(),
+      name: 'setting',
+      options,
+    }, conf, {type: new Signal('Enum')});
+    const activeSceneId = this.component.application.source.activeLocation.value;
+    const currentScene = this.component.application.source.get('main-project', activeSceneId);
+    const mainProject = this.component.application.source.get('main-project');
+
+    const formOptions = [];
+    for( const scene of mainProject.children){
+      if(activeSceneId === scene.id) continue;
+      const sceneName = scene.settings.get('title').value;
+      const formOption = { value: scene.id, textContent:sceneName };
+      formOptions.push(formOption);
+    }
+    options.value = formOptions;
+    const element = this.makeInputElement(enumInput);
+    return element;
+  }
+
+
+
   makeInputElement(configuration){
     const { id=guid(), label, name, value, data, type="text", text} = configuration;
 
@@ -48,14 +130,7 @@ export default class Forms {
 
     switch(type.value) {
 
-      case "Text": {
-
-
-        const labelElement = lol.label({for: id, class: 'me-1'}, label.value + ':');
-        container.appendChild(labelElement);
-
-        const textElement = lol.small({ type:'text', textContent: JSON.stringify(data.value)});
-        container.appendChild(textElement);
+      case "GGG": {
 
       } break;
 
@@ -68,9 +143,14 @@ export default class Forms {
         container.appendChild(inputElement);
         inputElement.addEventListener("input", () => {
           const value = JSON.parse(inputElement.value);
-          console.info(value)
+          //console.info(value)
           data.value = value;
         });
+
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
       } break;
 
       case "Boolean": {
@@ -82,9 +162,14 @@ export default class Forms {
         formCheckContainer.appendChild(labelElement);
         container.appendChild(formCheckContainer);
         inputElement.addEventListener("input", () => {
-          console.log(inputElement.value)
+          //console.log(inputElement.value)
           data.value =  inputElement.checked;
         });
+
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
       } break;
 
       case "Enum": {
@@ -96,7 +181,12 @@ export default class Forms {
         inputElement.addEventListener("input", () => {
           data.value = inputElement.value;
         });
-        } break;
+
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
+      } break;
 
       case "Float": {
         const {min, max, step} = configuration;
@@ -109,15 +199,16 @@ export default class Forms {
         inputElement.value = data.value;
         inputElement.addEventListener("input", () => {
           data.value =  inputElement.valueAsNumber ;
-          console.log(data.value)
+          //console.log(data.value)
         });
+
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
       } break;
 
-      case "Apple":
-        text = "How you like them apples?";
-        break;
-
-      default:
+      case "Input":
         const labelElement = lol.label({for: id, class: 'form-label'}, label.value);
         container.appendChild(labelElement);
         const inputElement = lol.input({ type:type.value, value:data.value, class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
@@ -127,13 +218,21 @@ export default class Forms {
           // inputElement.checkValidity();
           data.value = inputElement.value;
         });
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
+        break;
+
+      default:
+        const problematic = type.value?`Unrecognized (${type.value})`:'Undefined';
+        const alertIcon = lol.i({class: 'bi bi-exclamation-triangle me-2'});
+        const alertMessage = lol.div({class: 'alert alert-dark px-2 py-1'}, alertIcon, `${problematic} Form Field Type`);
+        container.appendChild(alertMessage);
     }
 
 
-    if(text){
-      const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
-      container.appendChild(textElement);
-    }
+
 
     // const valueElement = lol.small({id:guid(), class: 'small text-muted'});
     // container.appendChild(valueElement);
