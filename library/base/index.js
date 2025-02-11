@@ -15,34 +15,53 @@ class SystemTool extends Component {
 class Note extends SystemTool {
   static caption = 'Note';
   static description = 'Leave a note on the scene.';
-  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''}};
+  static defaults = { };
 }
 
 class Fetch extends SystemTool {
-  static caption = 'Note';
+  static caption = 'Fetch';
   static description = 'Leave a note on the scene.';
-  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''}};
+  static defaults = { };
   static ports = {out:{side:'out', icon:'activity'}};
 }
 
 class Queue extends SystemTool {
-  static caption = 'Note';
+  static caption = 'Queue';
   static description = 'Leave a note on the scene.';
   static defaults = {};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
 }
 
 class Manager extends SystemTool {
-  static caption = 'Note';
+  static caption = 'Manager';
   static description = 'Leave a note on the scene.';
-  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''},  loop: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, setting: {type:'Scene', label:'Transformer', text:'Transformer will only list scenes with "Scene Input" and "Scene Output" blocks. Allowing for _transformation_ of data.'}};
+  static defaults = { cpusync: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, setting: {type:'Scene', label:'Transformer', text:'Transformer will only list scenes with "Scene Input" and "Scene Output" blocks. Allowing for _transformation_ of data.'}};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
+
+  /*
+   Phrasing
+      "Match worker count to CPU cores"
+      "Auto-assign workers based on CPU count"
+      "Set worker threads to CPU core count"
+      "Use CPU core count for worker processes"
+      "Automatically adjust workers to CPU cores"
+      "Synchronize workers with system CPUs"
+      "Optimize worker count for system CPUs"
+      "Align worker count with CPU cores"
+      "Use all available CPU cores for workers"
+      "Distribute workers across CPU cores"
+      "Utilize CPU cores for worker allocation"
+      "Configure workers based on CPU availability"
+      "Adapt worker count to system processors"
+      "Enable CPU-based worker distribution"
+      "Maximize workers by using CPU cores"
+  */
 }
 
 class Files extends SystemTool {
-  static caption = 'Note';
+  static caption = 'Files';
   static description = 'Leave a note on the scene.';
-  static defaults = {text: {type:'Text', title:'', subtitle:'', text: ''}};
+  static defaults = { };
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
 }
 
@@ -77,7 +96,7 @@ class Toast extends SystemTool {
 
 
 class Setting extends SystemTool {
-  static caption = 'Scene Setting';
+  static caption = 'Setting';
   static description = 'Monitor a scene setting, and pass the value along if it changes.';
   static defaults = {setting: {label:'setting', type:'Setting'}};
   static ports = {out:{side:'out', icon:'activity'}};
