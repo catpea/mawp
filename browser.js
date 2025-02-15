@@ -23,7 +23,7 @@ mainLocation.settings.merge({title: 'Main'});
 project.create(mainLocation);
 
 const teeLocation = new Location('tee');
-teeLocation.settings.merge({title: 'Tee Example'});
+teeLocation.settings.merge({title: 'Text Transformation'});
 project.create(teeLocation);
 
 const musicLocation = new Location('music');
@@ -49,10 +49,11 @@ project.load();
   mainLocation.createConnection('manager1:out', 'files1:in');
 
 
-  mainLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 555, width: 200} );
+  // mainLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 555, width: 200} );
+  mainLocation.createModule('text1', 'system-tools/text', {title:'Text', left: 444, top: 555, width: 200} );
   mainLocation.createModule('procedure1', 'system-tools/procedure', {title:'Procedure', left: 777, top: 555, width: 200} );
-  mainLocation.createModule('display1', 'system-tools/display', {title:'Display', left: 1111, top: 555, width: 200} );
-  mainLocation.createConnection('code1:out', 'procedure1:in');
+  mainLocation.createModule('display1', 'system-tools/display', {title:'Display', left: 1111, top: 555, width: 300} );
+  mainLocation.createConnection('text1:out', 'procedure1:in');
   mainLocation.createConnection('procedure1:out', 'display1:in');
 
 
@@ -77,7 +78,10 @@ if(1){
 {
   teeLocation.createModule('input1', 'system-tools/input', {title:'Input', left: 66, top: 444}, {} );
   teeLocation.createModule('output1', 'system-tools/output', {title:'Output', left: 777, top: 444}, {});
-  teeLocation.createConnection('input1:out', 'output1:in');
+  teeLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 444, width: 200} );
+
+  teeLocation.createConnection('input1:out', 'code1:in');
+  teeLocation.createConnection('code1:out', 'output1:in');
 
   // teeLocation.createModule('setting1', 'system-tools/setting', {title:'Scene Setting', left: 333, top: 222}, {} );
 }

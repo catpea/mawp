@@ -16,8 +16,8 @@ class Configuration {
     this.rate = new Signal( .5 ); // 0 to stop program! 1=normal-operation
 
     // These are for simulations of computations and packets flowing over a wire
-    this.computationDurationMs = new Signal( 100 ); // ms
-    this.flowDurationMs = new Signal( 500 ); // ms
+    this.computationDurationMs = new Signal( 1); // ms
+    this.flowDurationMs = new Signal( 5  ); // ms
 
     this.computationDuration = new Signal( this.computationDurationMs.value / this.rate.value );
     this.flowDuration = new Signal( this.flowDurationMs.value / this.rate.value );

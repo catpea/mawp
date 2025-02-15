@@ -319,6 +319,11 @@ class Source {
     this.#garbage.map((s) => s.subscription());
   }
   set gc(subscription) {
+
+    if (typeof subscription !== 'function') {
+      throw new Error('gc subscription must be a function');
+    }
+
     // shorthand for component level garbage collection
     this.#garbage.push({
       type: "gc",
@@ -375,14 +380,8 @@ export class Project extends Source {
 export class Location extends Source {
   getRelated(id) {
     // return items related to id in a scene, usualy for removal.
-    const from = this.children
-      .filter((child) => child.type === "pipe")
-      .filter((child) => child.dataset.get("from") !== undefined)
-      .filter((child) => child.dataset.get("from").value.startsWith(id + ":"));
-    const to = this.children
-      .filter((child) => child.type === "pipe")
-      .filter((child) => child.dataset.get("to") !== undefined)
-      .filter((child) => child.dataset.get("to").value.startsWith(id + ":"));
+    const from = this.children .filter((child) => child.type === "pipe") .filter((child) => child.dataset.get("from") !== undefined) .filter((child) => child.dataset.get("from").value.startsWith(id + ":"));
+    const to = this.children .filter((child) => child.type === "pipe") .filter((child) => child.dataset.get("to") !== undefined) .filter((child) => child.dataset.get("to").value.startsWith(id + ":"));
     return [...from, ...to];
   }
 
@@ -397,9 +396,7 @@ export class Location extends Source {
 
     // Assign options
     if (!dataset.title) dataset.title = module.settings.name;
-    Object.entries(dataset)
-      .filter(([key, val]) => val)
-      .forEach(([key, val]) => component.dataset.set(key, val));
+    Object.entries(dataset) .filter(([key, val]) => val) .forEach(([key, val]) => component.dataset.set(key, val));
 
     component.settings.merge({ ...Component.defaults, ...settings });
 
@@ -441,12 +438,11 @@ export class Component extends Source {
   }
 
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT
-  pipes(name) {
-    return this.parent.filter(
-      (o) =>
-        o.type === "pipe" &&
-        o.dataset.get("from").value === this.id + ":" + name,
-    );
+  inputPipe(name) {
+    return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("to").value.startsWith(this.id + ':')).find(o=>o.dataset.get("to").value.endsWith(':'+name));
+  }
+  outputPipe(name) {
+    return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("from").value.startsWith(this.id + ':')).find(o=>o.dataset.get("from").value.endsWith(':'+name));
   }
 
   connectable() {
@@ -455,16 +451,14 @@ export class Component extends Source {
   connect() {}
   disconnect() {}
 
-  receive(port, data, address, options) {
-    this.emit("receive", port, data, address, options); // asap as data is received, (ex. trigger the ball rolling)
-    this.execute(port, data, address, options); // NOTE: process is under user's control
+  // receive(port, data, address, options) {
+  receive({source, to:{port}, data, options} /*:DataRequest*/) {
+    this.emit('receive', port, data, source, options); // asap as data is received, (ex. trigger the ball rolling)
+    this.execute(port, data, source, options); // NOTE: process is under user's control
   }
 
-  execute(port, data, address, options) {
+  execute(port, data, source, options) {
     console.warn("This method in meant to be overridden");
-    this.pipes("out").forEach((pipe) =>
-      pipe.send("in", data, this.id + ":out", options),
-    );
   }
 
 
@@ -476,29 +470,11 @@ export class DataRequest {
   source = null;
   destination = null;
   constructor(context) {
+
     // TODO: unknown.. cache and make reactive...
-    Object.assign(
-      this.from,
-      Object.fromEntries(
-        [context.dataset.get("from").value.split(":")]
-          .map(([id, port]) => [
-            ["id", id],
-            ["port", port],
-          ])
-          .flat(),
-      ),
-    );
-    Object.assign(
-      this.to,
-      Object.fromEntries(
-        [context.dataset.get("to").value.split(":")]
-          .map(([id, port]) => [
-            ["id", id],
-            ["port", port],
-          ])
-          .flat(),
-      ),
-    );
+    Object.assign( this.from, Object.fromEntries( [context.dataset.get("from").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+    Object.assign( this.to, Object.fromEntries( [context.dataset.get("to").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+
     this.source = context.parent.get(this.from.id);
     this.destination = context.parent.get(this.to.id);
   }
@@ -536,17 +512,19 @@ export class Connector extends Source {
    */
   receive(data, options) {
     const transportationRequest = new TransportationRequest( this, data, options, );
+    console.info('Connector receive data, options', data, options)
+    console.info('Connector receive transportationRequest', transportationRequest)
     if (CONFIGURATION.simulation.value === true) {
       const scheduler = new Scheduler({
         // schedule the arrival
         rate: this.rate,
         duration: CONFIGURATION.flowDuration,
         paused: CONFIGURATION.paused,
-        stop: () => destination.receive(transportationRequest),
+        stop: () => this.#connectionRequest.destination.receive(transportationRequest),
       });
       this.gc = scheduler.start();
     } else {
-      destination.receive(transportationRequest);
+      this.#connectionRequest.destination.receive(transportationRequest);
     }
   }
 

@@ -15,17 +15,52 @@ class SystemTool extends Component {
 
 
 
+class Text extends SystemTool {
+  static caption = 'Text';
+  static description = 'Send a text packet.';
+  static defaults = { text: {label:'Text', type: 'Input', data:"My hovercraft is full of eels"}, button: {label:'Send', type: 'Button', method:'execute'}, urgent: {label:'Urgent', type:'Boolean', data:true}};
+  static ports = {out:{side:'out', icon:'activity'}};
+
+  execute(a){
+    const options = {urgent: this.settings.get('urgent').data.value};
+    const data = this.settings.get('text').data.value;
+    this.outputPipe('out').receive(data, options);
+  }
+
+}
+
 class Code extends SystemTool {
   static caption = 'Code';
   static description = 'Execute a JavaScript function.';
-  static defaults = { code: {label:'JavaScript Code', type: 'Textarea', rows:5, data:"setTimeout(()=>{\n  this\n  .pipes('out')\n  .send('Hello World!');\n}, 1_000)"}};
-  static ports = {out:{side:'out', icon:'activity'}};
+  static defaults = { code: {label:'JavaScript Code', type: 'Textarea', rows:5, data:"input.toUpperCase();"}};
+  static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
+
+  execute(port, data, source, setup){
+    const code = this.settings.get('code').data.value;
+    console.info(`Code receive data`,  data);
+    console.info(`Code code is`, code);
+
+    let func = new Function ('input', `return ${code};`);
+
+
+    const transformed = func(data);
+
+    const options = {};
+    this.outputPipe('out').receive(transformed, options);
+  }
+
+
 }
 class Display extends SystemTool {
   static caption = 'Display';
   static description = 'Display submitted content.';
-  static defaults = {text: {type:'Text', title:'Data Output', subtitle:'', text: '...', subtext:''}};
+  static defaults = {text: {type:'Text', title:'', subtitle:'', text: '...', subtext:''}};
   static ports = {in:{side:'in', icon:'activity'}};
+  receive(request){
+    console.info(`Display receive request data`, request.data);
+
+    this.settings.get('text').text.value =   request.data;
+  }
 }
 
 class Input extends SystemTool {
@@ -33,18 +68,57 @@ class Input extends SystemTool {
   static description = 'Receive data from the scene.';
   static defaults = { };
   static ports = {out:{side:'out', icon:'activity'}};
+  receive(request){
+    console.log(`Input receive data`, request.data);
+    this.outputPipe('out').receive(request.data, request.options);
+
+  }
+  start(){
+    this.parentUnSubscription = this.parent.on('input', request=>this.receive(request))
+  }
+  stop(){
+    this.parentUnSubscription();
+  }
 }
 class Output extends SystemTool {
   static caption = 'Output';
   static description = 'Send data out of the scene.';
   static defaults = { };
   static ports = {in:{side:'in', icon:'activity'}};
+  receive(request){
+    console.log(`Output receive request data`, request.data);
+    this.parent.emit('output', request);
+  }
 }
 class Procedure extends SystemTool {
   static caption = 'Procedure';
   static description = 'Send data through a scene.';
-  static defaults = {procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.'}};
+  static defaults = {procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.', data:0}};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
+
+  receive(request){
+    const sceneName = this.settings.get('procedure').data.value;
+    const scene = this.root.get('main-project', sceneName);
+    scene.emit('input', request);
+
+
+    // TODO: MOVE PARENT SUBSCRIPTION TO START, but avait a proper scene name
+    this.parentUnSubscription = scene.on('output', ({data, options})=>{
+      console.log(`Procedure receive this.parent.on 'output'`, request.data);
+
+      this.outputPipe('out').receive(data, options)
+    })
+  }
+  start(){
+
+    // const sceneName = this.settings.get('procedure').data.value;
+    // const scene = this.root.get('main-project', sceneName);
+
+
+  }
+  stop(){
+    this.parentUnSubscription();
+  }
 }
 
 
@@ -76,7 +150,7 @@ class Queue extends SystemTool {
 class Manager extends SystemTool {
   static caption = 'Manager';
   static description = 'Leave a note on the scene.';
-  static defaults = { cpusync: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.'}};
+  static defaults = { cpusync: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.', data:1}};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
 
   /*
@@ -173,6 +247,7 @@ export default function install(){
   library.register('output', Output);
   library.register('procedure', Procedure);
   library.register('code', Code);
+  library.register('text', Text);
   library.register('display', Display);
 
   library.register('note',    Note);

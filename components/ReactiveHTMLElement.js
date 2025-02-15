@@ -136,6 +136,9 @@ export default class ReactiveHTMLElement extends HTMLElement {
     this.#garbage.map(s=>s.subscription())
   }
   set gc(subscription){ // shorthand for component level garbage collection
+    if (typeof subscription !== 'function') {
+      throw new Error('gc subscription must be a function');
+    }
     this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
   }
 

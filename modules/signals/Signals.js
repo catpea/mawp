@@ -44,12 +44,11 @@ export default class Signals {
 
     const segments = path.split(".");
     let current = this.data;
-
     // Navigate through the path, creating signals as needed
     for (let i = 0; i < segments.length - 1; i++) {
       const segment = segments[i];
       if (!current.value[segment] || !(current.value[segment] instanceof Signal)) {
-        current.value[segment] = new Signal({});
+        //current.value[segment] = new Signal({});
       }
       current = current.value[segment];
     }
@@ -59,7 +58,7 @@ export default class Signals {
       property: segments[segments.length - 1],
       depth: segments.length,
     };
-    //console.log('PPP', path, response)
+    console.log('XXX return', path, response, current[segments[segments.length - 1]])
     return response;
   }
 
@@ -93,7 +92,6 @@ export default class Signals {
     const { object, property, depth } = this.lookup(path);
 
     if (!object.value[property] || !(object.value[property] instanceof Signal)) {
-      //console.log('SET',path, depth, property, value)
       object.value[property] = value;//new Signal(value);
     } else {
       object.value[property].value = value;
@@ -103,12 +101,6 @@ export default class Signals {
   get(path) {
     const { object, property } = this.lookup(path);
     if (!object.value[property]) return undefined;
-
-    // BE STABLE DON'T DEREFERENCE
-    // return object.value[property] instanceof Signal ?
-    //   object.value[property].value :
-    //   object.value[property];
-
     return object.value[property];
   }
 

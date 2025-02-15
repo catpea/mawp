@@ -58,11 +58,25 @@ export default class Forms {
 
   makeText(configuration){
     let container = lol.div({ type:configuration.type.value, class: 'mb-1'});
+
+
+
+      if(configuration.text){
+        const node = lol.p({class: 'card-text'});
+        /*TODO: this.component.gc =*/ configuration.text.subscribe(value=> node.textContent = value);
+        container.appendChild(node);
+      }
+
+      // TODO: Update the following to use signals as well
+
       if(configuration.title) container.appendChild(lol.h5({class: 'card-title lead', textContent: configuration.title.value}));
       if(configuration.subtitle) container.appendChild(lol.h6({class: 'card-subtitle mb-3 text-body-secondary', textContent: configuration.subtitle.value}));
-      if(configuration.text) container.appendChild(lol.p({class: 'card-text', textContent: configuration.text.value}));
+
       if(configuration.data) container.appendChild(lol.p({class: 'card-text', textContent: configuration.data.value}));
       if(configuration.subtext) container.appendChild(lol.p({class: 'card-subtext mb-2 text-body-secondary', style:{fontSize: '.72rem'}, textContent: configuration.subtext.value}));
+
+
+
     return container;
   }
 
@@ -100,11 +114,13 @@ export default class Forms {
   makeSceneList(conf){
     const { id=guid(), label, name, value, data, type="text", text} = conf;
     const options = new Signal([]); // Format example [ { value:'up', textContent:'Up' } ]
+    if (!conf.data  ) throw new Error("Configuration must include a 'data' property of type Signal");
     const enumInput = Object.assign({
-      data: new Signal(),
       name: 'setting',
       options,
     }, conf, {type: new Signal('Enum')});
+
+
     const activeSceneId = this.component.application.source.activeLocation.value;
     const currentScene = this.component.application.source.get('main-project', activeSceneId);
     const mainProject = this.component.application.source.get('main-project');
@@ -141,7 +157,7 @@ export default class Forms {
 
         const inputElement = lol.input({ type:'text', value: JSON.stringify(data.value), class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
         container.appendChild(inputElement);
-        inputElement.addEventListener("input", () => {
+        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
           const value = JSON.parse(inputElement.value);
           //console.info(value)
           data.value = value;
@@ -161,7 +177,7 @@ export default class Forms {
         formCheckContainer.appendChild(inputElement);
         formCheckContainer.appendChild(labelElement);
         container.appendChild(formCheckContainer);
-        inputElement.addEventListener("input", () => {
+        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
           //console.log(inputElement.value)
           data.value =  inputElement.checked;
         });
@@ -178,14 +194,18 @@ export default class Forms {
         container.appendChild(labelElement);
         const inputElement = lol.select({id, name, class: 'form-select form-select-sm', id}, ...options.value.map(({value, textContent})=>lol.option({value, textContent, selected:value==data.value})) );
         container.appendChild(inputElement);
-        inputElement.addEventListener("input", () => {
+
+        /*TODO: this.component.gc =*/ inputElement.addEventListener("change", () => {
           data.value = inputElement.value;
         });
+        data.value = inputElement.value; // initialize value
+
 
         if(text){
           const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
           container.appendChild(textElement);
         }
+
       } break;
 
       case "Float": {
@@ -197,7 +217,7 @@ export default class Forms {
         const inputElement = lol.input({ type:'range', style:{width: '20rem'}, /* do not set value here, use .value */  min:min.value, max:max.value, step:step.value, class: 'form-range form-range-sm d-block', id, 'aria-describedby': 'inputHelp', name});
         container.appendChild(inputElement);
         inputElement.value = data.value;
-        inputElement.addEventListener("input", () => {
+        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
           data.value =  inputElement.valueAsNumber ;
           //console.log(data.value)
         });
@@ -208,12 +228,24 @@ export default class Forms {
         }
       } break;
 
+      case "Button": {
+        const buttonElement = lol.button({ id, name, type:'button', class: 'btn btn-primary btn-sm float-end'}, label.value);
+        container.appendChild(buttonElement);
+        /*TODO: this.component.gc =*/ buttonElement.addEventListener("click", () => {
+          this.component.source[configuration.method?.value||'execute']()
+        });
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
+       } break;
+
       case "Input": {
         const labelElement = lol.label({for: id, class: 'form-label'}, label.value);
         container.appendChild(labelElement);
         const inputElement = lol.input({ type:type.value, value:data.value, class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
         container.appendChild(inputElement);
-        inputElement.addEventListener("input", () => {
+        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
           // inputElement.setCustomValidity("");
           // inputElement.checkValidity();
           data.value = inputElement.value;
@@ -229,7 +261,7 @@ export default class Forms {
         container.appendChild(labelElement);
         const inputElement = lol.textarea({ class: 'form-control form-control-sm', id, rows: configuration.rows?.value, 'aria-describedby': 'inputHelp', name}, data.value );
         container.appendChild(inputElement);
-        inputElement.addEventListener("input", () => {
+        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
           // inputElement.setCustomValidity("");
           // inputElement.checkValidity();
           data.value = inputElement.value;
