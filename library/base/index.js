@@ -12,16 +12,57 @@ class SystemTool extends Component {
 }
 
 
+
+
+
+class Code extends SystemTool {
+  static caption = 'Code';
+  static description = 'Execute a JavaScript function.';
+  static defaults = { code: {label:'JavaScript Code', type: 'Textarea', rows:5, data:"setTimeout(()=>{\n  this\n  .pipes('out')\n  .send('Hello World!');\n}, 1_000)"}};
+  static ports = {out:{side:'out', icon:'activity'}};
+}
+class Display extends SystemTool {
+  static caption = 'Display';
+  static description = 'Display submitted content.';
+  static defaults = {text: {type:'Text', title:'Data Output', subtitle:'', text: '...', subtext:''}};
+  static ports = {in:{side:'in', icon:'activity'}};
+}
+
+class Input extends SystemTool {
+  static caption = 'Input';
+  static description = 'Receive data from the scene.';
+  static defaults = { };
+  static ports = {out:{side:'out', icon:'activity'}};
+}
+class Output extends SystemTool {
+  static caption = 'Output';
+  static description = 'Send data out of the scene.';
+  static defaults = { };
+  static ports = {in:{side:'in', icon:'activity'}};
+}
+class Procedure extends SystemTool {
+  static caption = 'Procedure';
+  static description = 'Send data through a scene.';
+  static defaults = {procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.'}};
+  static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
+}
+
+
+
+
+
+
+
 class Note extends SystemTool {
   static caption = 'Note';
   static description = 'Leave a note on the scene.';
-  static defaults = { };
+  static defaults = {text: {type:'Text', title:'Advanced Data Processing', subtitle:'data integration layer', text: 'Add Fetch, Queue, Manager, and File System. And allow the work manager to loop data through another scene.', subtext:'Later: Add more form controls, insert node by dropping it on line, magnetic connection by positioning connection near a port, and minimap.'}};
 }
 
 class Fetch extends SystemTool {
   static caption = 'Fetch';
   static description = 'Leave a note on the scene.';
-  static defaults = { };
+  static defaults = { url: {label:'URL', type: 'Input', data:"package.json"} };
   static ports = {out:{side:'out', icon:'activity'}};
 }
 
@@ -35,7 +76,7 @@ class Queue extends SystemTool {
 class Manager extends SystemTool {
   static caption = 'Manager';
   static description = 'Leave a note on the scene.';
-  static defaults = { cpusync: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, setting: {type:'Scene', label:'Transformer', text:'Transformer will only list scenes with "Scene Input" and "Scene Output" blocks. Allowing for _transformation_ of data.'}};
+  static defaults = { cpusync: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.'}};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
 
   /*
@@ -126,7 +167,13 @@ class Setting extends SystemTool {
 export default function install(){
 
   const library = new Library('system-tools');
-  library.settings.name = 'Scene Tools';
+  library.settings.name = 'System Tools';
+
+  library.register('input', Input);
+  library.register('output', Output);
+  library.register('procedure', Procedure);
+  library.register('code', Code);
+  library.register('display', Display);
 
   library.register('note',    Note);
   library.register('fetch',   Fetch);

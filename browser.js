@@ -38,7 +38,7 @@ project.load();
 {
   mainLocation.createModule('note1',    'system-tools/note',    {title:'My Todo List', left: 66, top: 555, width: 333, }, {text: {type:'Text', title:'Advanced Data Processing', subtitle:'data integration layer', text: 'Add Fetch, Queue, Manager, and File System. And allow the work manager to loop data through another scene.', subtext:'Later: Add more form controls, insert node by dropping it on line, magnetic connection by positioning connection near a port, and minimap.'}} );
 
-  mainLocation.createModule('fetch1',   'system-tools/fetch',   {title:'JSON Fetch', left: 66, top: 111}, { url: {label:'URL', type: 'Input', data:"package.json"}} );
+  mainLocation.createModule('fetch1',   'system-tools/fetch',   {title:'JSON Fetch', left: 66, top: 111} );
   mainLocation.createModule('queue1',   'system-tools/queue',   {title:'Data Queue', left: 420, top: 111, width: 200} );
   mainLocation.createModule('manager1', 'system-tools/manager', {title:'Work Manager', left: 772, top: 111, width: 200} );
 
@@ -47,6 +47,14 @@ project.load();
   mainLocation.createConnection('fetch1:out', 'queue1:in');
   mainLocation.createConnection('queue1:out', 'manager1:in');
   mainLocation.createConnection('manager1:out', 'files1:in');
+
+
+  mainLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 555, width: 200} );
+  mainLocation.createModule('procedure1', 'system-tools/procedure', {title:'Procedure', left: 777, top: 555, width: 200} );
+  mainLocation.createModule('display1', 'system-tools/display', {title:'Display', left: 1111, top: 555, width: 200} );
+  mainLocation.createConnection('code1:out', 'procedure1:in');
+  mainLocation.createConnection('procedure1:out', 'display1:in');
+
 
 }
 
@@ -60,17 +68,18 @@ if(1){
   musicLocation.createModule('player1',      'tone-js/player',            {title:'player1', left: 222, top: 555}, { url: {label:'Audio URL', type: 'Input', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {label:'Loop', type:'Boolean', data:true}, autostart: {label:'Autostart', type:'Boolean', data:true}, } );
 
   // mainLocation.createConnection('pattern1:out', 'synth1:in');
-  musicLocation.createConnection('synth1:out', 'destination1:in', {autostart: false});
+  musicLocation.createConnection('synth1:out', 'destination1:in');
   // mainLocation.createConnection('distortion1:out', 'destination1:in');
   // mainLocation.createConnection('player1:out', 'feedbackdelay1:in');
-  musicLocation.createConnection('feedbackdelay1:out', 'destination1:in', {autostart: false});
+  musicLocation.createConnection('feedbackdelay1:out', 'destination1:in');
 
 }
 {
-  teeLocation.createModule('note1', 'system-tools/note', {title:'Note', left: 66, top: 88}, {} );
-  teeLocation.createModule('setting1', 'system-tools/setting', {title:'Scene Setting', left: 333, top: 222}, {} );
-  teeLocation.createModule('toast1', 'system-tools/toast', {title:'Toast', left: 777, top: 444}, {});
-  teeLocation.createConnection('setting1:value', 'toast1:text', {autostart: false});
+  teeLocation.createModule('input1', 'system-tools/input', {title:'Input', left: 66, top: 444}, {} );
+  teeLocation.createModule('output1', 'system-tools/output', {title:'Output', left: 777, top: 444}, {});
+  teeLocation.createConnection('input1:out', 'output1:in');
+
+  // teeLocation.createModule('setting1', 'system-tools/setting', {title:'Scene Setting', left: 333, top: 222}, {} );
 }
 
 //////// UI ////////

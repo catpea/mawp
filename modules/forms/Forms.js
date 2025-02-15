@@ -208,7 +208,7 @@ export default class Forms {
         }
       } break;
 
-      case "Input":
+      case "Input": {
         const labelElement = lol.label({for: id, class: 'form-label'}, label.value);
         container.appendChild(labelElement);
         const inputElement = lol.input({ type:type.value, value:data.value, class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
@@ -222,7 +222,23 @@ export default class Forms {
           const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
           container.appendChild(textElement);
         }
-        break;
+       } break;
+
+      case "Textarea": {
+        const labelElement = lol.label({for: id, class: 'form-label'}, label.value);
+        container.appendChild(labelElement);
+        const inputElement = lol.textarea({ class: 'form-control form-control-sm', id, rows: configuration.rows?.value, 'aria-describedby': 'inputHelp', name}, data.value );
+        container.appendChild(inputElement);
+        inputElement.addEventListener("input", () => {
+          // inputElement.setCustomValidity("");
+          // inputElement.checkValidity();
+          data.value = inputElement.value;
+        });
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
+      } break;
 
       default:
         const problematic = type.value?`Unrecognized (${type.value})`:'Undefined';
