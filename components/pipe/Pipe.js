@@ -17,8 +17,14 @@ export default class Pipe extends ReactiveHTMLElement {
   #x2 = new Signal(0);
   #y2 = new Signal(0);
 
-  #lineStrokeSelected = 'var(--bs-primary)';
-  #lineStrokes = ['var(--bs-success)', 'rgba(var(--bs-success-rgb), .3)'];
+  #currentColor = new Signal();
+  #colorSelection = {
+    dry: 'var(--bs-secondary)',
+    wet: 'var(--bs-success)',
+    active: 'var(--bs-primary)',
+    // unused: selected: 'var(--bs-primary)'
+  };
+
   #lineWidths = [4, 2];
   #focusableLineStrokeWidth = 14;
 
@@ -27,6 +33,7 @@ export default class Pipe extends ReactiveHTMLElement {
       switch (status) {
         case "loading": // initial state
           // waiting for windows to report ready
+
           break;
         case "ready": // windows reported ready state
           // be a pipe that updated its x1y1 and x2y2
@@ -47,6 +54,8 @@ export default class Pipe extends ReactiveHTMLElement {
   connected() {
     this.gc = this.source.on('activate-marble', () => this.activateMarble() );
 
+    this.#currentColor.value = this.#colorSelection.dry;
+
     // PROCESS DEPENDENCIES
     const fromWindowStatusSignal = new Series(this.dataset2.get('from'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
     const toWindowStatusSignal = new Series(this.dataset2.get('to'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
@@ -65,21 +74,44 @@ export default class Pipe extends ReactiveHTMLElement {
     });
 
     // CREATE AND SUBSCRIBE LINES
-    let visualIndicatorLine;
-    for (const [sceneIndex, svgSurface] of Object.entries(this.scene.drawingSurfaces)) {
-      const svgLline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      if(sceneIndex==0) {
-        visualIndicatorLine = svgLline;
+
+    const visualIndicatorLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    visualIndicatorLine.setAttribute('stroke',  this.#currentColor.value);
+    visualIndicatorLine.setAttribute('stroke-width', 4);
+    this.scene.drawingSurfaces[0].appendChild(visualIndicatorLine);
+    this.gc = this.#x1.subscribe(v=>visualIndicatorLine.setAttribute('x1', v));
+    this.gc = this.#y1.subscribe(v=>visualIndicatorLine.setAttribute('y1', v));
+    this.gc = this.#x2.subscribe(v=>visualIndicatorLine.setAttribute('x2', v));
+    this.gc = this.#y2.subscribe(v=>visualIndicatorLine.setAttribute('y2', v));
+    this.gc = () => visualIndicatorLine.remove();
+
+    const magicalOverlayLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    magicalOverlayLine.setAttribute('stroke',  this.#currentColor.value);
+    magicalOverlayLine.setAttribute('stroke-opacity', .2);
+    magicalOverlayLine.setAttribute('stroke-width', 2);
+    this.scene.drawingSurfaces[1].appendChild(magicalOverlayLine);
+    this.gc = this.#x1.subscribe(v=>magicalOverlayLine.setAttribute('x1', v));
+    this.gc = this.#y1.subscribe(v=>magicalOverlayLine.setAttribute('y1', v));
+    this.gc = this.#x2.subscribe(v=>magicalOverlayLine.setAttribute('x2', v));
+    this.gc = this.#y2.subscribe(v=>magicalOverlayLine.setAttribute('y2', v));
+    this.gc = () => magicalOverlayLine.remove();
+
+
+
+
+    this.#currentColor.subscribe(v=>visualIndicatorLine.setAttribute('stroke',v));
+    this.#currentColor.subscribe(v=>magicalOverlayLine.setAttribute('stroke',v));
+
+    this.gc = this.source.dry.subscribe(v => {
+      if(v){
+        //visualIndicatorLine.setAttribute('stroke',  'var(--bs-secondary)');
+        this.#currentColor.value = this.#colorSelection.dry;
+      }else{
+        //visualIndicatorLine.setAttribute('stroke',  'var(--bs-success)');
+        this.#currentColor.value = this.#colorSelection.wet;
       }
-      svgLline.setAttribute('stroke',  this.#lineStrokes[sceneIndex]);
-      svgLline.setAttribute('stroke-width', this.#lineWidths[sceneIndex]);
-      svgSurface.appendChild(svgLline);
-      this.gc = this.#x1.subscribe(v=>svgLline.setAttribute('x1', v));
-      this.gc = this.#y1.subscribe(v=>svgLline.setAttribute('y1', v));
-      this.gc = this.#x2.subscribe(v=>svgLline.setAttribute('x2', v));
-      this.gc = this.#y2.subscribe(v=>svgLline.setAttribute('y2', v));
-      this.gc = () => svgLline.remove();
-    }
+    });
+
 
     const focusableLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     focusableLine.style.pointerEvents = 'auto';
@@ -95,11 +127,15 @@ export default class Pipe extends ReactiveHTMLElement {
       this.gc = focusable.start();
       this.gc = this.dataset2.get('active').subscribe(v => {
         if(v==='true'){
-          visualIndicatorLine.setAttribute('stroke',  this.#lineStrokeSelected);
+          // WHEN ACTIVE
+          this.#currentColor.value = this.#colorSelection.active;
         }else{
-          visualIndicatorLine.setAttribute('stroke',  this.#lineStrokes[0]);
+          // WHEN NOT ACTIVE || RESTORE COLOR
+          this.#currentColor.value = this.source.dry.value?this.#colorSelection.dry:this.#colorSelection.wet;
         }
       });
+
+
 
     // WHENEVER FROM OR TO WINDOW CHANGES SIZE, RECALCULATE LINE POSISTION
     this.gc = this.status.subscribe(v => { if (v === 'ready') {
@@ -131,6 +167,12 @@ export default class Pipe extends ReactiveHTMLElement {
         }
       });
     }});
+
+
+
+
+
+
   }
 
 

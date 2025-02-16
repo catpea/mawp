@@ -267,7 +267,7 @@ export default class Forms {
         container.appendChild(labelElement);
         const inputElement = lol.input({ type:type.value, value:data.value, class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
         container.appendChild(inputElement);
-
+        data.subscribe(v => inputElement.value = v);
         this.component.listenTo(inputElement, 'input', () => {
           // inputElement.setCustomValidity("");
           // inputElement.checkValidity();

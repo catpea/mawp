@@ -433,9 +433,12 @@ export class Location extends Source {
 }
 
 export class Component extends Source {
+
+  awaiting = new Signal(true); // awaiting pipes
   rate = new Signal(1); // speed of emitting signals
   health = new Signal("nominal"); // component health
   channels = new List();
+
 
   constructor(id) {
     super(id, "window");
@@ -450,8 +453,11 @@ export class Component extends Source {
   }
 
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT
+  inputPipes() {
+    return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("to").value.startsWith(this.id + ':')) ;
+  }
   inputPipe(name) {
-    return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("to").value.startsWith(this.id + ':')).find(o=>o.dataset.get("to").value.endsWith(':'+name));
+    return this.inputPipes().find(o=>o.dataset.get("to").value.endsWith(':'+name));
   }
   outputPipe(name) {
     return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("from").value.startsWith(this.id + ':')).find(o=>o.dataset.get("from").value.endsWith(':'+name));
@@ -464,9 +470,48 @@ export class Component extends Source {
   disconnect() {}
 
   // receive(port, data, address, options) {
-  receive({source, to:{port}, data, options} /*:DataRequest*/) {
-    this.emit('receive', port, data, source, options); // asap as data is received, (ex. trigger the ball rolling)
-    this.execute(port, data, source, options); // NOTE: process is under user's control
+  receivedPipes = new Set()
+  receive({source, pipe, to:{port}, data, options} /*:DataRequest*/) {
+
+
+
+    // WATCH
+    const determination = x => {
+      this.receivedPipes.add(pipe.id);
+      const pipes = this.inputPipes();
+      const pipeIds = pipes.map(o=>o.id);
+      const pipeCount = pipes.length;
+      const currentPipes = new Set(pipeIds);
+      const wetPipes = currentPipes.intersection(this.receivedPipes); // takes a set and returns a new set containing elements in this set but not in the given set.
+      const dryPipes = currentPipes.difference(this.receivedPipes); // takes a set and returns a new set containing elements in this set but not in the given set.
+      console.log({wetPipes})
+      console.log({ dryPipes})
+
+      if(dryPipes.size === 0){
+      this.awaiting.value = false;
+      }else{
+        this.awaiting.value = true;
+      }
+
+      // Mark pipe wet
+      for (const pipeId of wetPipes) {
+        this.parent.get(pipeId).dry.value = false;
+      }
+      // Mark pipe dry
+      for (const pipeId of dryPipes) {
+        this.parent.get(pipeId).dry.value = true;
+      }
+
+    };
+
+        // MONITORING
+    this.gc = this.parent.watch('create', `*`, ()=>determination());
+    this.gc = this.parent.watch('delete', `*`, ()=> determination());
+
+    determination();
+
+    if(this.awaiting.value == false) this.execute(port, data, source, options); // NOTE: process is under user's control
+
   }
 
   execute(port, data, source, options) {
@@ -477,11 +522,13 @@ export class Component extends Source {
 }
 
 export class DataRequest {
+  pipe = {id:null}
   from = { id: null, port: null };
   to = { id: null, port: null };
   source = null;
   destination = null;
   constructor(context) {
+    this.pipe.id = context.id;
 
     // TODO: unknown.. cache and make reactive...
     Object.assign( this.from, Object.fromEntries( [context.dataset.get("from").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
@@ -514,6 +561,7 @@ export class TransportationRequest extends DataRequest {
 export class Connector extends Source {
   #connectionRequest;
 
+  dry = new Signal(true); // all pipes are dty by default, this is just a visual indicator
   rate = new Signal(1); // speed of transmitting signals
   health = new Signal("nominal"); // component health
 
@@ -545,7 +593,7 @@ export class Connector extends Source {
 
       // ovveride duration of speed of marbles in an external non selected scene
       this.emit('activate-marble', {duration}); // as soon as possible emit activate marble, this is something the UI on top will be listening for
-
+      console.log('activate-marble')
 
       const scheduler = new Scheduler({
         // schedule the arrival

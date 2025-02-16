@@ -21,11 +21,13 @@ class Beacon extends SystemTool {
   static defaults = { counter: {label:'Counter', type: 'Number', data:0},  milliseconds: {label:'Milliseconds', type: 'Number', data:10_000, step:100, min:300},};
   static ports = {out:{side:'out', icon:'activity'}};
   start(){
-    this.setTimeout(this.execute.bind(this), this.settings.get('milliseconds').data.value);
+
+    //TODO: scene start event, likley when all children of a scene report ready
     setTimeout(() => {
-      /* code to run in the microtask here */
+      // Automatically start the process
       this.execute()
-    },11);
+    },666);
+
 
   }
   stop(){
@@ -41,7 +43,9 @@ class Beacon extends SystemTool {
       this.outputPipe('out').receive(data, options);
     }
 
-    this.setTimeout(this.execute.bind(this), this.settings.get('milliseconds').data.value);
+    const reactivate = this.settings.get('milliseconds').data.value;
+    console.log({reactivate})
+    this.setTimeout( this.execute.bind(this), reactivate);
   }
 
 }
@@ -49,11 +53,15 @@ class Beacon extends SystemTool {
 class Text extends SystemTool {
   static caption = 'Text';
   static description = 'Send a text packet.';
-  static defaults = { text: {label:'Text', type: 'Input', data:"My hovercraft is full of eels"}, button: {label:'Send', type: 'Button', method:'execute'}, urgent: {label:'Urgent', type:'Boolean', data:true}};
+  static defaults = { text: {label:'Text', type: 'Input', data:"My hovercraft is full of feels"}, button: {label:'Send', type: 'Button', method:'execute'}, formal: {label:'Formal', type:'Boolean', data:false}};
   static ports = {out:{side:'out', icon:'activity'}};
 
+  start(){
+    this.gc = this.settings.get('formal').data.subscribe(v=>this.settings.get('text').data.value=(v?"My hovercraft is full of eels":"My hovercraft is full of feels"))
+  }
+
   execute(a){
-    const options = {urgent: this.settings.get('urgent').data.value};
+    const options = {urgent: this.settings.get('formal').data.value};
     const data = this.settings.get('text').data.value;
     this.outputPipe('out').receive(data, options);
   }
@@ -82,14 +90,17 @@ class Code extends SystemTool {
 
 
 }
+
 class Display extends SystemTool {
   static caption = 'Display';
   static description = 'Display submitted content.';
   static defaults = {text: {type:'Text', title:'', subtitle:'', text: '...', subtext:''}};
   static ports = {in:{side:'in', icon:'activity'}};
-  receive(request){
-    this.settings.get('text').text.value =   request.data;
+
+  execute(port, data){
+    this.settings.get('text').text.value = data;
   }
+
 }
 
 class Input extends SystemTool {
