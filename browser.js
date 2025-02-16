@@ -38,17 +38,14 @@ project.create(musicLocation);
 project.load();
 
 {
-  mainLocation.createModule('note0',    'system-tools/note',    {left: 66, top: 111, width: 333, }, {text: {type:'Text', title:'Notice', subtitle:'display will ignore the beacon counter until you send some text', text: 'Waiting for all pipes to submit information is a way to control execution of complex machines.', subtext:'Practical applications: this is the techonogy behing smart applicaions, this is what makes the brain operate in correct sequence.'}} );
-  mainLocation.createModule('beacon0',   'system-tools/beacon', {left: 444, top: 111});
-  mainLocation.createModule('text0',   'system-tools/text', {left: 444, top: 444});
+
+  mainLocation.createModule('note0',      'system-tools/note',    {left: 66, top: 111, width: 333, }, {text: {type:'Text', title:'Notice', subtitle:'display will ignore the beacon counter until you send some text', text: 'Waiting for all pipes to submit information is a way to control execution of complex machines.', subtext:'Practical applications: this is the techonogy behing smart applicaions, this is what makes the brain operate in correct sequence.'}} );
+  mainLocation.createModule('beacon0',    'system-tools/beacon',  {left: 444, top: 111});
+  mainLocation.createModule('text0',      'system-tools/text',    {left: 444, top: 444});
   mainLocation.createModule('display0',   'system-tools/display', {left: 888, top: 333});
+
   mainLocation.createConnection('beacon0:out', 'display0:in');
   mainLocation.createConnection('text0:out', 'display0:in');
-
-
-
-
-
 
 
   // mainLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 555, width: 200} );

@@ -18,10 +18,15 @@ class SystemTool extends Component {
 class Beacon extends SystemTool {
   static caption = 'Beacon';
   static description = 'Emit a number every N milliseconds.';
-  static defaults = { counter: {label:'Counter', type: 'Number', data:0},  milliseconds: {label:'Milliseconds', type: 'Number', data:1_000, step:100, min:300},};
+  static defaults = { counter: {label:'Counter', type: 'Number', data:0},  milliseconds: {label:'Milliseconds', type: 'Number', data:10_000, step:100, min:300},};
   static ports = {out:{side:'out', icon:'activity'}};
   start(){
     this.setTimeout(this.execute.bind(this), this.settings.get('milliseconds').data.value);
+    setTimeout(() => {
+      /* code to run in the microtask here */
+      this.execute()
+    },11);
+
   }
   stop(){
     this.collectGarbage();

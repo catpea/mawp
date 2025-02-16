@@ -528,18 +528,29 @@ export class Connector extends Source {
 
     const transportationRequest = new TransportationRequest( this, data, options, );
 
+    let onTheSameScene = true;
+    const currentScene = this.root.activeLocation.value;
+    const sourceScene = this.#connectionRequest.source.parent.id;
+    const destinationScene = this.#connectionRequest.destination.parent.id;
+    if( (sourceScene !== currentScene) || (destinationScene !== currentScene) ) onTheSameScene = false;
+    // if(   (destinationScene !== currentScene) ) onTheSameScene = false;
+
+    // console.log( {onTheSameScene})
+    console.log( {onTheSameScene, currentScene, sourceScene, destinationScene} )
 
     this.#connectionRequest.source.emit('send-marble', transportationRequest.from.port);
 
-    if (CONFIGURATION.simulation.value === true) {
+    if ( CONFIGURATION.simulation.value === true) {
+      const duration = onTheSameScene?CONFIGURATION.flowDuration:0;
 
-      this.emit('activate-marble'); // as soon as possible emit activate marble, this is something the UI on top will be listening for
+      // ovveride duration of speed of marbles in an external non selected scene
+      this.emit('activate-marble', {duration}); // as soon as possible emit activate marble, this is something the UI on top will be listening for
 
 
       const scheduler = new Scheduler({
         // schedule the arrival
         rate: this.rate,
-        duration: CONFIGURATION.flowDuration,
+        duration: duration,
         paused: CONFIGURATION.paused,
         stop: () => {
           this.#connectionRequest.destination.emit('receive-marble', transportationRequest.to.port); // WHEN MARBLE ANIMATION STOPS
