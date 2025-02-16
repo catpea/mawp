@@ -64,7 +64,7 @@
     <div class="utilities">
 
         <div class="toast-container position-fixed top-0 end-0 p-3">
-            <div id="liveToast" class="toast text-bg-warning hide" role="alert" aria-live="assertive" aria-atomic="true">
+            <div id="liveToast1" class="toast text-bg-warning hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="30000">
                 <div class="toast-header">
                 <strong class="me-auto">How To Use</strong>
                 <small>Hello!</small>
@@ -74,12 +74,25 @@
                     Right-click on the background to open the toolbox!
                 </div>
             </div>
+
+            <div id="liveToast2" class="toast text-bg-info hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="12000">
+                <div class="toast-header">
+                <strong class="me-auto">Note</strong>
+                <small>Hello!</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Fixed right click trouble, pan/zoom is now restored when a scene changes.
+                </div>
+            </div>
         </div>
         <script>
-        const toastTrigger = document.getElementById('liveToastBtn')
-        const toastLiveExample = document.getElementById('liveToast')
-        const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
-        toastBootstrap.show()
+        const toastLiveExample1 = document.getElementById('liveToast1')
+        const toastLiveExample2 = document.getElementById('liveToast2')
+        const toastBootstrap1 = bootstrap.Toast.getOrCreateInstance(toastLiveExample1)
+        const toastBootstrap2 = bootstrap.Toast.getOrCreateInstance(toastLiveExample2)
+        toastBootstrap1.show()
+        toastBootstrap2.show()
         </script>
 
     </div>

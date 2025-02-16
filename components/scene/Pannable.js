@@ -28,7 +28,10 @@ export default class Pannable {
     window.addEventListener("mousemove", this.onMouseMove);
     window.addEventListener("mouseup", this.onMouseUp);
 
-    this.updateTransform();
+    this.sceneComponent.panX.subscribe(()=>this.updateTransform());
+    this.sceneComponent.panY.subscribe(()=>this.updateTransform());
+    this.sceneComponent.scale.subscribe(()=>this.updateTransform());
+
     return () => this.stop();
   }
 
@@ -66,7 +69,7 @@ export default class Pannable {
     if (this.#isPanning) {
       this.sceneComponent.panX.value = this.#startPanX + (event.clientX - this.#startMousePos.x);
       this.sceneComponent.panY.value = this.#startPanY + (event.clientY - this.#startMousePos.y);
-      this.updateTransform();
+      // this.updateTransform();
     }
   }
 
@@ -80,7 +83,12 @@ export default class Pannable {
     let allow = true;
     if (event.originalTarget !== this.sceneComponent) allow = false;
     if (event.target.tagName == 'X-WINDOW') allow = true; // overturn verdict;
+
+    try{
+    // Avoid Uncaught Error: Permission denied to access property "tagName"
     if (event.originalTarget.tagName == 'line') allow = true; // overturn verdict;
+    }catch(e){}
+
     if(!allow) return;
 
     const deltaScale = event.deltaY > 0 ? 0.9 : 1.1;
@@ -94,7 +102,7 @@ export default class Pannable {
     this.sceneComponent.panX.value = offsetX * (1 - deltaScale) + deltaScale * this.sceneComponent.panX.value;
     this.sceneComponent.panY.value = offsetY * (1 - deltaScale) + deltaScale * this.sceneComponent.panY.value;
 
-    this.updateTransform();
+    // this.updateTransform();
     event.preventDefault();
   }
 }

@@ -1,6 +1,7 @@
 import CONFIGURATION from 'configuration';
 
 import baseInstaller from './library/base/index.js';
+import browserInstaller from './library/browser/index.js';
 import toneInstaller from './library/tone-js/index.js';
 import { Application, Project, Location, Component, Connector, Modules, Library } from 'library';
 
@@ -12,6 +13,7 @@ const modules = new Modules('modules');
 application.create(modules);
 
 modules.create(baseInstaller(application));
+// modules.create(browserInstaller(application));
 modules.create(toneInstaller(application));
 
 // Project Registration

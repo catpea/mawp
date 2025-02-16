@@ -158,10 +158,11 @@ export default class Constructible {
   }
 
   onContextMenu(event) {
+    if(event.target !== this.sceneComponent) return;
+    console.log(event, this.sceneComponent );
     event.preventDefault();
     const [x,y] = this.sceneComponent.transform(event.clientX, event.clientY);
     this.#mouseCoordinates = {x, y};
-    //console.log(event, this.#mouseCoordinates );
 
      const svgSurface = this.sceneComponent.drawingSurfaces[1];
      if(!this.svgMarkerDot) this.svgMarkerDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');

@@ -285,6 +285,15 @@ class Source {
     }
   }
 
+  // UTILITY FUNCTIONS
+
+  listenTo(thing, event, listener){
+    if (!thing || !event || !listener) { throw new Error('All arguments (thing, event, listener) must be provided'); }
+    const boundListener = listener.bind(this);
+    thing.addEventListener(event, boundListener);
+    return ()=>thing.removeEventListener(event, boundListener);
+  }
+
   // GARBAGE COLLECTED TIMEOUT
   setTimeout(timeoutFunction, timeoutDuration, type = "timeout") {
     const timeoutGuid = guid();

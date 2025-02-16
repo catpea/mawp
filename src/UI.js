@@ -43,6 +43,8 @@ export default class UI {
   // on this level, web components have a .source that links back to the server data structure
 
   source;
+
+  previousLocationName;
   constructor(source){
     this.source = source;
   }
@@ -88,27 +90,52 @@ export default class UI {
     this.collectGarbage();
   }
 
-  watch(locationName){
-    if(!locationName) throw new Error('A watcher requires the name of a scene tp monitor')
+  watch(newLocationName){
+    if(!newLocationName) throw new Error('A watcher requires the name of a scene to monitor')
 
-    console.log(`Watching locationName: ${locationName}`)
+    console.log(`Watching locationName: ${newLocationName}`)
     // this.project.activeScene
     this.clearLocationGarbage()
 
     // MONITORING
-    this.locationGarbageCollector = this.source.watch('create', `main-project/${locationName}/*`, ({target})=> this.addWebComponent(target));
-    this.locationGarbageCollector = this.source.watch('delete', `main-project/${locationName}`, ({target})=> this.removeWebComponent(target));
+    this.locationGarbageCollector = this.source.watch('create', `main-project/${newLocationName}/*`, ({target})=> this.addWebComponent(target));
+    this.locationGarbageCollector = this.source.watch('delete', `main-project/${newLocationName}`, ({target})=> this.removeWebComponent(target));
 
     // INSTALLATION
-    const location = this.source.get('main-project', locationName);
+    const location = this.source.get('main-project', newLocationName);
+
     for(const child of location.children){
       this.addWebComponent(child)
     }
+
     console.log(`Installed ${location.children.length} WebComponents`);
 
+    this.restore(newLocationName);
   }
 
+  restore(newLocationName){
 
+    if(this.previousLocationName){
+      // We have a previous location, save current pan to its memory.
+      const previousLocation = this.source.get('main-project', this.previousLocationName);
+      const restore = JSON.stringify({ panX: this.scene.panX.value, panY: this.scene.panY.value, scale: this.scene.scale.value, });
+      previousLocation.settings.set('restore', restore);
+    }
+
+    const newLocation = this.source.get('main-project', newLocationName);
+    if(newLocation.settings.has('restore')){
+      const restore = JSON.parse(newLocation.settings.get('restore'));
+      console.log('location.restore', restore)
+      this.scene.panX.value = restore.panX;
+      this.scene.panY.value = restore.panY;
+      this.scene.scale.value = restore.scale;
+    }else{
+      this.scene.panX.value = 0;
+      this.scene.panY.value = 0;
+      this.scene.scale.value = 1;
+    }
+    this.previousLocationName = newLocationName;
+  }
 
 
 

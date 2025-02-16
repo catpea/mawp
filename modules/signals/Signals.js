@@ -58,7 +58,7 @@ export default class Signals {
       property: segments[segments.length - 1],
       depth: segments.length,
     };
-    console.log('XXX return', path, response, current[segments[segments.length - 1]])
+    // console.log('XXX return', path, response, current[segments[segments.length - 1]])
     return response;
   }
 

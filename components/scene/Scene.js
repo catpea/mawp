@@ -124,6 +124,8 @@ export default class Scene extends HTMLElement {
     const pannable = new Pannable(this);
     this.gc = pannable.start();
 
+
+
     const constructible = new Constructible(this);
     this.gc = constructible.start();
 
@@ -147,6 +149,7 @@ export default class Scene extends HTMLElement {
       }
       contentMouseElement.addEventListener("mousemove", mouseTracker);
       this.gc = () => contentMouseElement.removeEventListener("mousemove", mouseTracker);
+
 
 
 
