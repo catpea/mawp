@@ -513,8 +513,10 @@ export class TransportationRequest extends DataRequest {
 
 export class Connector extends Source {
   #connectionRequest;
+
   rate = new Signal(1); // speed of transmitting signals
   health = new Signal("nominal"); // component health
+
   constructor(id) {
     super(id, "pipe");
   }
@@ -523,18 +525,30 @@ export class Connector extends Source {
    * Pipe receive, when a pipe receives data, it passes it to the destination
    */
   receive(data, options) {
+
     const transportationRequest = new TransportationRequest( this, data, options, );
-    console.info('Connector receive data, options', data, options)
-    console.info('Connector receive transportationRequest', transportationRequest)
+
+
+    this.#connectionRequest.source.emit('send-marble', transportationRequest.from.port);
+
     if (CONFIGURATION.simulation.value === true) {
+
+      this.emit('activate-marble'); // as soon as possible emit activate marble, this is something the UI on top will be listening for
+
+
       const scheduler = new Scheduler({
         // schedule the arrival
         rate: this.rate,
         duration: CONFIGURATION.flowDuration,
         paused: CONFIGURATION.paused,
-        stop: () => this.#connectionRequest.destination.receive(transportationRequest),
+        stop: () => {
+          this.#connectionRequest.destination.emit('receive-marble', transportationRequest.to.port); // WHEN MARBLE ANIMATION STOPS
+          this.#connectionRequest.destination.receive(transportationRequest)
+        },
       });
+
       this.gc = scheduler.start();
+
     } else {
       this.#connectionRequest.destination.receive(transportationRequest);
     }

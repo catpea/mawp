@@ -38,25 +38,43 @@ project.create(musicLocation);
 project.load();
 
 {
-  mainLocation.createModule('note1',    'system-tools/note',    {title:'My Todo List', left: 66, top: 555, width: 333, }, {text: {type:'Text', title:'Advanced Data Processing', subtitle:'data integration layer', text: 'Add Fetch, Queue, Manager, and File System. And allow the work manager to loop data through another scene.', subtext:'Later: Add more form controls, insert node by dropping it on line, magnetic connection by positioning connection near a port, and minimap.'}} );
+  mainLocation.createModule('note0',    'system-tools/note',    {left: 66, top: 111, width: 333, }, {text: {type:'Text', title:'Notice', subtitle:'display will ignore the beacon counter until you send some text', text: 'Waiting for all pipes to submit information is a way to control execution of complex machines.', subtext:'Practical applications: this is the techonogy behing smart applicaions, this is what makes the brain operate in correct sequence.'}} );
+  mainLocation.createModule('beacon0',   'system-tools/beacon', {left: 444, top: 111});
+  mainLocation.createModule('text0',   'system-tools/text', {left: 444, top: 444});
+  mainLocation.createModule('display0',   'system-tools/display', {left: 888, top: 333});
+  mainLocation.createConnection('beacon0:out', 'display0:in');
+  mainLocation.createConnection('text0:out', 'display0:in');
 
-  mainLocation.createModule('fetch1',   'system-tools/fetch',   {title:'JSON Fetch', left: 66, top: 111} );
-  mainLocation.createModule('queue1',   'system-tools/queue',   {title:'Data Queue', left: 420, top: 111, width: 200} );
-  mainLocation.createModule('manager1', 'system-tools/manager', {title:'Work Manager', left: 772, top: 111, width: 200} );
 
-  mainLocation.createModule('files1',   'system-tools/files',   {title:'Virtual File System', left: 1120, top: 111} );
+
+
+
+
+
+  // mainLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 555, width: 200} );
+  mainLocation.createModule('note1',    'system-tools/note',    {title:'My Todo List', left: 66, top: 1111, width: 333, }, {text: {type:'Text', title:'Advanced Data Processing', subtitle:'data integration layer', text: 'Add Fetch, Queue, Manager, and File System. And allow the work manager to loop data through another scene.', subtext:'Later: Add more form controls, insert node by dropping it on line, magnetic connection by positioning connection near a port, and minimap.'}} );
+  mainLocation.createModule('text1', 'system-tools/text', {title:'Text', left: 444, top: 1111, width: 200} );
+  mainLocation.createModule('procedure1', 'system-tools/procedure', {title:'Procedure', left: 777, top: 1111, width: 200} );
+  mainLocation.createModule('display1', 'system-tools/display', {title:'Display', left: 1111, top: 1111, width: 300} );
+  mainLocation.createConnection('text1:out', 'procedure1:in');
+  mainLocation.createConnection('procedure1:out', 'display1:in');
+
+
+
+
+
+
+
+
+  mainLocation.createModule('fetch1',   'system-tools/fetch',   {title:'JSON Fetch', left: 66, top: 1555} );
+  mainLocation.createModule('queue1',   'system-tools/queue',   {title:'Data Queue', left: 444, top: 1555, width: 200} );
+  mainLocation.createModule('manager1', 'system-tools/manager', {title:'Work Manager', left: 772, top: 1555, width: 200} );
+
+  mainLocation.createModule('files1',   'system-tools/files',   {title:'Virtual File System', left: 1120, top: 1555} );
 
   mainLocation.createConnection('fetch1:out', 'queue1:in');
   mainLocation.createConnection('queue1:out', 'manager1:in');
   mainLocation.createConnection('manager1:out', 'files1:in');
-
-
-  // mainLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 555, width: 200} );
-  mainLocation.createModule('text1', 'system-tools/text', {title:'Text', left: 444, top: 555, width: 200} );
-  mainLocation.createModule('procedure1', 'system-tools/procedure', {title:'Procedure', left: 777, top: 555, width: 200} );
-  mainLocation.createModule('display1', 'system-tools/display', {title:'Display', left: 1111, top: 555, width: 300} );
-  mainLocation.createConnection('text1:out', 'procedure1:in');
-  mainLocation.createConnection('procedure1:out', 'display1:in');
 
 
 }

@@ -33,9 +33,7 @@ class Beacon extends SystemTool {
       this.settings.get('counter').data.value = this.settings.get('counter').data.value + 1;
       const options = { };
       const data = this.settings.get('counter').data.value;
-      console.log('this.outputPipe', this.outputPipe, this.outputPipe('out'));
       this.outputPipe('out').receive(data, options);
-      console.log('this.outputPipe(out)', data, options)
     }
 
     this.setTimeout(this.execute.bind(this), this.settings.get('milliseconds').data.value);
@@ -85,8 +83,6 @@ class Display extends SystemTool {
   static defaults = {text: {type:'Text', title:'', subtitle:'', text: '...', subtext:''}};
   static ports = {in:{side:'in', icon:'activity'}};
   receive(request){
-    console.info(`Display receive request data`, request.data);
-
     this.settings.get('text').text.value =   request.data;
   }
 }

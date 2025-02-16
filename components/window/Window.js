@@ -150,8 +150,8 @@ export default class Window extends ReactiveHTMLElement {
       this.changePortStyle(port, `solid-${indicator}`)
       this.setTimeout(() => this.changePortStyle(port, `solid-${normal}`), 222);
     };
-    this.gc = this.source.on('receive', name=>flash(name, 'warning', 'primary'));
-    this.gc = this.source.on('send', name=>flash(name, 'info', 'primary'));
+    this.gc = this.source.on('receive-marble', name=>flash(name, 'warning', 'primary'));
+    this.gc = this.source.on('send-marble', name=>flash(name, 'info', 'primary'));
 
 
     // PRINT SETTINGS
@@ -224,7 +224,9 @@ export default class Window extends ReactiveHTMLElement {
   }
 
   getPortElement(id) {
-    return this.shadowRoot.getElementById(id);
+    const portElement = this.shadowRoot.getElementById(id);
+    if(!portElement) throw new Error(`Port element ${id} not found.`);
+    return portElement;
   }
   changePortStyle(portId, newStyle){
     const portElement = this.getPortElement(portId);

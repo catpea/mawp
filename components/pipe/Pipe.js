@@ -11,6 +11,7 @@ export default class Pipe extends ReactiveHTMLElement {
 
   #line;
   #circle; // TODO: position of the circle should use x1 signals, piggy back
+
   #x1 = new Signal(0);
   #y1 = new Signal(0);
   #x2 = new Signal(0);
@@ -18,7 +19,7 @@ export default class Pipe extends ReactiveHTMLElement {
 
   #lineStrokeSelected = 'var(--bs-primary)';
   #lineStrokes = ['var(--bs-success)', 'rgba(var(--bs-success-rgb), .3)'];
-  #lineWidths = [4,2];
+  #lineWidths = [4, 2];
   #focusableLineStrokeWidth = 14;
 
   initialize() {
@@ -44,7 +45,7 @@ export default class Pipe extends ReactiveHTMLElement {
   }
 
   connected() {
-    this.gc = this.source.on('receive', () => this.activateMarble() );
+    this.gc = this.source.on('activate-marble', () => this.activateMarble() );
 
     // PROCESS DEPENDENCIES
     const fromWindowStatusSignal = new Series(this.dataset2.get('from'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
@@ -54,6 +55,7 @@ export default class Pipe extends ReactiveHTMLElement {
     const dependencies = new Signal();
     dependencies.addDependency(fromWindowStatusSignal);
     dependencies.addDependency(toWindowStatusSignal);
+
     this.gc = dependencies.subscribe((_, fromWindowStatus, toWindowStatus) => {
       if (fromWindowStatus === 'ready' && toWindowStatus === 'ready') {
         this.status.value = 'ready'
@@ -178,6 +180,7 @@ export default class Pipe extends ReactiveHTMLElement {
       duration: CONFIGURATION.flowDuration,
       paused: CONFIGURATION.paused,
     };
+
     const scheduler = new Scheduler(options);
     this.gc = scheduler.start();
 
