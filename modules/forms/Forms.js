@@ -157,9 +157,10 @@ export default class Forms {
 
         const inputElement = lol.input({ type:'text', value: JSON.stringify(data.value), class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
         container.appendChild(inputElement);
-        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
+
+        // data.value.subscribe(v=>inputElement.value = JSON.stringify(v))
+        this.component.listenTo(inputElement, 'input', () => {
           const value = JSON.parse(inputElement.value);
-          //console.info(value)
           data.value = value;
         });
 
@@ -177,8 +178,7 @@ export default class Forms {
         formCheckContainer.appendChild(inputElement);
         formCheckContainer.appendChild(labelElement);
         container.appendChild(formCheckContainer);
-        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
-          //console.log(inputElement.value)
+        this.component.listenTo(inputElement, 'input', () => {
           data.value =  inputElement.checked;
         });
 
@@ -195,7 +195,7 @@ export default class Forms {
         const inputElement = lol.select({id, name, class: 'form-select form-select-sm', id}, ...options.value.map(({value, textContent})=>lol.option({value, textContent, selected:value==data.value})) );
         container.appendChild(inputElement);
 
-        /*TODO: this.component.gc =*/ inputElement.addEventListener("change", () => {
+        this.component.listenTo(inputElement, 'change', () => {
           data.value = inputElement.value;
         });
         data.value = inputElement.value; // initialize value
@@ -217,9 +217,9 @@ export default class Forms {
         const inputElement = lol.input({ type:'range', style:{width: '20rem'}, /* do not set value here, use .value */  min:min.value, max:max.value, step:step.value, class: 'form-range form-range-sm d-block', id, 'aria-describedby': 'inputHelp', name});
         container.appendChild(inputElement);
         inputElement.value = data.value;
-        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
+
+        this.component.listenTo(inputElement, 'input', () => {
           data.value =  inputElement.valueAsNumber ;
-          //console.log(data.value)
         });
 
         if(text){
@@ -240,12 +240,35 @@ export default class Forms {
         }
        } break;
 
+      case "Number": {
+        const {min, max, step} = configuration;
+
+        const labelElement = lol.label({for: id, class: 'form-label'}, label.value);
+        container.appendChild(labelElement);
+
+        const inputElement = lol.input({ type:'number', min:min?.value, max:max?.value, step:step?.value, value:data.value, class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
+        container.appendChild(inputElement);
+
+        data.subscribe(v => inputElement.value = v);
+        this.component.listenTo(inputElement, 'input', () => {
+          // inputElement.setCustomValidity("");
+          // inputElement.checkValidity();
+          data.value = parseInt(inputElement.value);
+        });
+
+        if(text){
+          const textElement = lol.div({id:guid(), class: 'form-text'}, text.value);
+          container.appendChild(textElement);
+        }
+       } break;
+
       case "Input": {
         const labelElement = lol.label({for: id, class: 'form-label'}, label.value);
         container.appendChild(labelElement);
         const inputElement = lol.input({ type:type.value, value:data.value, class: 'form-control form-control-sm', id, 'aria-describedby': 'inputHelp', name});
         container.appendChild(inputElement);
-        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
+
+        this.component.listenTo(inputElement, 'input', () => {
           // inputElement.setCustomValidity("");
           // inputElement.checkValidity();
           data.value = inputElement.value;
@@ -261,7 +284,7 @@ export default class Forms {
         container.appendChild(labelElement);
         const inputElement = lol.textarea({ class: 'form-control form-control-sm', id, rows: configuration.rows?.value, 'aria-describedby': 'inputHelp', name}, data.value );
         container.appendChild(inputElement);
-        /*TODO: this.component.gc =*/ inputElement.addEventListener("input", () => {
+        this.component.listenTo(inputElement, 'input', () => {
           // inputElement.setCustomValidity("");
           // inputElement.checkValidity();
           data.value = inputElement.value;

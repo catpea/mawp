@@ -15,6 +15,34 @@ class SystemTool extends Component {
 
 
 
+class Beacon extends SystemTool {
+  static caption = 'Beacon';
+  static description = 'Emit a number every N milliseconds.';
+  static defaults = { counter: {label:'Counter', type: 'Number', data:0},  milliseconds: {label:'Milliseconds', type: 'Number', data:1_000, step:100, min:300},};
+  static ports = {out:{side:'out', icon:'activity'}};
+  start(){
+    this.setTimeout(this.execute.bind(this), this.settings.get('milliseconds').data.value);
+  }
+  stop(){
+    this.collectGarbage();
+  }
+  execute(){
+    const outputPipe = this.outputPipe('out');
+
+    if(outputPipe){
+      this.settings.get('counter').data.value = this.settings.get('counter').data.value + 1;
+      const options = { };
+      const data = this.settings.get('counter').data.value;
+      console.log('this.outputPipe', this.outputPipe, this.outputPipe('out'));
+      this.outputPipe('out').receive(data, options);
+      console.log('this.outputPipe(out)', data, options)
+    }
+
+    this.setTimeout(this.execute.bind(this), this.settings.get('milliseconds').data.value);
+  }
+
+}
+
 class Text extends SystemTool {
   static caption = 'Text';
   static description = 'Send a text packet.';
@@ -246,8 +274,12 @@ export default function install(){
   library.register('input', Input);
   library.register('output', Output);
   library.register('procedure', Procedure);
-  library.register('code', Code);
+
+
+  library.register('beacon', Beacon);
   library.register('text', Text);
+
+  library.register('code', Code);
   library.register('display', Display);
 
   library.register('note',    Note);

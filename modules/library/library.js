@@ -296,6 +296,7 @@ class Source {
 
   // GARBAGE COLLECTED TIMEOUT
   setTimeout(timeoutFunction, timeoutDuration, type = "timeout") {
+
     const timeoutGuid = guid();
     const timeoutId = setTimeout(() => {
       this.#garbage.splice(
@@ -304,15 +305,17 @@ class Source {
       );
       timeoutFunction();
     }, timeoutDuration);
+
     this.#garbage.push({
       type,
       id: timeoutGuid,
       ts: new Date().toISOString(),
       subscription: () => {
-        //console.log( "agent stop automatic garbage collect clearTimeout(timeoutId)", );
         clearTimeout(timeoutId);
       },
     });
+
+    return ()=>clearTimeout(timeoutId);
   }
   clearTimeouts(type) {
     const matches = this.#garbage
