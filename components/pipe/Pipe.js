@@ -169,10 +169,6 @@ export default class Pipe extends ReactiveHTMLElement {
     }});
 
 
-
-
-
-
   }
 
 
@@ -208,7 +204,7 @@ export default class Pipe extends ReactiveHTMLElement {
       state.marble.setAttribute('cy', cy);
     };
 
-    const stop = (state)=>{
+    const complete = (state)=>{
       state.marble.remove();
     }
 
@@ -216,7 +212,7 @@ export default class Pipe extends ReactiveHTMLElement {
       state,
       start,
       step,
-      stop,
+      complete,
       next: ƒ => requestAnimationFrame(ƒ),
       rate: this.source.rate,
       duration: CONFIGURATION.flowDuration,

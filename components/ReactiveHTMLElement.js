@@ -23,11 +23,12 @@ export default class ReactiveHTMLElement extends HTMLElement {
   initialize(){}
   connected(){}
   disconnected(){
-
+    console.log(`Disconnected ${this.constructor.name} and ran garbage collection.`)
     this.status.value = 'unloaded'; // ex: ALERT THE PIPES in case of window;
     this.collectGarbage();
 
-    //NOTE: you may not this.source.remove(); you are in the UI layer, components can be removed when switching a scene. It is when you execute a delete command that the source is removed and then its UI is removed from the screen.
+    //DANGER: you may not this.source.remove(); you are in the UI layer, UI components can be removed when switching a scene.
+    // It is when you execute a delete command that the source is removed and then its UI is removed permanently from the screen as well.
 
   }
 

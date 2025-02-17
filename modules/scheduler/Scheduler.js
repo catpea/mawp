@@ -17,13 +17,13 @@ export default class Scheduler {
   elapsedDuration = 0;
   elapsedPausedDuration = 0;
 
-  constructor({state={}, start, step, stop, next=(f) => setTimeout(f, 1_000/20), duration, rate=false, paused=false}){
+  constructor({state={}, start, step, complete, next=(f) => setTimeout(f, 1_000/20), duration, rate=false, paused=false}){
     this.next = next; // user can send in next: (f) => requestAnimationFrame(f);
     // User things
     this.user.state = state;
     this.user.start = start;
     this.user.step  = step;
-    this.user.stop  = stop;
+    this.user.complete  = complete;
     // CONFIGURATION
     this.duration = duration;
     this.rate = rate; // NOTE: this is local rate control, globa rate is already accounted for in duration
@@ -51,14 +51,19 @@ export default class Scheduler {
       if(this.user.step) this.user.step(this.user.state, progress);
       this.next( this.step.bind(this) );
     } else {
-      this.stop();
+      this.complete();
     }
     this.laststepAt = currentStepAt;
   }
 
+  complete(){
+    if(this.COMPLETED) return;
+    this.COMPLETED = true;
+    if(this.user.complete) this.user.complete(this.user.state);
+  }
+
   stop(){
     this.COMPLETED = true;
-    if(this.user.stop) this.user.stop(this.user.state);
   }
 
 }

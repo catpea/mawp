@@ -1,4 +1,4 @@
-import { Library, Component } from 'library';
+import { Library, Component, Tool } from 'library';
 
 import Tone from './Tone.js';
 
@@ -20,6 +20,16 @@ class ToneDestinationComponent extends ToneComponent {
     this.content.value = this.Tone.getDestination();
     //console.log('EEE ToneDestinationComponent',   this.content.value );
   }
+
+
+
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
+
 }
 
 
@@ -39,6 +49,16 @@ class TonePlayerComponent extends ToneComponent {
         this.gc = options.data.subscribe(v=>this.content.value[name]);
     }
   }
+
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
+
+
+
 
 
 
@@ -75,6 +95,16 @@ class ToneSynthComponent extends ToneComponent {
         this.gc = options.data.subscribe(v=>this.content.value[name]);
     }
   }
+
+
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
+
+
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
     const isCorrectInstance = destination instanceof ToneComponent;
@@ -107,6 +137,16 @@ class ToneDistortionComponent extends ToneComponent {
         this.gc = options.data.subscribe(v=>this.content.value[name]);
     }
   }
+
+
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
+
+
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
     const isCorrectInstance = destination instanceof ToneComponent;
@@ -138,6 +178,15 @@ class ToneFeedbackDelayComponent extends ToneComponent {
         this.gc = options.data.subscribe(v=>this.content.value[name]);
     }
   }
+
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
+
+
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
     const isCorrectInstance = destination instanceof ToneComponent;
@@ -171,6 +220,15 @@ class TonePatternComponent extends ToneComponent {
         this.gc = options.data.subscribe(v=>this.content?.value?this.content.value[name]=v:0);
     }
   }
+
+
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+
+
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
     const isCorrectInstance = destination instanceof ToneComponent;
@@ -195,9 +253,6 @@ class TonePatternComponent extends ToneComponent {
   }
 
 
-  execute(request){
-    // unused, tone passes its own data
-  }
 
   disconnect({destination}){
     // if( this.content?.value)
@@ -216,8 +271,8 @@ class TonePatternComponent extends ToneComponent {
 
 
 class ToneLibrary extends Library {
+  initialize() {}
   start(){
-
     const installTone = async () => {
       // Tone.getTransport() returns the main timekeeper.
       Tone.getTransport().start(); // All loops start when Transport is started
@@ -228,6 +283,12 @@ class ToneLibrary extends Library {
     document.body.addEventListener("mousedown", installTone, true);
 
   } // start
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
 }
 
 

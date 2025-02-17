@@ -30,7 +30,8 @@ class State {
 }
 
 export default class StateMachine {
-  constructor(actionMap) {
+  constructor(context, actionMap) {
+    this.context = context;
     this.actionMap = actionMap;
     this.name = new State("uninitialized"); // superposition
 
@@ -74,7 +75,9 @@ export default class StateMachine {
 
   initialize() {
     if (this.name.value === "uninitialized") {
+      if('preinit' in this.context) this.context.preinit();
       this.actionMap.initialize();
+      if('postinit' in this.context) this.context.postinit();
       this.changeState("initialized");
     }else{
       throw new Error('Will not change state from uninitialized as conditions are unmet')

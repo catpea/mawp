@@ -10,6 +10,49 @@ import guid from "guid";
 
 import CONFIGURATION from "configuration";
 
+
+
+export class DataRequest {
+  pipe = {id:null}
+  from = { id: null, port: null };
+  to = { id: null, port: null };
+  source = null;
+  destination = null;
+  constructor(context) {
+    this.pipe.id = context.id;
+
+    // TODO: unknown.. cache and make reactive...
+    Object.assign( this.from, Object.fromEntries( [context.dataset.get("from").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+    Object.assign( this.to, Object.fromEntries( [context.dataset.get("to").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+
+    this.source = context.parent.get(this.from.id);
+    this.destination = context.parent.get(this.to.id);
+  }
+}
+
+export class ConnectionRequest extends DataRequest {
+
+}
+
+export class TransportationRequest extends DataRequest {
+
+  data = null;
+  options = null;
+  constructor(context, data, options) {
+    super(context);
+    this.data = data;
+    this.options = options;
+  }
+
+}
+
+
+
+
+
+
+
+
 class Source {
 
   id;
@@ -32,7 +75,7 @@ class Source {
     this.dataset = new Dataset();
     this.settings = new Settings();
 
-    this.state = new State({
+    this.state = new State(this, {
       initialize: this.initialize.bind(this),
            start: this.start.bind(this),
            pause: this.pause.bind(this),
@@ -52,8 +95,9 @@ class Source {
   }
 
   remove() {
-    this.stop();
-    this.dispose();
+    console.log(this.id, 'stop dispose delete')
+    this.state.stop();
+    this.state.dispose();
     this.parent.delete(this);
   }
 
@@ -130,18 +174,16 @@ class Source {
   watch(name, pattern, callback) {
     if (!this.watchers) this.watchers = {};
     if (!this.watchers[name]) this.watchers[name] = {};
-    if (!this.watchers[name][pattern])
-      this.watchers[name][pattern] = [];
+    if (!this.watchers[name][pattern]) this.watchers[name][pattern] = [];
     this.watchers[name][pattern].push(callback);
+
     return () => this.unwatch(name, pattern, callback);
   }
   unwatch(name, pattern, callback) {
     const index = this.watchers[name][pattern].indexOf(callback);
-    if (index > -1) {
-      this.watchers[name][pattern].splice(index, 1);
-    }
-    if (this.watchers[name][pattern].length == 0)
-      delete this.watchers[name][pattern];
+    if (index > -1) this.watchers[name][pattern].splice(index, 1);
+    if (this.watchers[name][pattern].length == 0) delete this.watchers[name][pattern];
+    console.log(`UNWATCH: removed watcher index ${index}`)
   }
 
   /**
@@ -214,34 +256,6 @@ class Source {
     }
   }
 
-
-  // User Methods, will be called by state machine as needed
-  // they are exposed here for beauty purposes.
-  initialize(){
-    console.warn('.initialize() must be overriden');
-  }
-
-  start(){
-    console.warn('.start() must be overriden');
-  }
-
-  pause(){
-    console.warn('.pause() must be overriden');
-  }
-
-  resume(){
-    console.warn('.resume() must be overriden');
-  }
-
-  stop(){
-    console.warn('.stop() must be overriden');
-    console.warn('.stop() must collectGarbage');
-    this.collectGarbage(); // user should call collect garbage
-  }
-
-  dispose(){
-    console.warn('.dispose() must be overriden');
-  }
 
 
 
@@ -365,7 +379,14 @@ export class Application extends Source {
   stop() {
     this.all .filter((o) => o !== this) .map((node) => (node.state.stop()));
     this.all .filter((o) => o !== this) .map((node) => (node.state.dispose()));
+    this.collectGarbage();
   }
+
+  initialize() {}
+  pause() {}
+  resume() {}
+  dispose() {}
+
 }
 
 export class Project extends Source {
@@ -387,9 +408,28 @@ export class Project extends Source {
   //   this.#commandModules.set(name, AgentModule.default);
   //   return AgentModule.default;
   // }
+  //
+  initialize() {}
+  start() {}
+  pause() {}
+  resume() {}
+  dispose() {}
+  stop() {
+      this.collectGarbage();
+  }
 }
 
 export class Location extends Source {
+
+  initialize() {}
+  start() {}
+  pause() {}
+  resume() {}
+  stop() {
+      this.collectGarbage();
+  }
+  dispose() {}
+
   getRelated(id) {
     // return items related to id in a scene, usualy for removal.
     const from = this.children .filter((child) => child.type === "pipe") .filter((child) => child.dataset.get("from") !== undefined) .filter((child) => child.dataset.get("from").value.startsWith(id + ":"));
@@ -432,24 +472,58 @@ export class Location extends Source {
   }
 }
 
-export class Component extends Source {
+
+
+export class AwaitingComponent extends Source {
 
   awaiting = new Signal(true); // awaiting pipes
+  receivedPipes = new Set()
+  values = {};
+
+  postinit() {
+    this.gc = this.parent.watch('delete', `*`, ({target:{id}})=> this.receivedPipes.delete(id));
+    this.gc = this.parent.watch('create', `*`, ()=>this.determination());
+    this.gc = this.parent.watch('delete', `*`, ()=> this.determination());
+    this.gc = () => console.log('WATCHERS CLEANUP!!!!');
+  }
+
+  determination(){
+    const currentPipes = new Set(this.inputPipes().map(o=>o.id));
+    const wetPipes = currentPipes.intersection(this.receivedPipes); // takes a set and returns a new set containing elements in this set but not in the given set.
+    const dryPipes = currentPipes.difference(this.receivedPipes); // takes a set and returns a new set containing elements in this set but not in the given set.
+    if(dryPipes.size === 0) this.awaiting.value = false;
+    if(dryPipes.size > 0) this.awaiting.value = true;
+    for (const pipeId of wetPipes) this.parent.get(pipeId).dry.value = false; // Mark pipe wet
+    for (const pipeId of dryPipes) this.parent.get(pipeId).dry.value = true; // Mark pipe dry
+    return !this.awaiting.value;
+  }
+
+  receive(dataRequest /* :DataRequest */) {
+    const {source, pipe, to:{port}, data, options} = dataRequest;
+    this.receivedPipes.add(pipe.id);
+    this.values[pipe.id] = data; // capture latest frame of data
+
+    const execute = this.determination();
+    if(execute) this.execute(dataRequest);
+
+  }
+
+}
+
+export class Component extends AwaitingComponent {
+
   rate = new Signal(1); // speed of emitting signals
   health = new Signal("nominal"); // component health
   channels = new List();
 
-
   constructor(id) {
     super(id, "window");
-
     // NOTE: this is where we convent static ports to channels, a port is an idea, a channel is the real thing
     if(this.constructor.ports){
       for( const [name, value] of Object.entries(this.constructor.ports)){
         this.channels.set(name, value);
       }
     }
-
   }
 
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT
@@ -463,99 +537,15 @@ export class Component extends Source {
     return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("from").value.startsWith(this.id + ':')).find(o=>o.dataset.get("from").value.endsWith(':'+name));
   }
 
-  connectable() {
-    return true; //TODO: this should be false by default
+  connectable(request){
+    return true;
   }
-  connect() {}
-  disconnect() {}
-
-  // receive(port, data, address, options) {
-  receivedPipes = new Set()
-  receive({source, pipe, to:{port}, data, options} /*:DataRequest*/) {
-
-
-
-    // WATCH
-    const determination = x => {
-      this.receivedPipes.add(pipe.id);
-      const pipes = this.inputPipes();
-      const pipeIds = pipes.map(o=>o.id);
-      const pipeCount = pipes.length;
-      const currentPipes = new Set(pipeIds);
-      const wetPipes = currentPipes.intersection(this.receivedPipes); // takes a set and returns a new set containing elements in this set but not in the given set.
-      const dryPipes = currentPipes.difference(this.receivedPipes); // takes a set and returns a new set containing elements in this set but not in the given set.
-      console.log({wetPipes})
-      console.log({ dryPipes})
-
-      if(dryPipes.size === 0){
-      this.awaiting.value = false;
-      }else{
-        this.awaiting.value = true;
-      }
-
-      // Mark pipe wet
-      for (const pipeId of wetPipes) {
-        this.parent.get(pipeId).dry.value = false;
-      }
-      // Mark pipe dry
-      for (const pipeId of dryPipes) {
-        this.parent.get(pipeId).dry.value = true;
-      }
-
-    };
-
-        // MONITORING
-    this.gc = this.parent.watch('create', `*`, ()=>determination());
-    this.gc = this.parent.watch('delete', `*`, ()=> determination());
-
-    determination();
-
-    if(this.awaiting.value == false) this.execute(port, data, source, options); // NOTE: process is under user's control
-
+  connect(){
   }
-
-  execute(port, data, source, options) {
-    console.warn("This method in meant to be overridden");
-  }
-
-
-}
-
-export class DataRequest {
-  pipe = {id:null}
-  from = { id: null, port: null };
-  to = { id: null, port: null };
-  source = null;
-  destination = null;
-  constructor(context) {
-    this.pipe.id = context.id;
-
-    // TODO: unknown.. cache and make reactive...
-    Object.assign( this.from, Object.fromEntries( [context.dataset.get("from").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
-    Object.assign( this.to, Object.fromEntries( [context.dataset.get("to").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
-
-    this.source = context.parent.get(this.from.id);
-    this.destination = context.parent.get(this.to.id);
-  }
-}
-
-export class ConnectionRequest extends DataRequest {
-
-}
-
-export class TransportationRequest extends DataRequest {
-
-  data = null;
-  options = null;
-  constructor(context, data, options) {
-    super(context);
-    this.data = data;
-    this.options = options;
+  disconnect(){
   }
 
 }
-
-
 
 
 export class Connector extends Source {
@@ -568,6 +558,8 @@ export class Connector extends Source {
   constructor(id) {
     super(id, "pipe");
   }
+
+  initialize() {}
 
   /**
    * Pipe receive, when a pipe receives data, it passes it to the destination
@@ -600,10 +592,11 @@ export class Connector extends Source {
         rate: this.rate,
         duration: duration,
         paused: CONFIGURATION.paused,
-        stop: () => {
+        complete: () => {
           this.#connectionRequest.destination.emit('receive-marble', transportationRequest.to.port); // WHEN MARBLE ANIMATION STOPS
           this.#connectionRequest.destination.receive(transportationRequest)
         },
+
       });
 
       this.gc = scheduler.start();
@@ -630,19 +623,51 @@ export class Connector extends Source {
     }, 1);
   }
 
+  pause() {}
+  resume() {}
+
   stop() {
     if (this.#connectionRequest) this.#connectionRequest.source.disconnect(this.#connectionRequest);
     this.collectGarbage();
   }
+
+  dispose() {}
+
 }
 
 export class Modules extends Source {
+  initialize() {}
+  start() {}
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
+}
 
+export class Tool extends Source {
+  initialize() {}
+  start() {}
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
 }
 
 export class Library extends Source {
+  initialize() {}
+  start() {}
+  pause() {}
+  resume() {}
+  stop() {
+    this.collectGarbage();
+  }
+  dispose() {}
   register(id, content) {
-    const tool = new Source(id);
+    const tool = new Tool(id);
     tool.content.value = content;
     tool.settings.name = content.caption;
     tool.settings.description = content.description;
