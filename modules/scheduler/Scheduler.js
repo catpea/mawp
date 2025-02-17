@@ -4,7 +4,8 @@ export default class Scheduler {
     state: null, // user's own state
     start: null, // user's start callback
     step: null,  // user's step callback
-    stop: null,  // user's stop callback
+    complete: null,  // animation happily completes
+    cleanup: null,  // may need to abrpupltly clean up, as there will be no completion
   };
 
   next;
@@ -17,13 +18,14 @@ export default class Scheduler {
   elapsedDuration = 0;
   elapsedPausedDuration = 0;
 
-  constructor({state={}, start, step, complete, next=(f) => setTimeout(f, 1_000/20), duration, rate=false, paused=false}){
+  constructor({state={}, start, step, complete, cleanup, next=(f) => setTimeout(f, 1_000/20), duration, rate=false, paused=false}){
     this.next = next; // user can send in next: (f) => requestAnimationFrame(f);
     // User things
     this.user.state = state;
     this.user.start = start;
     this.user.step  = step;
     this.user.complete  = complete;
+    this.user.cleanup  = cleanup;
     // CONFIGURATION
     this.duration = duration;
     this.rate = rate; // NOTE: this is local rate control, globa rate is already accounted for in duration
@@ -60,10 +62,12 @@ export default class Scheduler {
     if(this.COMPLETED) return;
     this.COMPLETED = true;
     if(this.user.complete) this.user.complete(this.user.state);
+    if(this.user.cleanup) this.user.cleanup(this.user.state);
   }
 
   stop(){
     this.COMPLETED = true;
+    if(this.user.cleanup) this.user.cleanup(this.user.state);
   }
 
 }
