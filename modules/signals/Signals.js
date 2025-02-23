@@ -91,17 +91,25 @@ export default class Signals {
   set(path, value) {
     const { object, property, depth } = this.lookup(path);
 
-    if (!object.value[property] || !(object.value[property] instanceof Signal)) {
-      object.value[property] = value;//new Signal(value);
+    if (!object.value[property]) {
+      object.value[property] = new Signal(value);
     } else {
       object.value[property].value = value;
     }
   }
 
-  get(path) {
+  sig(path) {
     const { object, property } = this.lookup(path);
     if (!object.value[property]) return undefined;
     return object.value[property];
+  }
+
+  get(path) {
+    const { object, property } = this.lookup(path);
+    if (!object.value[property]) return undefined;
+
+
+    return object.value[property].value;
   }
 
   has(path) {
@@ -142,6 +150,8 @@ export default class Signals {
     // Merge the patch with existing values
     const currentValue = object.value[property].value;
     object.value[property].value = { ...currentValue, ...patch };
+
+
   }
 
   entries() {

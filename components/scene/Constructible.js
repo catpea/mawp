@@ -90,7 +90,7 @@ class Instruments extends ReactiveHTMLElement {
         const collapseId = guid();
         instrumentsCategory.innerHTML = `
           <button class="btn btn-toggle d-inline-flex align-items-center rounded border-0 ps-2 fs-5" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
-            ${parent.settings.name}
+            ${parent.settings.get('name')}
           </button>
           <div class="collapse show" id="${collapseId}">
             <ul class="btn-toggle-nav list-unstyled fw-normal ps-3 pb-1 small">
@@ -104,13 +104,13 @@ class Instruments extends ReactiveHTMLElement {
         const path = [ parent.id, child.id ].join('/');
         const click =()=> this.selected.value = { // select
           id: child.id,
-          name: child.settings.name,
-          description: child.settings.description,
+          name: child.settings.get('name'),
+          description: child.settings.get('description'),
           path,
           parent, child,
         };
         const dblclick =()=> this.addComponent({path, ...this.request}); // add instantly
-        const selector = lol.a({class:'d-inline-flex text-decoration-none rounded fs-6 user-select-none', on:{click, dblclick}, textContent: child.settings.name},  )
+        const selector = lol.a({class:'d-inline-flex text-decoration-none rounded fs-6 user-select-none', on:{click, dblclick}, textContent: child.settings.get('name')},  )
         item.appendChild(selector);
         instrumentsCategory.querySelector('ul').appendChild(item)
       }
@@ -159,7 +159,7 @@ export default class Constructible {
 
   onContextMenu(event) {
     if(event.target !== this.sceneComponent) return;
-    console.log(event, this.sceneComponent );
+    //console.log(event, this.sceneComponent );
     event.preventDefault();
     const [x,y] = this.sceneComponent.transform(event.clientX, event.clientY);
     this.#mouseCoordinates = {x, y};

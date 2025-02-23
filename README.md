@@ -3,6 +3,10 @@ MAWP
 
 ## TODO
 
+- tonejs read only components myst be destroyed-and-re-created
+- restore focus
+- restore sending options to tone js objects
+
 - style guard: ensure user methods are not called directly but via state machine
 - switch all to ReactiveHTMLElement for consistemt garbage collection
 - receive function

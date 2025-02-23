@@ -1,4 +1,4 @@
-import Dataset from 'dataset';
+import Settings from 'settings';
 import Connectable from './Connectable.js';
 
 import transcend from 'transcend';
@@ -8,7 +8,16 @@ export default class Port extends HTMLElement {
       // establish prototype chain
       super();
 
-      this.dataset2 = new Dataset();
+      this.ephemerals = new Settings();
+      this.ephemerals.merge({
+
+        title: 'Untitled',
+         name: 'Unnamed',
+         side: 'in',
+         icon: 'circle',
+        style: 'event',
+
+      })
 
       const shadow = this.attachShadow({ mode: 'open' });
       shadow.adoptedStyleSheets = document.adoptedStyleSheets;
@@ -16,32 +25,30 @@ export default class Port extends HTMLElement {
       const portNode = document.createElement('div');
 
       portNode.innerHTML = `
-        <span></span>
-        <span class="position-absolute top-50 translate-middle badge rounded-pill p-1"><i class="bi"></i></span>
+        <span name="label"></span>
+        <span name="sticker" class="position-absolute top-50 translate-middle badge rounded-pill p-1"><i class="bi"></i></span>
       `;
 
       shadow.appendChild(portNode);
 
-      const portComponents = shadow.querySelectorAll('span');
-      const portLabel = portComponents[0];
-
-      const portSticker = portComponents[1];
+      const portLabel = shadow.querySelector('span[name=label]');
+      const portSticker = shadow.querySelector('span[name=sticker]');
+      const portIcon = shadow.querySelector('i.bi');
 
       this.changePortStyle(portSticker, 'solid-primary')
-      this.dataset2.get('style').subscribe(newStyle => this.changePortStyle(portSticker, newStyle));
-
-      const portIcon = shadow.querySelector('.bi');
-
+      this.ephemerals.subscribeToValue('style', newStyle => this.changePortStyle(portSticker, newStyle));
 
       const connectable = new Connectable(this);
       this.gc = connectable.start();
 
       // UPDATE PORT ID
-      this.dataset2.get('name').subscribe(v => portSticker.id = v);
-      this.dataset2.get('title').subscribe(v => portLabel.textContent = v);
+      this.ephemerals.subscribeToValue('name',  v => portSticker.id = v);
+      this.ephemerals.subscribeToValue('title', v => portLabel.textContent = v);
 
       // UPDATE START/END POSITION
-      this.dataset2.get('side').subscribe(v => {
+      this.ephemerals.subscribeToValue('side', v => {
+        //console.log('RRR side', v )
+
         if (v === 'in') {
           portLabel.classList.remove('float-end');
           portLabel.classList.add('float-start');
@@ -56,7 +63,9 @@ export default class Port extends HTMLElement {
       });
 
       // UPDATE ICON
-      this.dataset2.get('icon').subscribe(v => {
+      this.ephemerals.subscribeToValue('icon', v => {
+        //console.log('RRR icon', v )
+
         portIcon.classList.remove(...Array.from(portIcon.classList).filter(className => className.startsWith('bi-')) )
         portIcon.classList.add(`bi-${v}`);
       });
@@ -66,24 +75,25 @@ export default class Port extends HTMLElement {
     // fires after the element has been attached to the DOM
     connectedCallback() {
 
-      const handleMutations = (mutationsList) => {
-         for (let mutation of mutationsList) {
-           if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
-             const attributeName = mutation.attributeName;
-             const newValue = mutation.target.getAttribute(attributeName);
-             this.dataset2.set(attributeName.substr(5), newValue);
-           }
-         }
-       }
-      this.observer = new MutationObserver(handleMutations);
-      this.observer.observe(this, { attributes: true });
-      this.gc = ()=> observer.disconnect();
+      // const handleMutations = (mutationsList) => {
+      //    for (let mutation of mutationsList) {
+      //      if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
+      //        const attributeName = mutation.attributeName;
+      //        const newValue = mutation.target.getAttribute(attributeName);
+      //        this.ephemerals.setValue(attributeName.substr(5), newValue);
+      //      }
+      //    }
+      //  }
 
-      for (const {name, value} of this.attributes) {
-        if (name.startsWith('data-')) {
-          this.dataset2.set(name.substr(5), this.getAttribute(name));
-        }
-      }
+      // this.observer = new MutationObserver(handleMutations);
+      // this.observer.observe(this, { attributes: true });
+      // this.gc = ()=> observer.disconnect();
+
+      // for (const {name, value} of this.attributes) {
+      //   if (name.startsWith('data-')) {
+      //     this.ephemerals.setValue(name.substr(5), this.getAttribute(name));
+      //   }
+      // }
 
 
 
@@ -123,16 +133,17 @@ export default class Port extends HTMLElement {
       this.#garbage.push( {type:'gc', id:'gc-'+this.#garbage.length, ts:(new Date()).toISOString(), subscription} );
     }
 
-// STYLE MANAGEMENT
-  #previousStyle = null;
-  changePortStyle(element, newStyle){
-    if(this.#previousStyle) CardStyles.remove(element, this.#previousStyle);
-    CardStyles.add(element, newStyle);
-    this.#previousStyle = newStyle;
-  }
+    // STYLE MANAGEMENT
+    #previousStyle = null;
+    changePortStyle(element, newStyle){
+      if(this.#previousStyle) StyleLibrary.remove(element, this.#previousStyle);
+      StyleLibrary.add(element, newStyle);
+      this.#previousStyle = newStyle;
+    }
+
 }
 
-class CardStyles {
+class StyleLibrary {
   static styles = {
     'data': ['text-bg-primary'],
     'event': ['text-bg-success'],
@@ -168,4 +179,4 @@ class CardStyles {
     styleClasses.forEach(o=>element.classList.add(o));
   }
 
-}
+} // StyleLibrary

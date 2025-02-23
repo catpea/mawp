@@ -41,7 +41,7 @@ export default class Settings {
 
     return new Proxy(this, {
       set: (settings, key, value, proxy) => {
-        return settings.set(key, value);
+        return settings.setValue(key, value);
       },
       get: (settings, key, value, proxy) => {
         if (key in settings) return settings[key];

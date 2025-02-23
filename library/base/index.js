@@ -38,13 +38,13 @@ class Beacon extends SystemTool {
   execute(){
     const outputPipe = this.outputPipe('out');
     if(outputPipe){
-      this.settings.get('counter').data.value = this.settings.get('counter').data.value + 1;
+      this.settings.set('counter', 'data', this.settings.get('counter', 'data') + 1 );
       const options = { };
-      const data = this.settings.get('counter').data.value;
+      const data = this.settings.get('counter', 'data');
       this.outputPipe('out').receive(data, options);
     }
-    const reactivate = this.settings.get('milliseconds').data.value;
-    console.log({reactivate})
+    const reactivate = this.settings.get('milliseconds', 'data');
+    //console.log({reactivate})
     this.setTimeout( this.execute.bind(this), reactivate);
   }
 }
@@ -56,23 +56,30 @@ class Beacon extends SystemTool {
 class Text extends SystemTool {
   static caption = 'Text';
   static description = 'Send a text packet.';
-  static defaults = { text: {label:'Text', type: 'Input', data:"My hovercraft is full of feels"}, button: {label:'Send', type: 'Button', method:'execute'}, formal: {label:'Formal', type:'Boolean', data:false}};
+  static defaults = {
+    text: {label:'Text', type: 'Input', data:"My hovercraft is full of feels"},
+    button: {label:'Send', type: 'Button', method:'execute'},
+    formal: {label:'Formal', type:'Boolean', data:false}
+  };
   static ports = {out:{side:'out', icon:'activity'}};
 
   initialize() {}
   start(){
-    this.gc = this.settings.get('formal').data.subscribe(v=>this.settings.get('text').data.value=(v?"My hovercraft is full of eels":"My hovercraft is full of feels"))
+
+    this.gc = this.settings.subscribe('formal', 'data', v=>
+      this.settings.set('text', 'data', v?"My hovercraft is full of eels":"My hovercraft is full of feels")
+    )
   }
   pause() {}
   resume() {}
   stop(){
-    console.warn('.stop()!!!!!!!!!!!!!!!!!!!!!!!');
+    //console.warn('.stop()!!!!!!!!!!!!!!!!!!!!!!!');
     this.collectGarbage(); // user should call collect garbage
   }
   dispose() {}
   execute(a){
-    const options = {urgent: this.settings.get('formal').data.value};
-    const data = this.settings.get('text').data.value;
+    const options = {urgent: this.settings.get('formal', 'data')};
+    const data = this.settings.get('text', 'data');
     this.outputPipe('out').receive(data, options);
   }
 }
@@ -97,7 +104,7 @@ class Code extends SystemTool {
   dispose() {}
 
   execute({data}){
-    const code = this.settings.get('code').data.value;
+    const code = this.settings.get('code', 'data');
     let func = new Function ('input', `return ${code};`);
     const transformed = func(data);
     const options = {};
@@ -125,9 +132,9 @@ class Display extends SystemTool {
   dispose() {}
 
   execute({data}){
-    if( this.settings.get('throw').data.value ) throw Error('Throw as enabled, and I threw at you!')
+    if( this.settings.get('throw', 'data') ) throw Error('Throw as enabled, and I threw at you!')
 
-    this.settings.get('text').text.value = data;
+    this.settings.set('text', 'text', data);
   }
 
 }
@@ -205,12 +212,12 @@ class Procedure extends SystemTool {
   }
 
   receive(request){
-    const sceneName = this.settings.get('procedure').data.value;
+    const sceneName = this.settings.get('procedure', 'data');
     const scene = this.root.get('main-project', sceneName);
     scene.emit('input', request);
     // TODO: MOVE PARENT SUBSCRIPTION TO START, but avait a proper scene name
     this.disobey = scene.on('output', ({data, options})=>{
-      console.log(`Procedure receive this.parent.on 'output'`, request.data);
+      //console.log(`Procedure receive this.parent.on 'output'`, request.data);
       this.outputPipe('out').receive(data, options)
     })
   }
@@ -223,7 +230,15 @@ class Procedure extends SystemTool {
 class Note extends SystemTool {
   static caption = 'Note';
   static description = 'Leave a note on the scene.';
-  static defaults = {text: {type:'Text', title:'Advanced Data Processing', subtitle:'data integration layer', text: 'Add Fetch, Queue, Manager, and File System. And allow the work manager to loop data through another scene.', subtext:'Later: Add more form controls, insert node by dropping it on line, magnetic connection by positioning connection near a port, and minimap.'}};
+  static defaults = {
+    text: {
+      type:'Text',
+      title:'Advanced Data Processing',
+      subtitle:'data integration layer',
+      text: 'Add Fetch, Queue, Manager, and File System. And allow the work manager to loop data through another scene.',
+      subtext:'Later: Add more form controls, insert node by dropping it on line, magnetic connection by positioning connection near a port, and minimap.'
+    }
+  };
 
   initialize() {}
   start() {}
@@ -389,7 +404,7 @@ class Setting extends SystemTool {
 export default function install(){
 
   const library = new Library('system-tools');
-  library.settings.name = 'System Tools';
+  library.settings.setValue('name', 'System Tools');
 
   library.register('input', Input);
   library.register('output', Output);

@@ -18,7 +18,6 @@ class ToneDestinationComponent extends ToneComponent {
 
   start(){
     this.content.value = this.Tone.getDestination();
-    //console.log('EEE ToneDestinationComponent',   this.content.value );
   }
 
 
@@ -42,11 +41,11 @@ class TonePlayerComponent extends ToneComponent {
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    //console.warn('TonePlayerComponent Start')
-    this.content.value = new this.Tone.Player(this.settings.getConfigurationObject());
-    for (const [name, options] of this.settings.getSettingsList() ){
-        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
-        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    //console.log('FOO', this.settings.toFields(o=>o.data))
+    this.content.value = new this.Tone.Player(this.settings.toFields(o=>o.data));
+    for (const [name, map] of this.settings.withColumn('type') ){
+      const setting = map.get('data');
+      this.gc = setting.subscribe(v=>this.content.value[name]=v);
     }
   }
 
@@ -57,12 +56,6 @@ class TonePlayerComponent extends ToneComponent {
   }
   dispose() {}
 
-
-
-
-
-
-
   connectable({from, source, to, destination}){
     // WARNING: VERY BASIC TEST
     const isCorrectInstance = destination instanceof ToneComponent;
@@ -70,7 +63,8 @@ class TonePlayerComponent extends ToneComponent {
     return [isCorrectInstance,isCompatiblePorts].every(o=>o);
   }
   connect({destination}){
-    this.content.value.connect(destination.content.value)
+    this.content.value.connect(destination.content.value);
+    this.content.value.start()
   }
   disconnect({destination}){
      this.Tone.disconnect(this.content.value, destination.content.value);
@@ -89,10 +83,10 @@ class ToneSynthComponent extends ToneComponent {
      //TODO: this.channels.set('events', {allow: (o)=> o instanceof this.tone.ToneEvent, icon:'music-note' });
   }
   start(){
-    this.content.value = new this.Tone.PolySynth(this.settings.getConfigurationObject());
-    for (const [name, options] of this.settings.getSettingsList() ){
-        this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
-        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    this.content.value = new this.Tone.PolySynth(this.settings.toFields(o=>o.data));
+    for (const [name, map] of this.settings.withColumn('type') ){
+      const setting = map.get('data');
+      this.gc = setting.subscribe(v=>this.content.value[name]=v);
     }
   }
 
@@ -130,11 +124,10 @@ class ToneDistortionComponent extends ToneComponent {
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    //console.log('Distortion Start!')
-    this.content.value = new this.Tone.Distortion(this.settings.getConfigurationObject());
-    for (const [name, options] of this.settings.getSettingsList() ){
-        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
-        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    this.content.value = new this.Tone.Distortion(this.settings.toFields(o=>o.data));
+    for (const [name, map] of this.settings.withColumn('type') ){
+      const setting = map.get('data');
+      this.gc = setting.subscribe(v=>this.content.value[name]=v);
     }
   }
 
@@ -165,17 +158,18 @@ class ToneDistortionComponent extends ToneComponent {
 class ToneFeedbackDelayComponent extends ToneComponent {
   static caption = 'Feedback Delay';
   static description = 'A sound delay effect where the output is fed back into the input, creating a repetitive, echo-like effect.';
-  static defaults = {delayTime:{label:'Delay Time', type:'Text', data:0.125,}, feedback:{label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01}};
+  static defaults = {delayTime:{label:'Delay Time', type:'Text', data:0.125, readonly:true}, feedback:{label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01, readonly:true}};
 
   initialize() {
     this.channels.set('in', {icon: 'soundwave'});
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    this.content.value = new this.Tone.FeedbackDelay(this.settings.getConfigurationObject());
-    for (const [name, options] of this.settings.getSettingsList() ){
-        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
-        this.gc = options.data.subscribe(v=>this.content.value[name]);
+    this.content.value = new this.Tone.FeedbackDelay(this.settings.toFields(o=>o.data));
+    for (const [name, map] of this.settings.withColumn('type') ){
+      if(map.get('readonly')?.value==true) continue;
+      const setting = map.get('data');
+      this.gc = setting.subscribe(v=>this.content.value[name]=v);
     }
   }
 
@@ -215,10 +209,7 @@ class TonePatternComponent extends ToneComponent {
   }
 
   start(){
-    for (const [name, options] of this.settings.getSettingsList() ){
-        //this.gc = options.data.subscribe(v=>console.log(`Updating ${name} to`, v));
-        this.gc = options.data.subscribe(v=>this.content?.value?this.content.value[name]=v:0);
-    }
+
   }
 
 
@@ -239,7 +230,7 @@ class TonePatternComponent extends ToneComponent {
   connect({destination}){ // when something is connected to you
 
     // Prepare
-    const toneOptions = this.settings.getConfigurationObject();
+    const toneOptions = this.settings.toObject();
     //console.log('toneOptions', toneOptions)
     const {values, pattern} = toneOptions;
     const callback = (time, note) => {
@@ -247,8 +238,10 @@ class TonePatternComponent extends ToneComponent {
     };
     // Create
     if(!this.content.value) this.content.value = new this.Tone.Pattern(callback, values, pattern);
-
-    // Start
+    for (const [name, map] of this.settings.withColumn('type') ){
+      const setting = map.get('data');
+      this.gc = setting.subscribe(v=>this.content.value[name]=v);
+    }
     this.content.value.start();
   }
 
@@ -298,7 +291,7 @@ class ToneLibrary extends Library {
 export default function install(){
 
   const library = new ToneLibrary('tone-js');
-  library.settings.name = 'Tone.js Components';
+  library.settings.setValue('name', 'Tone.js Components');
 
   library.register('distortion',    ToneDistortionComponent);
   library.register('feedbackdelay', ToneFeedbackDelayComponent);

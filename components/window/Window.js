@@ -56,33 +56,50 @@ export default class Window extends ReactiveHTMLElement {
     const cardTitle = this.shadowRoot.querySelector('.card-header .card-title');
     const cardState = this.shadowRoot.querySelector('.card-footer .card-state');
 
-    this.dataset2.get('date').subscribe(v => cardFooter.textContent = v);
-    this.dataset2.get('title').subscribe(v => cardTitle.textContent = v);
+    // this.source.settings.get('date').subscribe(v => cardFooter.textContent = v);
+
+
+
     this.source.state.name.subscribe(v => cardState.textContent = v);
-    this.dataset2.get('note').subscribe(v => cardFooter.textContent = v);
-    this.dataset2.get('zindex').subscribe(v => cardNode.style.zIndex = v);
-    this.dataset2.get('style').subscribe(newStyle => this.changeCardStyle(cardNode, newStyle));
+
+    //console.log('HHHH about to subscribeToValue title',  this.source.settings.getValue('title') );
+
+    //this.source.settings.subscribe('title', 'value', v => console.log('HHHH subscribeToValue title', v)    );
+
+    this.source.settings.subscribeToValue('title',  v => cardTitle.textContent = v);
+    this.source.settings.subscribeToValue('note',   v => cardFooter.textContent = v);
+    this.source.settings.subscribeToValue('zindex', v => cardNode.style.zIndex = v);
+    this.source.settings.subscribeToValue('style',  v => this.changeCardStyle(cardNode, v));
 
     // CREATE STANDARD PORTS
     //
     const channelMaker = (key, data, iolistItem = lol.li({class:'list-group-item bg-transparent'})) => {
+      let response;
 
-      const dataset = Object.assign({ title:key, side: 'in', icon: 'circle', style:'event' }, data)
+      const ephemerals = Object.assign({ title:key, side: 'in', icon: 'circle', style:'event' }, data)
 
       const existingPort = listGroup.querySelector(`x-port[id=${key}]`);
-
       if(existingPort){
-        for (const [k,v] of Object.entries(dataset) ){
-          existingPort.dataset2.set(k,v);
-        }
+      response = existingPort;
+      existingPort.ephemerals.merge(ephemerals);
+      // for (const [k,v] of Object.entries(ephemerals) ){
+      //   existingPort.ephemerals.setValue(k, v);
+      // }
+
       }
 
       if(!existingPort){
         listGroup.appendChild(iolistItem);
-        const portNode = lol['x-port']({ id: key, dataset});
+        const portNode = lol['x-port']({ id: key});
+        portNode.ephemerals.merge(ephemerals);
+        // for (const [k,v] of Object.entries(ephemerals) ){
+        //   portNode.ephemerals.setValue(k, v);
+        // }
         iolistItem.appendChild(portNode)
+        response = portNode;
       }
 
+      return response;
     }
 
     // // CHANNELS
@@ -126,23 +143,25 @@ export default class Window extends ReactiveHTMLElement {
       const container = (channelName === 'in' || channelName === 'out') ? iolistItem : undefined;
 
       // Create or update the channel
-      channelMaker(channelName, channelConfiguration, container);
+      const port = channelMaker(channelName, channelConfiguration, container);
+      //console.log('RRR',  port.ephemerals.toObject(), port);
+
     });
 
 
 
 
-    // ADD PIPES FROM REFERENCED SCENE
-    this.dataset2.get('reference').subscribe(reference => {
-      // Create Button
-      if(reference) cardHeader.appendChild(lol.i({ name:'open-referenced-scene' ,class:'bi bi-arrow-right-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.sceneSelect({id:this.dataset2.get('reference').value}) }}))
-      const referencedScene = this.application.source.get(reference);
-      for( const element of referencedScene.children.filter(child=>child.dataset.get('incoming').value ) ){
-        const portNode = lol['x-port']({ id: element.id, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
-        const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
-        listGroup.appendChild(listItem)
-      }
-    });
+    // // ADD PIPES FROM REFERENCED SCENE
+    // this.source.settings.get('reference').subscribe(reference => {
+    //   // Create Button
+    //   if(reference) cardHeader.appendChild(lol.i({ name:'open-referenced-scene' ,class:'bi bi-arrow-right-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.project.commander.sceneSelect({id:this.source.settings.get('reference').value}) }}))
+    //   const referencedScene = this.application.source.get(reference);
+    //   for( const element of referencedScene.children.filter(child=>child.dataset.get('incoming').value ) ){
+    //     const portNode = lol['x-port']({ id: element.id, dataset:{title:element.dataset.get('title').value, side: 'start', icon: 'box-arrow-in-right'} });
+    //     const listItem = lol.li({class:'list-group-item bg-transparent'}, portNode);
+    //     listGroup.appendChild(listItem)
+    //   }
+    // });
 
     // HEALTH signals.
     this.gc = this.source.health.subscribe(health=>this.changeCardStyle(cardNode, `border-${health}`));
@@ -155,11 +174,16 @@ export default class Window extends ReactiveHTMLElement {
 
 
     // PRINT SETTINGS
-    for (const [name, options] of this.source.settings.getSettingsList() ){
-      const keyType = options.type.value;
+    for (const [name, map] of this.source.settings.withColumn('type') ){
+      const options = Object.fromEntries([...map]);
+
+      // const keyType = options.type.value;
       // const valueSignal = this.source.settings.get(name);
-      const dataset = Object.assign({ side: 'in', icon: 'key', style:'setting' });
-      const portNode = lol['x-port']({ id: name, dataset });
+      // const dataset = Object.assign({ side: 'in', icon: 'key', style:'setting' });
+      // const portNode = lol['x-port']({ id: name, dataset });
+
+      //console.log('TTT', options)
+
       const inputField = this.Forms.buildField({name,...options});
       const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
       listGroup.appendChild(listItem)
@@ -172,10 +196,10 @@ export default class Window extends ReactiveHTMLElement {
     // cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowRead({id:this.id}) }}))
 
     // SUBSCRIBE TO DIMENSIONS SPECIFIED IN DATASET
-    this.dataset2.get('left').subscribe(v => cardNode.style.left = v + 'px');
-    this.dataset2.get('top').subscribe(v => cardNode.style.top = v + 'px');
-    this.dataset2.get('width').subscribe(v => cardNode.style.width = v + 'px');
-    this.dataset2.get('height').subscribe(v => cardNode.style.height = v + 'px');
+    this.source.settings.subscribeToValue('left', v => cardNode.style.left = v + 'px');
+    this.source.settings.subscribeToValue('top', v => cardNode.style.top = v + 'px');
+    this.source.settings.subscribeToValue('width', v => cardNode.style.width = v + 'px');
+    this.source.settings.subscribeToValue('height', v => cardNode.style.height = v + 'px');
 
     // MAKE WINDOW FOCUSABLE
     const focusable = new Focusable(this);
@@ -190,11 +214,11 @@ export default class Window extends ReactiveHTMLElement {
       }
     });
     let newlyCreated = true;
-    this.gc = this.dataset2.get('active').subscribe(v => {
+    this.gc = this.source.settings.subscribeToValue('active', v => {
       const id = this.id;
       if(!newlyCreated) return;
       //console.log({id, newlyCreated, v});
-      if(v==='true') this.scene.setFocus(this);
+      if(v===true) this.scene.setFocus(this);
       newlyCreated = false;
     });
 
@@ -236,6 +260,7 @@ export default class Window extends ReactiveHTMLElement {
   // STYLE MANAGEMENT
   #previousStyle = null;
   changeCardStyle(cardNode, newStyle){
+    //console.log('ZZZ', 'changeCardStyle', cardNode, newStyle)
     if(this.#previousStyle) CardStyles.remove(cardNode, this.#previousStyle);
     CardStyles.add(cardNode, newStyle);
     this.#previousStyle = newStyle;

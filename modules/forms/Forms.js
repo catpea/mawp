@@ -94,7 +94,7 @@ export default class Forms {
     const sceneName = this.component.application.source.activeLocation.value;
     const currentScene = this.component.application.source.get('main-project', sceneName);
     //
-    this.gc = currentScene.settings.data.subscribe(v=>{
+    this.gc = currentScene.settings.subscribeToValue('data', v=>{
       const variableNames = Object.keys(v); // Take the names of settings object
       const formOptions = [];
       for( const variableName of variableNames){
@@ -128,7 +128,7 @@ export default class Forms {
     const formOptions = [];
     for( const scene of mainProject.children){
       if(activeSceneId === scene.id) continue;
-      const sceneName = scene.settings.get('title').value;
+      const sceneName = scene.settings.get('title');
       const formOption = { value: scene.id, textContent:sceneName };
       formOptions.push(formOption);
     }
@@ -300,7 +300,9 @@ export default class Forms {
         const alertIcon = lol.i({class: 'bi bi-exclamation-triangle me-2'});
         const alertMessage = lol.div({class: 'alert alert-dark px-2 py-1'}, alertIcon, `${problematic} Form Field Type`);
         container.appendChild(alertMessage);
+        console.error('Unknown field', configuration)
     }
+
 
 
 

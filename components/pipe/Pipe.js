@@ -57,8 +57,9 @@ export default class Pipe extends ReactiveHTMLElement {
     this.#currentColor.value = this.#colorSelection.dry;
 
     // PROCESS DEPENDENCIES
-    const fromWindowStatusSignal = new Series(this.dataset2.get('from'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
-    const toWindowStatusSignal = new Series(this.dataset2.get('to'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
+    //console.log('XXX', this.source.settings.get('from', 'value') );
+    const fromWindowStatusSignal = new Series(this.source.settings.signal('from', 'value'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
+    const toWindowStatusSignal = new Series(this.source.settings.signal('to', 'value'), attribute => this.scene.getElementById(attribute.split(':', 1)[0]).status);
 
     // MONITOR FROM/TO ELEMENTS AND
     const dependencies = new Signal();
@@ -125,8 +126,8 @@ export default class Pipe extends ReactiveHTMLElement {
     this.gc = () => focusableLine.remove();
       const focusable = new Focusable(this, focusableLine);
       this.gc = focusable.start();
-      this.gc = this.dataset2.get('active').subscribe(v => {
-        if(v==='true'){
+      this.gc = this.source.settings.subscribeToValue('active', v => {
+        if(v===true){
           // WHEN ACTIVE
           this.#currentColor.value = this.#colorSelection.active;
         }else{
@@ -139,22 +140,22 @@ export default class Pipe extends ReactiveHTMLElement {
 
     // WHENEVER FROM OR TO WINDOW CHANGES SIZE, RECALCULATE LINE POSISTION
     this.gc = this.status.subscribe(v => { if (v === 'ready') {
-      this.scene.getWindow(this.dataset2.get('from').value)
-      this.scene.getWindow(this.dataset2.get('to').value)
+      this.scene.getWindow(this.source.settings.get('from'))
+      this.scene.getWindow(this.source.settings.get('to'))
       const dependencies = new Signal();
       dependencies.addDependency(fromWindowStatusSignal);
       dependencies.addDependency(toWindowStatusSignal);
-      dependencies.addDependency(this.scene.getWindow(this.dataset2.get('from').value).sizeSignal);
-      dependencies.addDependency(this.scene.getWindow(this.dataset2.get('to').value).sizeSignal);
-      dependencies.addDependency(this.scene.getWindow(this.dataset2.get('from').value).dataset2.get('left'));
-      dependencies.addDependency(this.scene.getWindow(this.dataset2.get('from').value).dataset2.get('top'));
-      dependencies.addDependency(this.scene.getWindow(this.dataset2.get('to').value).dataset2.get('left'));
-      dependencies.addDependency(this.scene.getWindow(this.dataset2.get('to').value).dataset2.get('top'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('from')).sizeSignal);
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('to')).sizeSignal);
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('from')).source.settings.signal('left', 'value'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('from')).source.settings.signal('top', 'value'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('to')).source.settings.signal('left', 'value'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('to')).source.settings.signal('top', 'value'));
       this.gc = dependencies.subscribe((_, a, b) => {
         if (a === 'ready' && a === b) {
           // NOTE: this function return untransformed coordinates
-          let [x1, y1] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.dataset2.get('from').value));
-          let [x2, y2] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.dataset2.get('to').value));
+          let [x1, y1] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.source.settings.getValue('from')));
+          let [x2, y2] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.source.settings.getValue('to')));
           // Transform Coordinates with Pan and Zoom
           [x1, y1] = this.scene.transform(x1, y1);
           [x2, y2] = this.scene.transform(x2, y2);

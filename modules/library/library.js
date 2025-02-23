@@ -3,7 +3,6 @@ import Commander from "commander";
 import Scheduler from "scheduler";
 import List from "list";
 
-import Dataset from "dataset";
 import Settings from "settings";
 import State from "state";
 import guid from "guid";
@@ -21,9 +20,18 @@ export class DataRequest {
   constructor(context) {
     this.pipe.id = context.id;
 
+    if( (!context.settings.getValue("from"))||(!context.settings.getValue("from")) ) throw new Error(`BORK! Data request from ${context.id} is invalid as from||to is empty`);
+    if( (!context.settings.getValue("from"))||(!context.settings.getValue("from")) ) console.error(`BORK! Data request from ${context.id} is invalid as from||to is empty`);
+
+    if( !context.settings.getValue("from") ) console.error(`From may not be empty (${context.id})`, `GOT: ${context.settings.getValue("from")}`, context.settings.get("from", 'value'));
+    if( !context.settings.getValue("to") ) console.error(`To may not be empty (${context.id})`, `GOT: ${context.settings.getValue("to")}`, context.settings.get("to", 'value'));
+
+    if( !context.settings.getValue("from") ) throw new TypeError(`From may not be empty (${context.id})`);
+    if( !context.settings.getValue("to") ) throw new TypeError(`To may not be empty (${context.id})`);
+
     // TODO: unknown.. cache and make reactive...
-    Object.assign( this.from, Object.fromEntries( [context.dataset.get("from").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
-    Object.assign( this.to, Object.fromEntries( [context.dataset.get("to").value.split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+    Object.assign( this.from, Object.fromEntries( [context.settings.getValue("from").split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+    Object.assign( this.to, Object.fromEntries( [context.settings.getValue("to").split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
 
     this.source = context.parent.get(this.from.id);
     this.destination = context.parent.get(this.to.id);
@@ -55,24 +63,28 @@ export class TransportationRequest extends DataRequest {
 
 class Source {
 
-  id;
-  type;
-  parent;
-  children;
-  content;
+  id; // this is where id is kept, it is not changable
+  type; // evey node has a type
+  parent; // we keep track of parents
 
-  dataset;
-  settings;
-  state;
+  children; // the tree nature
+  content; // It is a signal used by some components to store instances of objects, think text in a text file
+
+  state; // State Machine
+  settings; // where all settings are stored
 
   constructor(id, type) {
+
     this.id = id || guid();
+
+    // TODO: freeze what needs to be forzen:
+    // this.final('id', id||guid());
+
     this.type = type || "node";
 
     this.children = [];
     this.content = new Signal();
 
-    this.dataset = new Dataset();
     this.settings = new Settings();
 
     this.state = new State(this, {
@@ -86,8 +98,9 @@ class Source {
 
   }
 
-  // TREE BUILDING //
+  final(name, value){ Object.defineProperty(this, name, { value, writable: false, configurable: false, enumerable: true }); }
 
+  // TREE BUILDING //
   create(node) {
     node.parent = this;
     this.children.push(node);
@@ -95,7 +108,7 @@ class Source {
   }
 
   remove() {
-    console.log(this.id, 'stop dispose delete')
+    //console.log(this.id, 'stop dispose delete')
     this.state.stop();
     this.state.dispose();
     this.parent.delete(this);
@@ -432,13 +445,13 @@ export class Location extends Source {
 
   getRelated(id) {
     // return items related to id in a scene, usualy for removal.
-    const from = this.children .filter((child) => child.type === "pipe") .filter((child) => child.dataset.get("from") !== undefined) .filter((child) => child.dataset.get("from").value.startsWith(id + ":"));
-    const to = this.children .filter((child) => child.type === "pipe") .filter((child) => child.dataset.get("to") !== undefined) .filter((child) => child.dataset.get("to").value.startsWith(id + ":"));
+    const from = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.getValue("from") !== undefined) .filter((child) => child.settings.getValue("from").startsWith(id + ":"));
+    const to = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.getValue("to") !== undefined) .filter((child) => child.settings.getValue("to").startsWith(id + ":"));
     return [...from, ...to];
   }
 
   // 'distortion1', 'tone-js/distortion',         {left: 100, top: 100}, {distortion: 0.4}
-  createModule(id, modulePath, dataset, settings) {
+  createModule(id, modulePath, settings) {
     const path = ["modules", ...modulePath.split("/")];
     const module = this.root.get(...path);
     const Component = module.content.value;
@@ -446,11 +459,8 @@ export class Location extends Source {
     const component = new Component(id);
     component.type = "window";
 
-    // Assign options
-    if (!dataset.title) dataset.title = module.settings.name;
-    Object.entries(dataset) .filter(([key, val]) => val) .forEach(([key, val]) => component.dataset.set(key, val));
-
-    component.settings.merge({ ...Component.defaults, ...settings });
+    const setup = { ...Component.defaults, ...settings,  };
+    component.settings.merge(setup);
 
     // Add to stage
     this.create(component);
@@ -463,8 +473,12 @@ export class Location extends Source {
     const id = [fromAddress, toAddress].join("__").replace(/:/g, "_");
     const connector = new Connector(id);
     // Assign options
-    connector.dataset.set("from", fromAddress);
-    connector.dataset.set("to", toAddress);
+    connector.settings.setValue('from', fromAddress );
+    connector.settings.setValue('to',   toAddress );
+
+      if( !connector.settings.getValue("from") ) console.error(`STORAGE ENGINE FAILURE: From may not be empty (${connector.id})`, `GOT: "${connector.settings.getValue("from")}", MUST BE: "${fromAddress}"`);
+      if( !connector.settings.getValue("to") ) console.error(`STORAGE ENGINE FAILURE: To may not be empty (${connector.id})`, `GOT: "${connector.settings.getValue("to")}", MUST BE: "${toAddress}"`);
+
     // Add to stage
     this.create(connector);
     // do not autostart, you are just creating, not starting - start is a different process, it can be triggered by commands or load scripts
@@ -518,6 +532,19 @@ export class Component extends AwaitingComponent {
 
   constructor(id) {
     super(id, "window");
+
+    this.settings.merge({
+      title: 'Untitled',
+      active: true, // TODO: convert active to Boolean
+      note: '',
+      style: null,
+      zindex: 0,
+      left: 0,
+      top: 0,
+      width: null,
+      height: null,
+    });
+
     // NOTE: this is where we convent static ports to channels, a port is an idea, a channel is the real thing
     if(this.constructor.ports){
       for( const [name, value] of Object.entries(this.constructor.ports)){
@@ -528,13 +555,13 @@ export class Component extends AwaitingComponent {
 
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT
   inputPipes() {
-    return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("to").value.startsWith(this.id + ':')) ;
+    return this.parent.filter( (o) => o.type === "pipe" && o.settings.getValue("to").startsWith(this.id + ':')) ;
   }
   inputPipe(name) {
-    return this.inputPipes().find(o=>o.dataset.get("to").value.endsWith(':'+name));
+    return this.inputPipes().find(o=>o.settings.getValue("to").endsWith(':'+name));
   }
   outputPipe(name) {
-    return this.parent.filter( (o) => o.type === "pipe" && o.dataset.get("from").value.startsWith(this.id + ':')).find(o=>o.dataset.get("from").value.endsWith(':'+name));
+    return this.parent.filter( (o) => o.type === "pipe" && o.settings.getValue("from").startsWith(this.id + ':')).find(o=>o.settings.getValue("from").endsWith(':'+name));
   }
 
   connectable(request){
@@ -557,6 +584,7 @@ export class Connector extends Source {
 
   constructor(id) {
     super(id, "pipe");
+    this.settings.setValue('active', false);
   }
 
   initialize() {}
@@ -576,7 +604,7 @@ export class Connector extends Source {
     // if(   (destinationScene !== currentScene) ) onTheSameScene = false;
 
     // console.log( {onTheSameScene})
-    console.log( {onTheSameScene, currentScene, sourceScene, destinationScene} )
+    //console.log( {onTheSameScene, currentScene, sourceScene, destinationScene} )
 
     this.#connectionRequest.source.emit('send-marble', transportationRequest.from.port);
 
@@ -585,7 +613,7 @@ export class Connector extends Source {
 
       // ovveride duration of speed of marbles in an external non selected scene
       this.emit('activate-marble', {duration}); // as soon as possible emit activate marble, this is something the UI on top will be listening for
-      console.log('activate-marble')
+      //console.log('activate-marble')
 
       const scheduler = new Scheduler({
         // schedule the arrival
@@ -607,8 +635,13 @@ export class Connector extends Source {
   }
 
   start() {
-    console.warn("Investigate time travel, connectors should naturally come second");
+
+    if(!this.settings.getValue('from')) throw new TypeError('BORK: MISSING FROM');
+    //console.log('BORK', this.settings.getValue('from'), this.settings.getValue('to'))
+
+    console.warn("Investigate time travel, initialize connection only after all windows initialized (microtask?)");
     setTimeout(() => {
+    //console.log('BORK111111111', this.settings.getValue('from'), this.settings.getValue('to'))
       const request = new ConnectionRequest(this);
       const isConnectable = request.source.connectable(request);
 
@@ -669,8 +702,8 @@ export class Library extends Source {
   register(id, content) {
     const tool = new Tool(id);
     tool.content.value = content;
-    tool.settings.name = content.caption;
-    tool.settings.description = content.description;
+    tool.settings.setValue('name', content.caption);
+    tool.settings.setValue('description', content.description);
     this.create(tool);
   }
 }

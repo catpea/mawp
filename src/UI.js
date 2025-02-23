@@ -78,10 +78,13 @@ export default class UI {
     const component = document.createElement(tagName);
     component.id = source.id;
     component.source = source;
-    // NOTE: this is a data pipeline that AUTOMATICALLY moves dataset of a plain object to the attributes of a DOM node.
-    this.locationGarbageCollector = source.dataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
-    this.scene.appendChild(component);
 
+    // UPGRADE TO source.settings
+    // NOTE: this is a data pipeline that AUTOMATICALLY moves dXXXataset of a plain object to the attributes of a DOM node.
+    // no longer used! use source.settings directly, we aim for single source of truth, DOM Web Components turned out to be too easy to treat with heavy magic. this.locationGarbageCollector = source.dXXXataset.subscribe((k, v) => component.setAttribute('data-'+k, v));
+
+
+    this.scene.appendChild(component);
     this.locationGarbageCollector = () => component.remove();
   }
 
@@ -119,13 +122,13 @@ export default class UI {
       // We have a previous location, save current pan to its memory.
       const previousLocation = this.source.get('main-project', this.previousLocationName);
       const restore = JSON.stringify({ panX: this.scene.panX.value, panY: this.scene.panY.value, scale: this.scene.scale.value, });
-      previousLocation.settings.set('restore', restore);
+      previousLocation.settings.setValue('restore', restore);
     }
 
     const newLocation = this.source.get('main-project', newLocationName);
-    if(newLocation.settings.has('restore')){
+    if(newLocation.settings.hasValue('restore')){
       const restore = JSON.parse(newLocation.settings.get('restore'));
-      console.log('location.restore', restore)
+      console.log('UUU location.restore', restore)
       this.scene.panX.value = restore.panX;
       this.scene.panY.value = restore.panY;
       this.scene.scale.value = restore.scale;

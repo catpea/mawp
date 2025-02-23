@@ -1,4 +1,3 @@
-import Dataset from 'dataset';
 import Signal from 'signal';
 
 import transcend from 'transcend';
@@ -6,7 +5,7 @@ import guid from 'guid';
 
 /*
 
-  Nothing special here, just a reactive dataset, and some health singals
+  Nothing special here, just some health singals
   this class exists to eliminate code duplication, it is just something you can't avoid.
 
 */
@@ -17,13 +16,11 @@ export default class ReactiveHTMLElement extends HTMLElement {
   health; // Tells the USER that they have made a mistake while visually programming.
   status; // communicates component status with other components (whether it is loadeed or not)
 
-  dataset2;
-
   // USER CONTROL:
   initialize(){}
   connected(){}
   disconnected(){
-    console.log(`Disconnected ${this.constructor.name} and ran garbage collection.`)
+    //console.log(`Disconnected ${this.constructor.name} and ran garbage collection.`)
     this.status.value = 'unloaded'; // ex: ALERT THE PIPES in case of window;
     this.collectGarbage();
 
@@ -36,12 +33,13 @@ export default class ReactiveHTMLElement extends HTMLElement {
     super();
     this.health = new Signal('nominal'); // nominal, primary, secondary, success, danger, warning, info, light, dark.
     this.status = new Signal('loading'); // loading, ready, unloaded;
-    this.dataset2 = new Dataset(); // reactive dataset
+
+
     this.initialize();
   }
 
   connectedCallback() {
-    this.#initializeReactiveDataset();
+    // this.#initializeDataAttributeToSettingsPipeline();
     this.connected();
   }
 
@@ -49,29 +47,42 @@ export default class ReactiveHTMLElement extends HTMLElement {
     this.disconnected();
   }
 
-  #initializeReactiveDataset() {
-    this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
-    this.observer.observe(this, { attributes: true });
-    this.gc = ()=> this.observer.disconnect();
 
-    // SEED DATASET2 WITH WebComponent Attributes
-    for (const {name: attributeName, value: attributeValue} of this.attributes) {
-      if (attributeName.startsWith('data-')) {
-        const keyName = attributeName.substr(5); // remove "data-" prefix
-        this.dataset2.set(keyName, attributeValue);
-      }
-    }
-  }
-  #handleAttributeMutations(mutationsList) {
-    for (let mutation of mutationsList) {
-      if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
-        const attributeName = mutation.attributeName;
-        const newValue = mutation.target.getAttribute(attributeName);
-        //console.log('SET ATTRIBUTE', attributeName.substr(5), newValue);
-        this.dataset2.set(attributeName.substr(5), newValue);
-      }
-    }
-  }
+
+
+
+  // #initializeDataAttributeToSettingsPipeline() {
+  //   // any data-* attribute is sent to .source.settings
+  //   this.observer = new MutationObserver(this.#handleAttributeMutations.bind(this));
+  //   this.observer.observe(this, { attributes: true });
+  //   this.gc = ()=> this.observer.disconnect();
+
+  //   // Originally: SEED DXXXATASET2 WITH WebComponent Attributes
+  //   // but repurposed for a convenient setings writer
+  //   for (const {name: attributeName, value: attributeValue} of this.attributes) {
+  //     if (attributeName.startsWith('data-')) {
+  //       const keyName = attributeName.substr(5); // remove "data-" prefix
+  //       this.source.settings.set(keyName, attributeValue);
+  //     }
+  //   }
+  // }
+  // #handleAttributeMutations(mutationsList) {
+  //   for (let mutation of mutationsList) {
+  //     if (mutation.type === 'attributes' && mutation.attributeName.startsWith('data-')) {
+  //       const attributeName = mutation.attributeName;
+  //       const newValue = mutation.target.getAttribute(attributeName);
+  //       //console.log('SET ATTRIBUTE', attributeName.substr(5), newValue);
+  //       this.source.settings.set(attributeName.substr(5), newValue);
+  //     }
+  //   }
+  // }
+
+
+
+
+
+
+
 
   // WORKING WITH TEMPLATES
   assignText(object, element){

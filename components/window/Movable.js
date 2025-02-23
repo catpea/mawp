@@ -83,10 +83,6 @@ export default class Movable {
       // TODO: should only assign to attribute
       this.cardElement.style.left = `${x}px`;
       this.cardElement.style.top = `${y}px`;
-
-      // this.windowComponent.source.dataset.set("left", x);
-      // this.windowComponent.source.dataset.set("top", y);
-
       this.finalCoordinate = { id: this.windowComponent.id, left: x, top: y };
 
       // WARN: you must use floating point numbers, otherwise motion is inaccurate

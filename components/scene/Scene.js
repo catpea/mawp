@@ -185,41 +185,51 @@ export default class Scene extends HTMLElement {
    clearFocusHandler(){
      if (event.originalTarget === this) this.clearFocus()
    }
+
    clearFocus(){
-    const childGroup = Array.from(this.children)
-    this.active.value = false;
-    childGroup.filter(o=>o.dataset.active != 'false').map(o=>o.dataset.active = 'false');
+
+     //WARNING: scene is not a child, a scene cannot be selected or desetected
+     this.active.value = false; // NOTE: this is not a selection signal, this is a who is selected signal, scene is alerted that nothing is selected;
+
+     const allChildElements = Array.from(this.children);
+     const onlyActiveElements = allChildElements.filter(childElement=>childElement.source.settings.getValue('active')==true);
+     onlyActiveElements.forEach(childElement=>childElement.source.settings.setValue('active', false));
    }
 
 
 
    setFocus(sceneElement){
-     // console.log('setFocus', sceneElement.id);
+     //console.log('setFocus', sceneElement.id);
 
-    const childGroup = Array.from(this.children)
+    const allChildElements = Array.from(this.children)
 
     // Normalizing z-index: It ensures that any elements without a defined z-index are assigned one based on their order.
-    for (const [index, win] of childGroup.entries()) {
-      if(win.dataset.zindex === undefined) win.dataset.zindex=index;
+    for (const [index, childElement] of allChildElements.entries()) {
+      childElement.source.settings.setValue('zindex', index);
     }
 
     // Finding the Topmost z-index: It calculates the maximum z-index among the children to determine the next available z-index.
-    let newTopmost = Math.max( ...childGroup.map(o=>parseInt(o.dataset.zindex)) ) + 1;
-    sceneElement.dataset.zindex = newTopmost;
+    let newTopmostInt = Math.max( ...allChildElements.map(childElement=>parseInt(childElement.source.settings.getValue('zindex'))) ) + 1;
+    sceneElement.source.settings.setValue('zindex', newTopmostInt);
 
-    childGroup.filter(o=>o.id !== sceneElement.id).filter(o=>o.dataset.active != 'false').map(o=>o.dataset.active = 'false');
-    if(sceneElement.dataset.active != 'true') sceneElement.dataset.active = 'true';
+    // deselet all
+    allChildElements.filter(childElement=>childElement.id !== sceneElement.id).forEach(childElement=>childElement.source.settings.setValue('active', false));
+    // select the chosen one
+    sceneElement.source.settings.setValue('active', true);
+
+    // notify scene of new selection
     this.active.value = sceneElement.id;
 
+
     // Reindexing: Finally, it sorts the children by their z-index and applies a zero-based numbering scheme.
-    for (const [index, win] of [...childGroup].sort((a,b)=>parseInt(a.dataset.zindex) - parseInt(b.dataset.zindex) ).entries()) {
-      const oldValue = parseInt(win.dataset.zindex);
+    for (const [index, win] of [...allChildElements].sort((a,b)=>parseInt(a.source.settings.getValue('zindex')) - parseInt(b.source.settings.getValue('zindex')) ).entries()) {
+      const oldValue = parseInt(win.source.settings.getValue('zindex'));
       const newValue = index;
       if(oldValue !== newValue){
-        win.dataset.zindex = newValue;
+         win.source.settings.setValue('zindex', newValue); // win.settings.zindex = newValue;
       }
     }
-    // console.dir(childGroup.map(o=>[o.id, o.dataset.zindex]));
+    // console.dir(childGroup.map(o=>[o.id, o.settings.zindex]));
 
   }
 

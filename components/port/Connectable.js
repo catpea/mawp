@@ -173,7 +173,7 @@ export default class Connectable {
 
       this.#lines.forEach(line=>line.remove());
 
-      // NOTE: using element.id, not dataset or cutom property
+      // NOTE: using element.id, not settings or cutom property
       const fromActor = this.portComponent.window;
       const fromValve = this.portComponent;
       const from = [fromActor.id, fromValve.id].join(':');
