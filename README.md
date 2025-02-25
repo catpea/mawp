@@ -3,6 +3,7 @@ MAWP
 
 ## TODO
 
+- add this.gc/listenTo to all the .subscribeToValue
 - tonejs read only components myst be destroyed-and-re-created
 - restore focus
 - restore sending options to tone js objects
