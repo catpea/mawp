@@ -36,17 +36,17 @@ export default class Port extends HTMLElement {
       const portIcon = shadow.querySelector('i.bi');
 
       this.changePortStyle(portSticker, 'solid-primary')
-      this.ephemerals.subscribeToValue('style', newStyle => this.changePortStyle(portSticker, newStyle));
+      this.ephemerals.subscribe('style', 'value', newStyle => this.changePortStyle(portSticker, newStyle));
 
       const connectable = new Connectable(this);
       this.gc = connectable.start();
 
       // UPDATE PORT ID
-      this.ephemerals.subscribeToValue('name',  v => portSticker.id = v);
-      this.ephemerals.subscribeToValue('title', v => portLabel.textContent = v);
+      this.ephemerals.subscribe('name', 'value',  v => portSticker.id = v);
+      this.ephemerals.subscribe('title', 'value', v => portLabel.textContent = v);
 
       // UPDATE START/END POSITION
-      this.ephemerals.subscribeToValue('side', v => {
+      this.ephemerals.subscribe('side', 'value', v => {
         //console.log('RRR side', v )
 
         if (v === 'in') {
@@ -63,7 +63,7 @@ export default class Port extends HTMLElement {
       });
 
       // UPDATE ICON
-      this.ephemerals.subscribeToValue('icon', v => {
+      this.ephemerals.subscribe('icon', 'value', v => {
         //console.log('RRR icon', v )
 
         portIcon.classList.remove(...Array.from(portIcon.classList).filter(className => className.startsWith('bi-')) )

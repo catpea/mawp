@@ -1,4 +1,5 @@
 import CONFIGURATION from "configuration";
+import UI from "./src/UI.js";
 
 import baseInstaller from "./library/base/index.js";
 import browserInstaller from "./library/browser/index.js";
@@ -6,15 +7,30 @@ import toneInstaller from "./library/tone-js/index.js";
 import {
   Application,
   Project,
-  Location,
-  Component,
-  Connector,
+
   Modules,
   Library,
+
+  Location,
+    Component,
+    Connector,
 } from "library";
 
 // Boot
-const application = new Application();
+const application = new Application('root');
+
+const expectedSession = self.crypto.randomUUID();
+application.settings.set('session', 'value', expectedSession);
+const actualSession = application.settings.get('session', 'value');
+console.assert(expectedSession, actualSession);
+
+let passed = (expectedSession == actualSession);
+
+console.log( application );
+
+if(passed){
+
+
 
 // Module Registration
 const modules = new Modules("modules");
@@ -30,14 +46,15 @@ application.create(project);
 
 const mainLocation = new Location("main");
 mainLocation.settings.merge({ title: "Main" });
+mainLocation.settings.set('title', 'value', 'Main');
 project.create(mainLocation);
 
 const teeLocation = new Location("tee");
-teeLocation.settings.merge({ title: "Text Transformation" });
+teeLocation.settings.set('title', 'value', 'Text Transformation');
 project.create(teeLocation);
 
 const musicLocation = new Location("music");
-musicLocation.settings.merge({ title: "Music Example" });
+musicLocation.settings.set('title', 'value', 'Music Example');
 project.create(musicLocation);
 
 project.load();
@@ -50,6 +67,7 @@ if (ALL == 0) {
     top: 111,
     width: 333,
     text: {
+      kind: 'field',
       type: "Text",
       title: "Notice",
       subtitle: "display will ignore the beacon counter until you send some text",
@@ -66,13 +84,12 @@ if (ALL) {
     top: 111,
     width: 333,
     text: {
+      kind: 'field',
       type: "Text",
       title: "Notice",
-      subtitle:
-        "display will ignore the beacon counter until you send some text",
+      subtitle: "display will ignore the beacon counter until you send some text",
       text: "Waiting for all pipes to submit information is a way to control execution of complex machines.",
-      subtext:
-        "Practical applications: this is the techonogy behing smart applicaions, this is what makes the brain operate in correct sequence.",
+      subtext: "Practical applications: this is the techonogy behing smart applicaions, this is what makes the brain operate in correct sequence.",
     },
   });
   mainLocation.createModule("beacon0", "system-tools/beacon", {
@@ -98,6 +115,7 @@ if (ALL) {
     top: 1111,
     width: 333,
     text: {
+      kind: 'field',
       type: "Text",
       title: "Advanced Data Processing",
       subtitle: "data integration layer",
@@ -162,11 +180,13 @@ if (ALL) {
     left: 66,
     top: 222,
     values: {
+      kind: 'field',
       label: "Tonal Values",
       type: "Array",
       data: ["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]],
     },
     pattern: {
+      kind: 'field',
       label: "Arpeggio Pattern",
       type: "Enum",
       options: [
@@ -193,6 +213,7 @@ if (ALL) {
     left: 1111,
     top: 666,
     distortion: {
+      kind: 'field',
       label: "Distortion Ammount",
       type: "Float",
       data: 0.2,
@@ -205,8 +226,9 @@ if (ALL) {
     title: "feedbackdelay1",
     left: 555,
     top: 444,
-    delayTime: { title: "Delay Time", type: "Text", data: 0.125, readonly:true },
+    delayTime: {kind: 'field', title: "Delay Time", type: "Text", data: 0.125, readonly:true },
     feedback: {
+      kind: 'field',
       title: "Feedback",
       // label: "Feedback",
       type: "Text", //"Float",
@@ -227,12 +249,13 @@ if (ALL) {
     left: 222,
     top: 555,
     url: {
+      kind: 'field',
       label: "Audio URL",
       type: "Input",
       data: "https://tonejs.github.io/audio/loop/chords.mp3",
     },
-    loop: { label: "Loop", type: "Boolean", data: true },
-    autostart: { label: "Autostart", type: "Boolean", data: true },
+    loop: {kind: 'field', label: "Loop", type: "Boolean", data: true },
+    autostart: {kind: 'field', label: "Autostart", type: "Boolean", data: true },
   });
 
   // mainLocation.createConnection('pattern1:out', 'synth1:in');
@@ -266,7 +289,6 @@ if (ALL) {
 }
 
 //////// UI ////////
-import UI from "./src/UI.js";
 const ui = new UI(application);
 application.state.initialize();
 application.state.start();
@@ -278,3 +300,6 @@ console.log(`Startup at ${new Date().toISOString()}`);
 //   // ui.stop();
 //   // project.shutdown();
 // });
+
+
+} // passed

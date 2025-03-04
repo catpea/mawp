@@ -126,7 +126,7 @@ export default class Pipe extends ReactiveHTMLElement {
     this.gc = () => focusableLine.remove();
       const focusable = new Focusable(this, focusableLine);
       this.gc = focusable.start();
-      this.gc = this.source.settings.subscribeToValue('active', v => {
+      this.gc = this.source.settings.subscribe('active', 'value', v => {
         if(v===true){
           // WHEN ACTIVE
           this.#currentColor.value = this.#colorSelection.active;
@@ -145,17 +145,17 @@ export default class Pipe extends ReactiveHTMLElement {
       const dependencies = new Signal();
       dependencies.addDependency(fromWindowStatusSignal);
       dependencies.addDependency(toWindowStatusSignal);
-      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('from')).sizeSignal);
-      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('to')).sizeSignal);
-      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('from')).source.settings.signal('left', 'value'));
-      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('from')).source.settings.signal('top', 'value'));
-      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('to')).source.settings.signal('left', 'value'));
-      dependencies.addDependency(this.scene.getWindow(this.source.settings.getValue('to')).source.settings.signal('top', 'value'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.get('from', 'value')).sizeSignal);
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.get('to', 'value')).sizeSignal);
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.get('from', 'value')).source.settings.signal('left', 'value'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.get('from', 'value')).source.settings.signal('top', 'value'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.get('to', 'value')).source.settings.signal('left', 'value'));
+      dependencies.addDependency(this.scene.getWindow(this.source.settings.get('to', 'value')).source.settings.signal('top', 'value'));
       this.gc = dependencies.subscribe((_, a, b) => {
         if (a === 'ready' && a === b) {
           // NOTE: this function return untransformed coordinates
-          let [x1, y1] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.source.settings.getValue('from')));
-          let [x2, y2] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.source.settings.getValue('to')));
+          let [x1, y1] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.source.settings.get('from', 'value')));
+          let [x2, y2] = this.scene.calculateCentralCoordinates(this.scene.getDecal(this.source.settings.get('to', 'value')));
           // Transform Coordinates with Pan and Zoom
           [x1, y1] = this.scene.transform(x1, y1);
           [x2, y2] = this.scene.transform(x2, y2);

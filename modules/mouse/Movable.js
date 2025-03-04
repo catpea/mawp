@@ -77,8 +77,8 @@ export default class Movable {
       this.element.style.left = `${x}px`;
       this.element.style.top = `${y}px`;
 
-      this.system.source.settings.setValue('left', x);
-      this.system.source.settings.setValue('top', y);
+      this.system.source.settings.set('left', 'value', x);
+      this.system.source.settings.set('top', 'value', y);
 
       console.warn('TODO: this requires command support projectCommand.moveWindow({ left: x, top: y });')
 

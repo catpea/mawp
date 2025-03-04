@@ -3,7 +3,10 @@ import Commander from "commander";
 import Scheduler from "scheduler";
 import List from "list";
 
-import Settings from "settings";
+import { memory, Settings } from "storage/web-ext/index.js";
+
+// import Settings from "settings";
+
 import State from "state";
 import guid from "guid";
 
@@ -20,18 +23,11 @@ export class DataRequest {
   constructor(context) {
     this.pipe.id = context.id;
 
-    if( (!context.settings.getValue("from"))||(!context.settings.getValue("from")) ) throw new Error(`BORK! Data request from ${context.id} is invalid as from||to is empty`);
-    if( (!context.settings.getValue("from"))||(!context.settings.getValue("from")) ) console.error(`BORK! Data request from ${context.id} is invalid as from||to is empty`);
-
-    if( !context.settings.getValue("from") ) console.error(`From may not be empty (${context.id})`, `GOT: ${context.settings.getValue("from")}`, context.settings.get("from", 'value'));
-    if( !context.settings.getValue("to") ) console.error(`To may not be empty (${context.id})`, `GOT: ${context.settings.getValue("to")}`, context.settings.get("to", 'value'));
-
-    if( !context.settings.getValue("from") ) throw new TypeError(`From may not be empty (${context.id})`);
-    if( !context.settings.getValue("to") ) throw new TypeError(`To may not be empty (${context.id})`);
+    if( (!context.settings.get('from', 'value'))||(!context.settings.get('to', 'value')) ) throw new Error(`Data request from ${context.id} is invalid as from||to is empty`);
 
     // TODO: unknown.. cache and make reactive...
-    Object.assign( this.from, Object.fromEntries( [context.settings.getValue("from").split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
-    Object.assign( this.to, Object.fromEntries( [context.settings.getValue("to").split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+    Object.assign( this.from, Object.fromEntries( [context.settings.get('from', 'value').split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
+    Object.assign( this.to, Object.fromEntries( [context.settings.get('to', 'value').split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
 
     this.source = context.parent.get(this.from.id);
     this.destination = context.parent.get(this.to.id);
@@ -53,12 +49,6 @@ export class TransportationRequest extends DataRequest {
   }
 
 }
-
-
-
-
-
-
 
 
 class Source {
@@ -85,7 +75,7 @@ class Source {
     this.children = [];
     this.content = new Signal();
 
-    this.settings = new Settings();
+    this.settings = new Settings(this.id, memory);
 
     this.state = new State(this, {
       initialize: this.initialize.bind(this),
@@ -374,6 +364,10 @@ class Source {
 
 }
 
+
+/**
+  This is the root.
+*/
 export class Application extends Source {
   commander;
   activeLocation = new Signal("main");
@@ -445,8 +439,8 @@ export class Location extends Source {
 
   getRelated(id) {
     // return items related to id in a scene, usualy for removal.
-    const from = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.getValue("from") !== undefined) .filter((child) => child.settings.getValue("from").startsWith(id + ":"));
-    const to = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.getValue("to") !== undefined) .filter((child) => child.settings.getValue("to").startsWith(id + ":"));
+    const from = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.get('from', 'value') !== undefined) .filter((child) => child.settings.get('from', 'value').startsWith(id + ":"));
+    const to = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.get('to', 'value') !== undefined) .filter((child) => child.settings.get('to', 'value').startsWith(id + ":"));
     return [...from, ...to];
   }
 
@@ -460,6 +454,11 @@ export class Location extends Source {
     component.type = "window";
 
     const setup = { ...Component.defaults, ...settings,  };
+
+    for (const [key, value] of Object.entries(setup).filter(([key, value])=>value===Object(value))) {
+      if(!('kind' in value)) throw new Error('Setting rows must specify a kind.');
+    }
+
     component.settings.merge(setup);
 
     // Add to stage
@@ -473,11 +472,11 @@ export class Location extends Source {
     const id = [fromAddress, toAddress].join("__").replace(/:/g, "_");
     const connector = new Connector(id);
     // Assign options
-    connector.settings.setValue('from', fromAddress );
-    connector.settings.setValue('to',   toAddress );
+    connector.settings.set('from', 'value', fromAddress );
+    connector.settings.set('to', 'value', toAddress );
 
-      if( !connector.settings.getValue("from") ) console.error(`STORAGE ENGINE FAILURE: From may not be empty (${connector.id})`, `GOT: "${connector.settings.getValue("from")}", MUST BE: "${fromAddress}"`);
-      if( !connector.settings.getValue("to") ) console.error(`STORAGE ENGINE FAILURE: To may not be empty (${connector.id})`, `GOT: "${connector.settings.getValue("to")}", MUST BE: "${toAddress}"`);
+      if( !connector.settings.get('from', 'value') ) console.error(`STORAGE ENGINE FAILURE: From may not be empty (${connector.id})`, `GOT: "${connector.settings.get('from', 'value')}", MUST BE: "${fromAddress}"`);
+      if( !connector.settings.get('to', 'value') ) console.error(`STORAGE ENGINE FAILURE: To may not be empty (${connector.id})`, `GOT: "${connector.settings.get('to', 'value')}", MUST BE: "${toAddress}"`);
 
     // Add to stage
     this.create(connector);
@@ -554,14 +553,15 @@ export class Component extends AwaitingComponent {
   }
 
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT
+
   inputPipes() {
-    return this.parent.filter( (o) => o.type === "pipe" && o.settings.getValue("to").startsWith(this.id + ':')) ;
+    return this.parent.filter( (o) => o.type === "pipe" && o.settings.get('to', 'value').startsWith(this.id + ':')) ;
   }
   inputPipe(name) {
-    return this.inputPipes().find(o=>o.settings.getValue("to").endsWith(':'+name));
+    return this.inputPipes().find(o=>o.settings.get('to', 'value').endsWith(':'+name));
   }
   outputPipe(name) {
-    return this.parent.filter( (o) => o.type === "pipe" && o.settings.getValue("from").startsWith(this.id + ':')).find(o=>o.settings.getValue("from").endsWith(':'+name));
+    return this.parent.filter( (o) => o.type === "pipe" && o.settings.get('from', 'value').startsWith(this.id + ':')).find(o=>o.settings.get('from', 'value').endsWith(':'+name));
   }
 
   connectable(request){
@@ -571,6 +571,39 @@ export class Component extends AwaitingComponent {
   }
   disconnect(){
   }
+
+  // Settings Helpers
+  // getSignalList => getSettingsOfKind('field', {includeReadonly: false})
+  getSettingsOfKind(kind, options={}){
+    const defaults = { includeReadonly: true, decodeSignals:true };
+    const {includeReadonly, decodeSignals} = Object.assign({}, defaults, options);
+
+    const list =
+      Object.entries(this.constructor.defaults)
+      .filter(([key, value])=>value===Object(value))
+      .filter(([key,value])=>value.kind===kind)
+      .filter(([key,value])=>includeReadonly?!value.readonly:false) //
+
+      .map(([key, value]) => [key,
+        Object.fromEntries( Object.keys(value).map(subKey=> [subKey, this.settings[decodeSignals?'get':'signal'](key, subKey)] ) )
+      ])
+
+      // .map(([key]) => [key, this.settings[decodeSignals?'get':'signal'](key, 'value')])
+
+    return list;
+  }
+
+
+
+  // getSignalList(){
+  //   const signals = Object
+  //     .entries(this.constructor.defaults)
+  //     .filter(([key, value])=>value===Object(value))
+  //     .filter(([key,value])=>value.kind==='field')
+  //     .filter(([key,value])=>!value.readonly) //
+  //     .map(([key]) => [key, this.settings.signal(key, 'value')]);
+  //   return signals;
+  // }
 
 }
 
@@ -584,7 +617,7 @@ export class Connector extends Source {
 
   constructor(id) {
     super(id, "pipe");
-    this.settings.setValue('active', false);
+    this.settings.set('active', 'value', false);
   }
 
   initialize() {}
@@ -636,12 +669,10 @@ export class Connector extends Source {
 
   start() {
 
-    if(!this.settings.getValue('from')) throw new TypeError('BORK: MISSING FROM');
-    //console.log('BORK', this.settings.getValue('from'), this.settings.getValue('to'))
+    if(!this.settings.get('from', 'value')) throw new TypeError('Missing settings:from value');
 
     console.warn("Investigate time travel, initialize connection only after all windows initialized (microtask?)");
     setTimeout(() => {
-    //console.log('BORK111111111', this.settings.getValue('from'), this.settings.getValue('to'))
       const request = new ConnectionRequest(this);
       const isConnectable = request.source.connectable(request);
 
@@ -702,8 +733,8 @@ export class Library extends Source {
   register(id, content) {
     const tool = new Tool(id);
     tool.content.value = content;
-    tool.settings.setValue('name', content.caption);
-    tool.settings.setValue('description', content.description);
+    tool.settings.set('name', 'value', content.caption);
+    tool.settings.set('description', 'value', content.description);
     this.create(tool);
   }
 }

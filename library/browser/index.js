@@ -23,7 +23,7 @@ class Message extends BrowserTool {
 export default function install(){
 
   const library = new Library('browser-tools');
-  library.settings.setValue('name', 'Browser Tools');
+  library.settings.set('name', 'value', 'Browser Tools');
 
   library.register('message', Message);
 

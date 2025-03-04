@@ -42,7 +42,7 @@ export default class List {
       return new Proxy(this, {
         set: (settings, key, value) => {
           if (key in settings) return settings[key] = value;
-          return settings.setValue(key, value);
+          return settings.set(key, 'value', value);
         },
         get: (settings, key) => {
           if (key in settings) return settings[key];

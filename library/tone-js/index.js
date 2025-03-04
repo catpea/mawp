@@ -4,6 +4,16 @@ import Tone from './Tone.js';
 
 class ToneComponent extends Component {
   Tone = Tone;
+
+  getToneConfigurationObject(){
+    const rawObject = this.getSettingsOfKind('field', {decodeSignals:true, includeReadonly: true});
+    const keyValues =  rawObject
+      .map(([key,data])=>[key, data.data]);
+    const justValueObject = Object.fromEntries(keyValues);
+    console.log('Player', {rawObject, justValueObject})
+    return justValueObject
+  }
+
 }
 
 
@@ -19,9 +29,6 @@ class ToneDestinationComponent extends ToneComponent {
   start(){
     this.content.value = this.Tone.getDestination();
   }
-
-
-
   pause() {}
   resume() {}
   stop() {
@@ -35,18 +42,23 @@ class ToneDestinationComponent extends ToneComponent {
 class TonePlayerComponent extends ToneComponent {
   static caption = 'Player';
   static description = 'A versatile sample player for playing audio files, supporting various playback features like looping and playback rate adjustment.';
-  static defaults = { url: {label:'Audio URL', type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {label:'Loop', type:'Boolean', data:true}, autostart: {label:'Autostart', type:'Boolean', data:true}, };
+  static defaults = { url: {kind: 'field', label:'Audio URL', type: 'URL', data:"https://tonejs.github.io/audio/loop/chords.mp3"}, loop: {kind: 'field', label:'Loop', type:'Boolean', data:true}, autostart: {kind: 'field', label:'Autostart', type:'Boolean', data:true}, };
 
   initialize() {
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    //console.log('FOO', this.settings.toFields(o=>o.data))
-    this.content.value = new this.Tone.Player(this.settings.toFields(o=>o.data));
-    for (const [name, map] of this.settings.withColumn('type') ){
-      const setting = map.get('data');
-      this.gc = setting.subscribe(v=>this.content.value[name]=v);
+
+    console.log(' new this.Tone.Player', this.getToneConfigurationObject())
+
+    // convert settings' row of type field to a plain object for Tone.js
+    this.content.value = new this.Tone.Player(this.getToneConfigurationObject());
+
+    // extract settings' row of type field, and retun name and signal, to subscribe to changes and update Tone object
+    for (const [name, signal] of Object.entries(this.getSettingsOfKind('field', {decodeSignals:false, includeReadonly: false})) ){
+      this.gc = signal.subscribe(v=>this.content.value[name]=v);
     }
+
   }
 
   pause() {}
@@ -83,12 +95,17 @@ class ToneSynthComponent extends ToneComponent {
      //TODO: this.channels.set('events', {allow: (o)=> o instanceof this.tone.ToneEvent, icon:'music-note' });
   }
   start(){
-    this.content.value = new this.Tone.PolySynth(this.settings.toFields(o=>o.data));
-    for (const [name, map] of this.settings.withColumn('type') ){
-      const setting = map.get('data');
-      this.gc = setting.subscribe(v=>this.content.value[name]=v);
+
+    // convert settings' row of type field to a plain object for Tone.js
+    this.content.value = new this.Tone.PolySynth(this.getToneConfigurationObject());
+
+    // extract settings' row of type field, and retun name and signal, to subscribe to changes and update Tone object
+    for (const [name, signal] of Object.entries(this.getSettingsOfKind('field', {decodeSignals:false, includeReadonly: false})) ){
+      this.gc = signal.subscribe(v=>this.content.value[name]=v);
     }
+
   }
+
 
 
   pause() {}
@@ -117,18 +134,22 @@ class ToneSynthComponent extends ToneComponent {
 class ToneDistortionComponent extends ToneComponent {
   static caption = 'Distortion';
   static description = 'A waveform alteration effect that adds harmonic distortion, which can enhance the sound by adding complexity and warmth.';
-  static defaults = {distortion: {label:'Distortion Ammount', type:'Float', data:0.2, min:0, max:1, step:0.01}};
+  static defaults = {distortion: {kind: 'field', label:'Distortion Ammount', type:'Float', data:0.2, min:0, max:1, step:0.01}};
 
   initialize() {
     this.channels.set('in', {icon: 'soundwave'});
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    this.content.value = new this.Tone.Distortion(this.settings.toFields(o=>o.data));
-    for (const [name, map] of this.settings.withColumn('type') ){
-      const setting = map.get('data');
-      this.gc = setting.subscribe(v=>this.content.value[name]=v);
+
+    // convert settings' row of type field to a plain object for Tone.js
+    this.content.value = new this.Tone.Distortion(this.getToneConfigurationObject());
+
+    // extract settings' row of type field, and retun name and signal, to subscribe to changes and update Tone object
+    for (const [name, signal] of Object.entries(this.getSettingsOfKind('field', {decodeSignals:false, includeReadonly: false})) ){
+      this.gc = signal.subscribe(v=>this.content.value[name]=v);
     }
+
   }
 
 
@@ -158,19 +179,25 @@ class ToneDistortionComponent extends ToneComponent {
 class ToneFeedbackDelayComponent extends ToneComponent {
   static caption = 'Feedback Delay';
   static description = 'A sound delay effect where the output is fed back into the input, creating a repetitive, echo-like effect.';
-  static defaults = {delayTime:{label:'Delay Time', type:'Text', data:0.125, readonly:true}, feedback:{label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01, readonly:true}};
+  static defaults = {delayTime:{kind: 'field', label:'Delay Time', type:'Text', data:0.125, readonly:true}, feedback:{kind: 'field', label:'Feedback', type:'Float', data:0.5, min:0, max:1, step:0.01, readonly:true}};
 
   initialize() {
     this.channels.set('in', {icon: 'soundwave'});
     this.channels.set('out', {side:'out', icon: 'soundwave'});
   }
   start(){
-    this.content.value = new this.Tone.FeedbackDelay(this.settings.toFields(o=>o.data));
-    for (const [name, map] of this.settings.withColumn('type') ){
-      if(map.get('readonly')?.value==true) continue;
-      const setting = map.get('data');
-      this.gc = setting.subscribe(v=>this.content.value[name]=v);
+
+    // convert settings' row of type field to a plain object for Tone.js
+    this.content.value = new this.Tone.FeedbackDelay(this.getToneConfigurationObject());
+
+    // extract settings' row of type field, and retun name and signal, to subscribe to changes and update Tone object
+    for (const [name, signal] of Object.entries(this.getSettingsOfKind('field', {decodeSignals:false, includeReadonly: false})) ){
+      this.gc = signal.subscribe(v=>this.content.value[name]=v);
     }
+
+
+
+
   }
 
   pause() {}
@@ -199,7 +226,7 @@ class ToneFeedbackDelayComponent extends ToneComponent {
 class TonePatternComponent extends ToneComponent {
   static caption = 'Pattern';
   static description = 'A sequencer for playing musical patterns, with customizable values and patterns to control the rhythm and order of playback.';
-  static defaults = {values:{label:'Tonal Values', type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{label: 'Arpeggio Pattern', type:'Enum', options:[{value:'up', textContent:'up'},  {value:'down', textContent:'down'},  {value:'upDown', textContent:'upDown'},  {value:'downUp', textContent:'downUp'},  {value:'alternateUp', textContent:'alternateUp'},  {value:'alternateDown', textContent:'alternateDown'},  {value:'random', textContent:'random'},  {value:'randomOnce',
+  static defaults = {values:{kind: 'field', label:'Tonal Values', type:'Array', data:["C4", ["E4", "D4", "E4"], "G4", ["A4", "G4"]] }, pattern:{kind: 'field', label: 'Arpeggio Pattern', type:'Enum', options:[{value:'up', textContent:'up'},  {value:'down', textContent:'down'},  {value:'upDown', textContent:'upDown'},  {value:'downUp', textContent:'downUp'},  {value:'alternateUp', textContent:'alternateUp'},  {value:'alternateDown', textContent:'alternateDown'},  {value:'random', textContent:'random'},  {value:'randomOnce',
     textContent:'randomOnce'},  {value:'randomWalk', textContent:'randomWalk'},], data:"upDown"},};
 
   l(...a){console.log(this.constructor.name, ...a)}
@@ -228,20 +255,26 @@ class TonePatternComponent extends ToneComponent {
   }
 
   connect({destination}){ // when something is connected to you
+    if(this.content.value) return;
 
-    // Prepare
-    const toneOptions = this.settings.toObject();
-    //console.log('toneOptions', toneOptions)
+    // WARNING: Special Prepare - special callback is required
+    // convert settings' row of type field to a plain object for Tone.js
+    const toneOptions = this.getToneConfigurationObject();
     const {values, pattern} = toneOptions;
+
     const callback = (time, note) => {
       destination.content.value.triggerAttackRelease(note, 0.1, time);
     };
-    // Create
-    if(!this.content.value) this.content.value = new this.Tone.Pattern(callback, values, pattern);
-    for (const [name, map] of this.settings.withColumn('type') ){
-      const setting = map.get('data');
-      this.gc = setting.subscribe(v=>this.content.value[name]=v);
+
+    // Create Tone Object
+    this.content.value = new this.Tone.Pattern(callback, values, pattern);
+
+    // extract settings' row of type field, and retun name and signal, to subscribe to changes and update Tone object
+    for (const [name, signal] of Object.entries(this.getSettingsOfKind('field', {decodeSignals:false, includeReadonly: false})) ){
+      this.gc = signal.subscribe(v=>this.content.value[name]=v);
     }
+
+
     this.content.value.start();
   }
 
@@ -291,7 +324,7 @@ class ToneLibrary extends Library {
 export default function install(){
 
   const library = new ToneLibrary('tone-js');
-  library.settings.setValue('name', 'Tone.js Components');
+  library.settings.set('name', 'value', 'Tone.js Components');
 
   library.register('distortion',    ToneDistortionComponent);
   library.register('feedbackdelay', ToneFeedbackDelayComponent);

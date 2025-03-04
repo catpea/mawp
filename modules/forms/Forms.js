@@ -94,7 +94,7 @@ export default class Forms {
     const sceneName = this.component.application.source.activeLocation.value;
     const currentScene = this.component.application.source.get('main-project', sceneName);
     //
-    this.gc = currentScene.settings.subscribeToValue('data', v=>{
+    this.gc = currentScene.settings.subscribe('data', 'value', v=>{
       const variableNames = Object.keys(v); // Take the names of settings object
       const formOptions = [];
       for( const variableName of variableNames){

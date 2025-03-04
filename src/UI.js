@@ -122,11 +122,11 @@ export default class UI {
       // We have a previous location, save current pan to its memory.
       const previousLocation = this.source.get('main-project', this.previousLocationName);
       const restore = JSON.stringify({ panX: this.scene.panX.value, panY: this.scene.panY.value, scale: this.scene.scale.value, });
-      previousLocation.settings.setValue('restore', restore);
+      previousLocation.settings.set('restore', 'value', restore);
     }
 
     const newLocation = this.source.get('main-project', newLocationName);
-    if(newLocation.settings.hasValue('restore')){
+    if(newLocation.settings.has('restore')){
       const restore = JSON.parse(newLocation.settings.get('restore'));
       console.log('UUU location.restore', restore)
       this.scene.panX.value = restore.panX;

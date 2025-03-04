@@ -18,7 +18,7 @@ class SystemTool extends Component {
 class Beacon extends SystemTool {
   static caption = 'Beacon';
   static description = 'Emit a number every N milliseconds.';
-  static defaults = { counter: {label:'Counter', type: 'Number', data:0},  milliseconds: {label:'Milliseconds', type: 'Number', data:10_000, step:100, min:300},};
+  static defaults = { counter: {kind: 'field', label:'Counter', type: 'Number', data:0},  milliseconds: {kind: 'field', label:'Milliseconds', type: 'Number', data:10_000, step:100, min:300},};
   static ports = {out:{side:'out', icon:'activity'}};
 
   initialize() {}
@@ -57,9 +57,9 @@ class Text extends SystemTool {
   static caption = 'Text';
   static description = 'Send a text packet.';
   static defaults = {
-    text: {label:'Text', type: 'Input', data:"My hovercraft is full of feels"},
-    button: {label:'Send', type: 'Button', method:'execute'},
-    formal: {label:'Formal', type:'Boolean', data:false}
+    text: {kind: 'field', label:'Text', type: 'Input', data:"My hovercraft is full of feels"},
+    button: {kind: 'field', label:'Send', type: 'Button', method:'execute'},
+    formal: {kind: 'field', label:'Formal', type:'Boolean', data:false}
   };
   static ports = {out:{side:'out', icon:'activity'}};
 
@@ -91,7 +91,7 @@ class Text extends SystemTool {
 class Code extends SystemTool {
   static caption = 'Code';
   static description = 'Execute a JavaScript function.';
-  static defaults = { code: {label:'JavaScript Code', type: 'Textarea', rows:5, data:"input.toUpperCase();"}};
+  static defaults = { code: {kind: 'field', label:'JavaScript Code', type: 'Textarea', rows:5, data:"input.toUpperCase();"}};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
 
   initialize() {}
@@ -119,7 +119,7 @@ class Code extends SystemTool {
 class Display extends SystemTool {
   static caption = 'Display';
   static description = 'Display submitted content.';
-  static defaults = {text: {type:'Text', title:'', subtitle:'', text: '...', subtext:''}, throw: {label:'Throw', type:'Boolean', data:false}};
+  static defaults = {text: {kind: 'field', type:'Text', title:'', subtitle:'', text: '...', subtext:''}, throw: {kind: 'field', label:'Throw', type:'Boolean', data:false}};
   static ports = {in:{side:'in', icon:'activity'}};
 
   initialize() {}
@@ -195,7 +195,7 @@ class Output extends SystemTool {
 class Procedure extends SystemTool {
   static caption = 'Procedure';
   static description = 'Send data through a scene.';
-  static defaults = {procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.', data:0}};
+  static defaults = {procedure: {kind: 'field', type:'Scene', label:'Procedure', text:'Send data through another scene.', data:0}};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
 
   initialize() {}
@@ -232,6 +232,7 @@ class Note extends SystemTool {
   static description = 'Leave a note on the scene.';
   static defaults = {
     text: {
+      kind: 'field',
       type:'Text',
       title:'Advanced Data Processing',
       subtitle:'data integration layer',
@@ -258,7 +259,7 @@ class Note extends SystemTool {
 class Fetch extends SystemTool {
   static caption = 'Fetch';
   static description = 'Leave a note on the scene.';
-  static defaults = { url: {label:'URL', type: 'Input', data:"package.json"} };
+  static defaults = { url: {kind: 'field', label:'URL', type: 'Input', data:"package.json"} };
   static ports = {out:{side:'out', icon:'activity'}};
 
   initialize() {}
@@ -300,7 +301,7 @@ class Queue extends SystemTool {
 class Manager extends SystemTool {
   static caption = 'Manager';
   static description = 'Leave a note on the scene.';
-  static defaults = { cpusync: {label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, procedure: {type:'Scene', label:'Procedure', text:'Send data through another scene.', data:1}};
+  static defaults = { cpusync: {kind: 'field', label:'CPU Sync', text:'Automatically adjust worker count to the number of available CPU cores.', type:'Boolean', data:true}, procedure: {kind: 'field', type:'Scene', label:'Procedure', text:'Send data through another scene.', data:1}};
   static ports = {in:{side:'in', icon:'activity'}, out:{side:'out', icon:'activity'}};
 
   initialize() {}
@@ -375,7 +376,7 @@ class Toast extends SystemTool {
 class Setting extends SystemTool {
   static caption = 'Setting';
   static description = 'Monitor a scene setting, and pass the value along if it changes.';
-  static defaults = {setting: {label:'setting', type:'Setting'}};
+  static defaults = {setting: {kind: 'field', label:'setting', type:'Setting'}};
   static ports = {out:{side:'out', icon:'activity'}};
 
   initialize(){
@@ -404,7 +405,7 @@ class Setting extends SystemTool {
 export default function install(){
 
   const library = new Library('system-tools');
-  library.settings.setValue('name', 'System Tools');
+  library.settings.set('name', 'value', 'System Tools');
 
   library.register('input', Input);
   library.register('output', Output);

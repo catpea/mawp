@@ -62,14 +62,10 @@ export default class Window extends ReactiveHTMLElement {
 
     this.source.state.name.subscribe(v => cardState.textContent = v);
 
-    //console.log('HHHH about to subscribeToValue title',  this.source.settings.getValue('title') );
-
-    //this.source.settings.subscribe('title', 'value', v => console.log('HHHH subscribeToValue title', v)    );
-
-    this.source.settings.subscribeToValue('title',  v => cardTitle.textContent = v);
-    this.source.settings.subscribeToValue('note',   v => cardFooter.textContent = v);
-    this.source.settings.subscribeToValue('zindex', v => cardNode.style.zIndex = v);
-    this.source.settings.subscribeToValue('style',  v => this.changeCardStyle(cardNode, v));
+    this.source.settings.subscribe('title', 'value',  v => cardTitle.textContent = v);
+    this.source.settings.subscribe('note', 'value',   v => cardFooter.textContent = v);
+    this.source.settings.subscribe('zindex', 'value', v => cardNode.style.zIndex = v);
+    this.source.settings.subscribe('style', 'value',  v => this.changeCardStyle(cardNode, v));
 
     // CREATE STANDARD PORTS
     //
@@ -174,16 +170,15 @@ export default class Window extends ReactiveHTMLElement {
 
 
     // PRINT SETTINGS
-    for (const [name, map] of this.source.settings.withColumn('type') ){
-      const options = Object.fromEntries([...map]);
+    // for (const [name, map] of this.source.settings.withColumn('type') ){
+    for (const [name, options] of this.source.getSettingsOfKind('field', {decodeSignals: false, includeReadonly: true}) ){
 
       // const keyType = options.type.value;
       // const valueSignal = this.source.settings.get(name);
       // const dataset = Object.assign({ side: 'in', icon: 'key', style:'setting' });
       // const portNode = lol['x-port']({ id: name, dataset });
 
-      //console.log('TTT', options)
-
+      console.log('TTT', name, options);
       const inputField = this.Forms.buildField({name,...options});
       const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
       listGroup.appendChild(listItem)
@@ -196,10 +191,10 @@ export default class Window extends ReactiveHTMLElement {
     // cardHeader.appendChild(lol.i({ name:'configure-component' ,class:'bi bi-wrench-adjustable-circle text-muted float-end cursor-pointer ms-2', on:{ click:()=> this.application.source.commander.windowRead({id:this.id}) }}))
 
     // SUBSCRIBE TO DIMENSIONS SPECIFIED IN DATASET
-    this.source.settings.subscribeToValue('left', v => cardNode.style.left = v + 'px');
-    this.source.settings.subscribeToValue('top', v => cardNode.style.top = v + 'px');
-    this.source.settings.subscribeToValue('width', v => cardNode.style.width = v + 'px');
-    this.source.settings.subscribeToValue('height', v => cardNode.style.height = v + 'px');
+    this.source.settings.subscribe('left', 'value', v => cardNode.style.left = v + 'px');
+    this.source.settings.subscribe('top', 'value', v => cardNode.style.top = v + 'px');
+    this.source.settings.subscribe('width', 'value', v => cardNode.style.width = v + 'px');
+    this.source.settings.subscribe('height', 'value', v => cardNode.style.height = v + 'px');
 
     // MAKE WINDOW FOCUSABLE
     const focusable = new Focusable(this);
@@ -214,7 +209,7 @@ export default class Window extends ReactiveHTMLElement {
       }
     });
     let newlyCreated = true;
-    this.gc = this.source.settings.subscribeToValue('active', v => {
+    this.gc = this.source.settings.subscribe('active', 'value', v => {
       const id = this.id;
       if(!newlyCreated) return;
       //console.log({id, newlyCreated, v});
