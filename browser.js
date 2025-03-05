@@ -1,5 +1,6 @@
-import CONFIGURATION from "configuration";
-import UI from "./src/UI.js";
+import CONFIGURATION from 'configuration';
+import guid from 'guid';
+import UI from './src/UI.js';
 
 import baseInstaller from "./library/base/index.js";
 import browserInstaller from "./library/browser/index.js";
@@ -19,7 +20,7 @@ import {
 // Boot
 const application = new Application('root');
 
-const expectedSession = self.crypto.randomUUID();
+const expectedSession = guid();
 application.settings.set('session', 'value', expectedSession);
 const actualSession = application.settings.get('session', 'value');
 console.assert(expectedSession, actualSession);
