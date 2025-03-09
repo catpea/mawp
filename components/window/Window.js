@@ -178,7 +178,6 @@ export default class Window extends ReactiveHTMLElement {
       // const dataset = Object.assign({ side: 'in', icon: 'key', style:'setting' });
       // const portNode = lol['x-port']({ id: name, dataset });
 
-      console.log('TTT', name, options);
       const inputField = this.Forms.buildField({name,...options});
       const listItem = lol.li({class:'list-group-item bg-transparent'},   inputField);
       listGroup.appendChild(listItem)

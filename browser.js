@@ -27,7 +27,6 @@ console.assert(expectedSession, actualSession);
 
 let passed = (expectedSession == actualSession);
 
-console.log( application );
 
 if(passed){
 
@@ -37,9 +36,9 @@ if(passed){
 const modules = new Modules("modules");
 application.create(modules);
 
-modules.create(baseInstaller(application));
+baseInstaller(modules, application);
 // modules.create(browserInstaller(application));
-modules.create(toneInstaller(application));
+toneInstaller(modules, application);
 
 // Project Registration
 const project = new Project("main-project");

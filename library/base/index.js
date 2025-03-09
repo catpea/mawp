@@ -402,10 +402,11 @@ class Setting extends SystemTool {
 
 
 
-export default function install(){
+export default function install(modules){
 
   const library = new Library('system-tools');
   library.settings.set('name', 'value', 'System Tools');
+  modules.create(library);
 
   library.register('input', Input);
   library.register('output', Output);

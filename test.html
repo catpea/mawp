@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- this will get updated by second subscription -->
+    <title>demo</title>
+  </head>
+
+  <body>
+      <!-- span with id usernamePlacement marks where the name is going to be inserted -->
+      <h1>Hello, <span id="usernamePlacement">world</span>!</h1>
+  </body>
+
+  <script>
+
+    class ReactiveVariable {
+      #value;
+      #listeners;
+      constructor(value) {
+        this.#value = value;
+        this.#listeners = [];
+      }
+      subscribe(listener) {
+        this.#listeners.push(listener);
+        let initializeListener = true;
+        if(this.#value === undefined) initializeListener = false;
+        if(this.#value === null) initializeListener = false;
+        if(initializeListener) listener(this.#value);
+        return () => this.unsubscribe(listener); /* Return Unsubscribe */
+      }
+      unsubscribe(listener) {
+        this.#listeners = this.#listeners.filter((l) => l !== listener);
+      }
+      #notify() {
+        this.#listeners.forEach((listener) => listener(this.#value));
+      }
+      set value(v) {
+        if (this.#value == v) return;
+        this.#value = v;
+        this.#notify();
+      }
+      get value() {
+        return this.#value;
+      }
+    }
+
+    const usernameReactiveVariable = new ReactiveVariable('Bob');
+
+    usernameReactiveVariable.subscribe(usernameValue => document.getElementById('usernamePlacement').innerText = usernameValue );
+
+    usernameReactiveVariable.subscribe(usernameValue => document.title = usernameValue + ' was here.' );
+
+    // After 3 seconds update the username to alice
+    setTimeout(()=>usernameReactiveVariable.value = 'Alice', 3_000)
+
+  </script>
+</html>

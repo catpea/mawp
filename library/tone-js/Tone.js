@@ -24095,18 +24095,18 @@ var toneAudioWorkletProcessor = (
   /* javascript */
   `
 	/**
-	 * The base AudioWorkletProcessor for use in Tone.js. Works with the {@link ToneAudioWorklet}. 
+	 * The base AudioWorkletProcessor for use in Tone.js. Works with the {@link ToneAudioWorklet}.
 	 */
 	class ToneAudioWorkletProcessor extends AudioWorkletProcessor {
 
 		constructor(options) {
-			
+
 			super(options);
 			/**
 			 * If the processor was disposed or not. Keep alive until it's disposed.
 			 */
 			this.disposed = false;
-		   	/** 
+		   	/**
 			 * The number of samples in the processing block
 			 */
 			this.blockSize = 128;
@@ -24116,7 +24116,7 @@ var toneAudioWorkletProcessor = (
 			this.sampleRate = sampleRate;
 
 			this.port.onmessage = (event) => {
-				// when it receives a dispose 
+				// when it receives a dispose
 				if (event.data === "dispose") {
 					this.disposed = true;
 				}
@@ -24132,7 +24132,7 @@ var singleIOProcess = (
   /* javascript */
   `
 	/**
-	 * Abstract class for a single input/output processor. 
+	 * Abstract class for a single input/output processor.
 	 * has a 'generate' function which processes one sample at a time
 	 */
 	class SingleIOProcessor extends ToneAudioWorkletProcessor {
@@ -24161,7 +24161,7 @@ var singleIOProcess = (
 		generate(){}
 
 		/**
-		 * Update the private params object with the 
+		 * Update the private params object with the
 		 * values of the parameters at the given index
 		 * @param parameters { [name: string]: Float32Array },
 		 * @param index number
@@ -24209,7 +24209,7 @@ var delayLine = (
 	 * A multichannel buffer for use within an AudioWorkletProcessor as a delay line
 	 */
 	class DelayLine {
-		
+
 		constructor(size, channels) {
 			this.buffer = [];
 			this.writeHead = []

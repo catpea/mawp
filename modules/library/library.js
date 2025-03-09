@@ -12,7 +12,68 @@ import guid from "guid";
 
 import CONFIGURATION from "configuration";
 
+// Storage of Source instances
+class AllocationTable {
 
+  #instances;
+
+  constructor(){
+    this.#instances = new Map();
+  }
+
+  get all(){ // as array, note getter
+    return [...this.#instances.values()];
+  }
+
+  delete(id){
+    if(!this.#instances.has(id)) throw new Error(`Unable to delete, Source instance with id ${id} is not in AllocationTable.`)
+    return this.#instances.delete(id);
+  }
+  get(id){
+    if(!this.#instances.has(id)) throw new Error(`Source instance with id ${id} is not in AllocationTable. Sources register themselves upon first instantiation.`)
+    return this.#instances.get(id);
+  }
+
+  set(id, instance){
+    if(this.#instances.has(id)) throw new Error(`You may not re-initialize a node with the same ID.`)
+    this.#instances.set(id, instance);
+  }
+
+}
+
+class Children {
+
+  #allocationTable; // reverence to the central place that holds object instances
+  #signal; // the children signal of the current node
+  #referencedChildren; // Array of pointers into #allocationTable
+
+  constructor(allocationTable, signal){
+
+    this.#allocationTable = allocationTable;
+    this.#signal = signal;
+    this.#referencedChildren = [];
+
+    this.gc = signal.subscribe(identities => {
+      const update = identities.split(/\W/).filter(id=>id).map(id=> this.#allocationTable.get(id));
+      this.#referencedChildren.length = 0;
+      this.#referencedChildren.concat(update);
+    });
+
+  }
+
+  // Todo make these more useful, don't ask users to splice and indexOf, just dive them add/delete
+  [Symbol.iterator]() { return this.#referencedChildren[Symbol.iterator]() }
+  map(...a){ return this.#referencedChildren.map(...a) }
+  sort(...a){ return this.#referencedChildren.sort(...a) }
+  filter(...a){ return this.#referencedChildren.filter(...a) }
+  find(...a){ return this.#referencedChildren.find(...a) }
+  get length(){ return this.#referencedChildren.length }
+  push(...a){ return this.#referencedChildren.push(...a) }
+  slice(...a){ return this.#referencedChildren.slice(...a) }
+  splice(...a){ return this.#referencedChildren.splice(...a) }
+  indexOf(...a){ return this.#referencedChildren.indexOf(...a) }
+
+}
 
 export class DataRequest {
   pipe = {id:null}
@@ -65,17 +126,17 @@ class Source {
 
   constructor(id, type) {
 
-    this.id = id || guid();
+    this.id = id || guid(); // guid is the prefered method, hard coded id is for conventional components, like applicaion, scenes, modules
 
     // TODO: freeze what needs to be forzen:
     // this.final('id', id||guid());
 
     this.type = type || "node";
 
-    this.children = [];
     this.content = new Signal();
 
     this.settings = new Settings(this.id, memory);
+    this.children = new Children(this.root.allocationTable, this.settings.signal('children', 'value'));
 
     this.state = new State(this, {
       initialize: this.initialize.bind(this),
@@ -93,12 +154,16 @@ class Source {
   // TREE BUILDING //
   create(node) {
     node.parent = this;
+    this.root.allocationTable.set(node.id, node); // register self in allocation table;
     this.children.push(node);
     this.propagate("create", node);
+
   }
 
   remove() {
     //console.log(this.id, 'stop dispose delete')
+    this.root.allocationTable.delete(this.id); // register self in allocation table;
+
     this.state.stop();
     this.state.dispose();
     this.parent.delete(this);
@@ -133,19 +198,10 @@ class Source {
   }
 
   get all() {
-    const nodes = [];
-    const stack = [this.root]; // Initialize stack with the root node
-
-    while (stack.length > 0) {
-      const node = stack.pop();
-      nodes.push(node);
-      // Add child nodes to the stack (reverse order to maintain left-to-right traversal)
-      for (let i = node.children.length - 1; i >= 0; i--) {
-        stack.push(node.children[i]);
-      }
-    }
-    return nodes;
+    return this.root.allocationTable.all;
   }
+
+
 
   filter(f) {
     return this.children.filter(f);
@@ -369,11 +425,15 @@ class Source {
   This is the root.
 */
 export class Application extends Source {
+
+  allocationTable;
+
   commander;
   activeLocation = new Signal("main");
 
   constructor(...a) {
     super(...a);
+    this.allocationTable = new AllocationTable();
     this.commander = new Commander(this);
   }
 
@@ -445,6 +505,8 @@ export class Location extends Source {
   }
 
   // 'distortion1', 'tone-js/distortion',         {left: 100, top: 100}, {distortion: 0.4}
+
+
   createModule(id, modulePath, settings) {
     const path = ["modules", ...modulePath.split("/")];
     const module = this.root.get(...path);
@@ -464,6 +526,8 @@ export class Location extends Source {
     // Add to stage
     this.create(component);
     // do not autostart, you are just creating, not starting - start is a different process, it can be triggered by commands or load scripts
+    // this.root.allocationTable.set(component.id, component); // register self in allocation table;
+
     return component;
   }
 
@@ -481,6 +545,8 @@ export class Location extends Source {
     // Add to stage
     this.create(connector);
     // do not autostart, you are just creating, not starting - start is a different process, it can be triggered by commands or load scripts
+    // this.root.allocationTable.set(connector.id, connector); // register self in allocation table;
+
     return connector;
   }
 }

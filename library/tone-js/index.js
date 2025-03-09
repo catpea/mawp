@@ -1,7 +1,8 @@
 import { Library, Component, Tool } from 'library';
 
-import Tone from './Tone.js';
+window.TONE_SILENCE_VERSION_LOGGING = true;
 
+import Tone from './Tone.js';
 class ToneComponent extends Component {
   Tone = Tone;
 
@@ -10,7 +11,6 @@ class ToneComponent extends Component {
     const keyValues =  rawObject
       .map(([key,data])=>[key, data.data]);
     const justValueObject = Object.fromEntries(keyValues);
-    console.log('Player', {rawObject, justValueObject})
     return justValueObject
   }
 
@@ -49,7 +49,6 @@ class TonePlayerComponent extends ToneComponent {
   }
   start(){
 
-    console.log(' new this.Tone.Player', this.getToneConfigurationObject())
 
     // convert settings' row of type field to a plain object for Tone.js
     this.content.value = new this.Tone.Player(this.getToneConfigurationObject());
@@ -321,10 +320,12 @@ class ToneLibrary extends Library {
 
 
 
-export default function install(){
+export default function install(modules){
 
   const library = new ToneLibrary('tone-js');
   library.settings.set('name', 'value', 'Tone.js Components');
+  modules.create(library);
+
 
   library.register('distortion',    ToneDistortionComponent);
   library.register('feedbackdelay', ToneFeedbackDelayComponent);
