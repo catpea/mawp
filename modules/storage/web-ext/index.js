@@ -215,7 +215,7 @@ class SignalTable extends Table {
   #disposables;
 
   constructor(columns, db) {
-    columns = [...new Set(['signal', 'status', 'typeof' ].concat(columns))]; // Ensure unique column names
+    columns = [...new Set(['signal', 'status',  ].concat(columns))]; // Ensure unique column names
     super(columns);
     this.#db = db;
     this.#disposables = [];
@@ -235,7 +235,7 @@ class SignalTable extends Table {
       this.add(pathKey, {signal, status: 0, typeof: typeof value});
 
       if(this.#db){
-       this.listenTo(signal, value => this.#db.storage.set({[pathKey]:value}).then(()=>this.setStatus(pathKey, this.#SAVED), (e)=>this.setStatus(pathKey, e)) );
+        this.listenTo(signal, value => this.#db.storage.set({[pathKey]:JSON.stringify(value)}).then(()=>this.setStatus(pathKey, this.#SAVED), (e)=>this.setStatus(pathKey, e)) );
       }
 
 
@@ -243,8 +243,13 @@ class SignalTable extends Table {
         //Listen to changes on the store, where the values have been serialized.
         // const storageListener = db.storage.subscribe(pathKey, v=> signal.value = this.cast(v, typeof value) );
         const storageListener = this.#db.storage.subscribe(pathKey, v => {
-          console.log('Storage bridge reports change on pathKey, casting...', pathKey, v, this.cast(v, typeof value))
-          signal.value = this.cast(v, typeof value)
+          // console.log('Storage bridge reports change on pathKey, casting...', pathKey, v, this.cast(v, typeof value))
+          // console.log('Incoming data from remote instance:', pathKey, v, this.cast(v, typeof value), typeof value, this.get(pathKey))
+          console.log('Incoming data from remote instance:', pathKey, v, JSON.parse(v))
+
+          // signal.value = this.cast(v, typeof value);
+          signal.value = JSON.parse(v);
+
         });
         this.#disposables.push(storageListener);
       }
@@ -272,47 +277,47 @@ class SignalTable extends Table {
     this.#disposables.push(dispose)
   }
 
-  cast(v, type) {
-    let response;
+  // cast(v, type) {
+  //   let response;
 
-    switch (type) {
-      case 'string':
-        response = String(v);
-        break;
+  //   switch (type) {
+  //     case 'string':
+  //       response = String(v);
+  //       break;
 
-      case 'number':
-        response = Number(v);
-        break;
+  //     case 'number':
+  //       response = Number(v);
+  //       break;
 
-      case 'boolean':
-        response = v === 'true' ? true : false;
-        break;
+  //     case 'boolean':
+  //       response = v === 'true' ? true : false;
+  //       break;
 
-      case 'object':
-        // Assuming the object was serialized as JSON
-        try {
-          response = JSON.parse(v);
-        } catch (e) {
-          response = null; // Or handle the error differently if needed
-        }
-        break;
+  //     case 'object':
+  //       // Assuming the object was serialized as JSON
+  //       try {
+  //         response = JSON.parse(v);
+  //       } catch (e) {
+  //         response = null; // Or handle the error differently if needed
+  //       }
+  //       break;
 
-      case 'undefined':
-        response = undefined;
-        break;
+  //     case 'undefined':
+  //       response = undefined;
+  //       break;
 
-      case 'function':
-        // Functions are too complex to restore from a string reliably
-        response = null;
-        break;
+  //     case 'function':
+  //       // Functions are too complex to restore from a string reliably
+  //       response = null;
+  //       break;
 
-      default:
-        // Handle other types as needed (e.g., BigInt, Symbol, etc.)
-        response = v;
-    }
+  //     default:
+  //       // Handle other types as needed (e.g., BigInt, Symbol, etc.)
+  //       response = v;
+  //   }
 
-    return response;
-  }
+  //   return response;
+  // }
 
 }
 

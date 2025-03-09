@@ -9,6 +9,8 @@ export default class Port extends HTMLElement {
       // establish prototype chain
       super();
 
+      // Note this is temporary storage, data here is not fed from any source, but from the Window
+      // NOTE: By not specifying memeory, we create ephemeral memeory tables :goberserk:
       this.ephemerals = new Settings();
       this.ephemerals.assignValues({
         title: 'Untitled',
