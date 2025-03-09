@@ -4,14 +4,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <!-- this will get updated by second subscription -->
     <title>demo</title>
   </head>
 
   <body>
-      <!-- span with id usernamePlacement marks where the name is going to be inserted -->
-      <h1>Hello, <span id="usernamePlacement">world</span>!</h1>
+      <!-- span with id of "username-placement" marks where the name is going to be inserted -->
+      <h1>Hello, <span id="username-placement">world</span>!</h1>
   </body>
 
   <script>
@@ -49,7 +48,7 @@
 
     const usernameReactiveVariable = new ReactiveVariable('Bob');
 
-    usernameReactiveVariable.subscribe(usernameValue => document.getElementById('usernamePlacement').innerText = usernameValue );
+    usernameReactiveVariable.subscribe(usernameValue => document.getElementById('username-placement').innerText = usernameValue );
 
     usernameReactiveVariable.subscribe(usernameValue => document.title = usernameValue + ' was here.' );
 

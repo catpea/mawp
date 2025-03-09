@@ -45,7 +45,6 @@ const project = new Project("main-project");
 application.create(project);
 
 const mainLocation = new Location("main");
-mainLocation.settings.merge({ title: "Main" });
 mainLocation.settings.set('title', 'value', 'Main');
 project.create(mainLocation);
 

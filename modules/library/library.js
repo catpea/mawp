@@ -521,7 +521,7 @@ export class Location extends Source {
       if(!('kind' in value)) throw new Error('Setting rows must specify a kind.');
     }
 
-    component.settings.merge(setup);
+    component.settings.assignValues(setup);
 
     // Add to stage
     this.create(component);
@@ -598,7 +598,7 @@ export class Component extends AwaitingComponent {
   constructor(id) {
     super(id, "window");
 
-    this.settings.merge({
+    this.settings.initializeDefaults({
       title: 'Untitled',
       active: true, // TODO: convert active to Boolean
       note: '',
@@ -799,8 +799,8 @@ export class Library extends Source {
   register(id, content) {
     const tool = new Tool(id);
     tool.content.value = content;
-    tool.settings.set('name', 'value', content.caption);
-    tool.settings.set('description', 'value', content.description);
+    // tool.settings.set('caption',     'value', content.constructor.caption);
+    // tool.settings.set('description', 'value', content.constructor.description);
     this.create(tool);
   }
 }

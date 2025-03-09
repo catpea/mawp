@@ -1,3 +1,5 @@
+import guid from 'guid';
+
 class Signal {
   #value;
   #listeners;
@@ -87,9 +89,23 @@ class BrowserStorage {
   }
 
   subscribe(key, reply){
-    const listener = event => event.key===key ? reply(event.newValue, event.oldValue):0;
-    window.addListener('storage', listener);
-    return ()=>window.removeListener('storage', listener);
+
+    //TODO: this is called too many times, turn this arround and write directly table.
+    // const listener = event => event.key===key ? reply(event.newValue, event.oldValue):0;
+    const listener = event => {
+
+      const correctKey = event.key===key;
+      if(!correctKey) return;
+
+      const changeOccured = event.newValue !== event.oldValue;
+      if(!changeOccured) return;
+
+      console.log('Storage change', key, event.newValue, event.oldValue, event)
+      reply(event.newValue, event.oldValue);
+    };
+
+    window.addEventListener('storage', listener);
+    return ()=>window.removeEventListener('storage', listener);
   }
 
 }
@@ -106,7 +122,7 @@ class StorageBridge {
     }
   }
 }
-const storageBridge = new StorageBridge();
+
 
 
 
@@ -194,23 +210,45 @@ class Table {
 }
 
 class SignalTable extends Table {
+  #db;
   #SAVED = {message: "SAVED"};
   #disposables;
 
-  constructor(columns) {
-    columns = [...new Set(['signal', 'status'].concat(columns))]; // Ensure unique column names
+  constructor(columns, db) {
+    columns = [...new Set(['signal', 'status', 'typeof' ].concat(columns))]; // Ensure unique column names
     super(columns);
+    this.#db = db;
     this.#disposables = [];
+    console.warn('I need a stop() to cleanup disposables!')
   }
 
   setSignal(pathKey, value){
+
+
     if(this.hasSignal(pathKey)){
+    // if(value !== undefined || value !== null) return;
       this.getSignal(pathKey).value = value;
     }else{
       const signal = new Signal(value);
-      this.add(pathKey, {signal, status: 0});
-      this.listenTo(signal, value => storageBridge.storage.set({[pathKey]:value}).then(()=>this.setStatus(pathKey, this.#SAVED), (e)=>this.setStatus(pathKey, e)) );
-      //TODO: listen to changes on the store.
+
+      // console.log('add pathKey', pathKey)
+      this.add(pathKey, {signal, status: 0, typeof: typeof value});
+
+      if(this.#db){
+       this.listenTo(signal, value => this.#db.storage.set({[pathKey]:value}).then(()=>this.setStatus(pathKey, this.#SAVED), (e)=>this.setStatus(pathKey, e)) );
+      }
+
+
+      if(this.#db){
+        //Listen to changes on the store, where the values have been serialized.
+        // const storageListener = db.storage.subscribe(pathKey, v=> signal.value = this.cast(v, typeof value) );
+        const storageListener = this.#db.storage.subscribe(pathKey, v => {
+          console.log('Storage bridge reports change on pathKey, casting...', pathKey, v, this.cast(v, typeof value))
+          signal.value = this.cast(v, typeof value)
+        });
+        this.#disposables.push(storageListener);
+      }
+
     }
   }
 
@@ -234,6 +272,48 @@ class SignalTable extends Table {
     this.#disposables.push(dispose)
   }
 
+  cast(v, type) {
+    let response;
+
+    switch (type) {
+      case 'string':
+        response = String(v);
+        break;
+
+      case 'number':
+        response = Number(v);
+        break;
+
+      case 'boolean':
+        response = v === 'true' ? true : false;
+        break;
+
+      case 'object':
+        // Assuming the object was serialized as JSON
+        try {
+          response = JSON.parse(v);
+        } catch (e) {
+          response = null; // Or handle the error differently if needed
+        }
+        break;
+
+      case 'undefined':
+        response = undefined;
+        break;
+
+      case 'function':
+        // Functions are too complex to restore from a string reliably
+        response = null;
+        break;
+
+      default:
+        // Handle other types as needed (e.g., BigInt, Symbol, etc.)
+        response = v;
+    }
+
+    return response;
+  }
+
 }
 
 
@@ -249,9 +329,9 @@ class Memory {
   #separator;
   #table;
 
-  constructor(){
+  constructor(db){
     this.#separator = ":";
-    this.#table = new SignalTable();
+    this.#table = new SignalTable([], db);
   }
 
   has(objectId, rowId, columnId){
@@ -278,7 +358,6 @@ class Memory {
 
 }
 
-const memory = new Memory();
 
 
 
@@ -290,7 +369,7 @@ class Settings {
   #objectId;
   #memory;
 
-  constructor(objectId, memory){
+  constructor(objectId=guid(), memory = new Memory()){
     this.#objectId = objectId;
     this.#memory = memory;
   }
@@ -308,6 +387,10 @@ class Settings {
   }
 
   set(rowId, columnId='value', value){
+    if(value === undefined){
+     throw new Error('Value should not be set to undefined');
+    }
+
     this.signal(rowId, columnId).value = value;
   }
 
@@ -315,17 +398,49 @@ class Settings {
     return this.signal(rowId, columnId).subscribe(f);
   }
 
-  merge(o){
+  assignValues(o){
     Object.entries(o).forEach(([rowId, value])=>{
       if(value===Object(value)){
         Object.entries(value).forEach(([columnId, value])=>this.set(rowId, columnId, value))
       }else{
-        this.set(rowId, 'value', value);
+        const columnId = 'value';
+        this.set(rowId, columnId, value);
+      }
+    });
+  }
+
+  initializeDefaults(o){
+    Object.entries(o).forEach(([rowId, value])=>{
+      const valueIsAnObject = value===Object(value);
+      if(valueIsAnObject){
+        Object.entries(value).forEach(([columnId, value])=>{
+
+          if(!this.has(rowId, columnId)){
+            this.set(rowId, columnId, value)
+          }else{
+            // console.log('THWACK: initializing defaults twice, that is a non-no', [rowId, columnId].join('/'), this.get(rowId, columnId), value)
+            throw new Error(`Can't initialize data twice, you were trying to set ${[rowId, columnId].join('/')} again.`)
+            // this.set(rowId, columnId, value)
+          }
+
+          })
+      }else{
+        const columnId = 'value';
+        if(!this.has(rowId, columnId,)){
+          this.set(rowId, columnId, value);
+        }else{
+          // console.log('THWACK: initializing defaults twice, that is a non-no', [rowId, columnId].join('/'), this.get(rowId, columnId), value)
+          throw new Error(`Can't initialize data twice, you were trying to set ${[rowId, columnId].join('/')} again.`)
+          // this.set(rowId, columnId, value);
+
+        }
+
       }
     });
   }
 
 }
 
-
+// this is the main memory, it is persistent, and a singleton
+const memory = new Memory(new StorageBridge());
 export {memory, Settings};

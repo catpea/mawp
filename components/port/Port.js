@@ -1,4 +1,5 @@
-import Settings from 'settings';
+import { memory, Settings } from "storage/web-ext/index.js";
+
 import Connectable from './Connectable.js';
 
 import transcend from 'transcend';
@@ -9,14 +10,12 @@ export default class Port extends HTMLElement {
       super();
 
       this.ephemerals = new Settings();
-      this.ephemerals.merge({
-
+      this.ephemerals.assignValues({
         title: 'Untitled',
          name: 'Unnamed',
          side: 'in',
          icon: 'circle',
         style: 'event',
-
       })
 
       const shadow = this.attachShadow({ mode: 'open' });
@@ -47,7 +46,7 @@ export default class Port extends HTMLElement {
 
       // UPDATE START/END POSITION
       this.ephemerals.subscribe('side', 'value', v => {
-        //console.log('RRR side', v )
+        console.log('RRR side', this.id, v )
 
         if (v === 'in') {
           portLabel.classList.remove('float-end');

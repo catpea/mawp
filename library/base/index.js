@@ -117,10 +117,19 @@ class Code extends SystemTool {
 
 
 class Display extends SystemTool {
-  static caption = 'Display';
-  static description = 'Display submitted content.';
-  static defaults = {text: {kind: 'field', type:'Text', title:'', subtitle:'', text: '...', subtext:''}, throw: {kind: 'field', label:'Throw', type:'Boolean', data:false}};
-  static ports = {in:{side:'in', icon:'activity'}};
+  static defaults = {
+    caption: 'Display',
+    description: 'Display submitted content.',
+
+    text: {kind: 'field', type:'Text', title:'', subtitle:'', text: '[data will appear here]', subtext:''},
+    throw: {kind: 'field', label:'Throw', type:'Boolean', data:false}
+  };
+  static ports = {
+    in:{
+      side:'in',
+      icon:'activity'
+    }
+  };
 
   initialize() {}
   start() {}

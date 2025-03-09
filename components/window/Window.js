@@ -62,7 +62,7 @@ export default class Window extends ReactiveHTMLElement {
 
     this.source.state.name.subscribe(v => cardState.textContent = v);
 
-    this.source.settings.subscribe('title', 'value',  v => cardTitle.textContent = v);
+    this.source.settings.subscribe('caption', 'value',  v => cardTitle.textContent = v);
     this.source.settings.subscribe('note', 'value',   v => cardFooter.textContent = v);
     this.source.settings.subscribe('zindex', 'value', v => cardNode.style.zIndex = v);
     this.source.settings.subscribe('style', 'value',  v => this.changeCardStyle(cardNode, v));
@@ -77,7 +77,7 @@ export default class Window extends ReactiveHTMLElement {
       const existingPort = listGroup.querySelector(`x-port[id=${key}]`);
       if(existingPort){
       response = existingPort;
-      existingPort.ephemerals.merge(ephemerals);
+      existingPort.ephemerals.assignValues(ephemerals);
       // for (const [k,v] of Object.entries(ephemerals) ){
       //   existingPort.ephemerals.setValue(k, v);
       // }
@@ -87,7 +87,7 @@ export default class Window extends ReactiveHTMLElement {
       if(!existingPort){
         listGroup.appendChild(iolistItem);
         const portNode = lol['x-port']({ id: key});
-        portNode.ephemerals.merge(ephemerals);
+        portNode.ephemerals.assignValues(ephemerals);
         // for (const [k,v] of Object.entries(ephemerals) ){
         //   portNode.ephemerals.setValue(k, v);
         // }
@@ -140,8 +140,6 @@ export default class Window extends ReactiveHTMLElement {
 
       // Create or update the channel
       const port = channelMaker(channelName, channelConfiguration, container);
-      //console.log('RRR',  port.ephemerals.toObject(), port);
-
     });
 
 
