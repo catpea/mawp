@@ -17,7 +17,7 @@ class Signal {
     if(this.#value === null) initializeListener = false;
     //console.log('HHHH Setting SUBSCRIPTION', {initializeListener}, this.#value, listener.toString())
 
-    if(initializeListener) listener(this.#value);
+    if(initializeListener) listener(this.#value, null);
 
     return () => this.unsubscribe(listener); /* Return Unsubscribe Funcion */
   }
@@ -26,14 +26,15 @@ class Signal {
     this.#listeners = this.#listeners.filter((l) => l !== listener);
   }
 
-  #notify() {
-    this.#listeners.forEach((listener) => listener(this.#value));
+  #notify(newValue, oldValue) {
+    this.#listeners.forEach((listener) => listener(newValue, oldValue));
   }
 
-  set value(v) {
-    if (this.#value == v) return;
-    this.#value = v;
-    this.#notify();
+  set value(newValue) {
+    const oldValue = this.#value;
+    if (oldValue == newValue) return;
+    this.#value = newValue;
+    this.#notify(newValue, oldValue);
   }
 
   get value() {

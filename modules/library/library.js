@@ -1,77 +1,87 @@
-import Signal from "signal";
-import Commander from "commander";
-import Scheduler from "scheduler";
-import List from "list";
+import Signal from 'signal';
+import Commander from 'commander';
+import Scheduler from 'scheduler';
+import List from 'list';
 
-import { memory, Settings } from "storage/web-ext/index.js";
+import { memory, Settings } from 'storage/web-ext/index.js';
 
-// import Settings from "settings";
+import State from 'state';
+import guid from 'guid';
 
-import State from "state";
-import guid from "guid";
-
-import CONFIGURATION from "configuration";
+import CONFIGURATION from 'configuration';
+import {allocationTable} from './AllocationTable.js';
 
 // Storage of Source instances
-class AllocationTable {
 
-  #instances;
-
-  constructor(){
-    this.#instances = new Map();
-  }
-
-  get all(){ // as array, note getter
-    return [...this.#instances.values()];
-  }
-
-  delete(id){
-    if(!this.#instances.has(id)) throw new Error(`Unable to delete, Source instance with id ${id} is not in AllocationTable.`)
-    return this.#instances.delete(id);
-  }
-  get(id){
-    if(!this.#instances.has(id)) throw new Error(`Source instance with id ${id} is not in AllocationTable. Sources register themselves upon first instantiation.`)
-    return this.#instances.get(id);
-  }
-
-  set(id, instance){
-    if(this.#instances.has(id)) throw new Error(`You may not re-initialize a node with the same ID.`)
-    this.#instances.set(id, instance);
-  }
-
-}
 
 class Children {
 
   #allocationTable; // reverence to the central place that holds object instances
   #signal; // the children signal of the current node
-  #referencedChildren; // Array of pointers into #allocationTable
 
   constructor(allocationTable, signal){
-
+    if(!allocationTable) throw new Error('Allocation table is required')
     this.#allocationTable = allocationTable;
     this.#signal = signal;
-    this.#referencedChildren = [];
-
-    this.gc = signal.subscribe(identities => {
-      const update = identities.split(/\W/).filter(id=>id).map(id=> this.#allocationTable.get(id));
-      this.#referencedChildren.length = 0;
-      this.#referencedChildren.concat(update);
-    });
-
   }
 
-  // Todo make these more useful, don't ask users to splice and indexOf, just dive them add/delete
-  [Symbol.iterator]() { return this.#referencedChildren[Symbol.iterator]() }
-  map(...a){ return this.#referencedChildren.map(...a) }
-  sort(...a){ return this.#referencedChildren.sort(...a) }
-  filter(...a){ return this.#referencedChildren.filter(...a) }
-  find(...a){ return this.#referencedChildren.find(...a) }
-  get length(){ return this.#referencedChildren.length }
-  push(...a){ return this.#referencedChildren.push(...a) }
-  slice(...a){ return this.#referencedChildren.slice(...a) }
-  splice(...a){ return this.#referencedChildren.splice(...a) }
-  indexOf(...a){ return this.#referencedChildren.indexOf(...a) }
+  subscribe(f){
+    return this.#signal.subscribe(f);
+  }
+
+  append(id){
+    console.log('ID', id)
+    if(typeof id !== 'string') throw new TypeError('You must specify a string id');
+    // NOTE: we are performing an asignment to the signal
+    // NOTE: we must not prefix by space an empty value
+    this.#signal.value = this.#signal.value?this.#signal.value + ' ' + id:id;
+  }
+
+  remove(id){
+    if(typeof id !== 'string') throw new TypeError('You must specify a string id');
+    // NOTE: we are performing an asignment to the signal
+    this.#signal.value = this.keys().filter(o=>o!==id).join(' ');
+    // NOTE: less robust but faster method:
+    // it expects well formed strings, with one space as separator.
+    // this.#signal.value = (this.#signal.value + ' ').replaceAll(id + ' ', '').trimEnd();
+  }
+
+  keys(){
+    console.log('KEYS', this.#signal.value, this.#signal.value.split(/\s+/))
+    return this.#signal.value.split(/\s+/);
+  }
+
+  values(){
+    return this.keys().map(id => this.#allocationTable.get(id));
+  }
+
+  [Symbol.iterator]() {
+    return this.values()[Symbol.iterator]()
+  }
+
+  get length(){ return this.keys().length }
+
+
+  has(id){
+    if(typeof id !== 'string') throw new TypeError('You must specify a string id');
+    return this.keys().includes(id);
+  }
+
+  get(id){
+    if(!this.has(id)) throw new TypeError(`Not Found: ${id}`);
+    if(this.#allocationTable.keys().length == 0) throw new Error(`Allocation Table Is Empty (attempting to load "${id}")`);
+    console.log('HAS', id, this.has(id), this.keys().includes(id), this.keys(), this.#allocationTable.keys())
+    return this.#allocationTable.get(id);
+  }
+
+  filter(...a){ return this.values().filter(...a) }
+
+  // map(...a){ return this.#signal.value.split(/\s+/).map(...a) }
+  // reduce(...a){ return this.#signal.value.split(/\s+/).reduce(...a) }
+
+  // sort(...a){ return this.#signal.value.split(/\s+/).sort(...a) }
+  // find(...a){ return this.#signal.value.split(/\s+/).find(...a) }
+
 
 }
 
@@ -125,7 +135,7 @@ class Source {
   settings; // where all settings are stored
 
   constructor(id, type) {
-
+    this.allocationTable = allocationTable;
     this.id = id || guid(); // guid is the prefered method, hard coded id is for conventional components, like applicaion, scenes, modules
 
     // TODO: freeze what needs to be forzen:
@@ -135,8 +145,11 @@ class Source {
 
     this.content = new Signal();
 
+
     this.settings = new Settings(this.id, memory);
-    this.children = new Children(this.root.allocationTable, this.settings.signal('children', 'value'));
+    this.children = new Children(this.allocationTable, this.settings.signal('children', 'value'));
+
+
 
     this.state = new State(this, {
       initialize: this.initialize.bind(this),
@@ -147,35 +160,37 @@ class Source {
          dispose: this.dispose.bind(this),
     });
 
+
+
   }
+
+
+
+
+
+
 
   final(name, value){ Object.defineProperty(this, name, { value, writable: false, configurable: false, enumerable: true }); }
 
   // TREE BUILDING //
   create(node) {
     node.parent = this;
-    this.root.allocationTable.set(node.id, node); // register self in allocation table;
-    this.children.push(node);
+    console.log('CREATE', node.id)
+    this.root.allocationTable.set(node.id, node); // register cached instance in allocation table;
+    this.children.append(node.id); // WARN: add node it to the allocation table first!
     this.propagate("create", node);
-
   }
 
   remove() {
-    //console.log(this.id, 'stop dispose delete')
-    this.root.allocationTable.delete(this.id); // register self in allocation table;
-
+    this.parent.children.remove(this.id);
+    this.root.allocationTable.delete(this.id); // remove cached instance from allocation table;
     this.state.stop();
     this.state.dispose();
-    this.parent.delete(this);
+    this.propagate("delete", this);
+
   }
 
-  delete(node) {
-    const index = this.children.indexOf(node);
-    if (index > -1) {
-      this.children.splice(index, 1);
-    }
-    this.propagate("delete", node);
-  }
+
 
   // GETTERS AS TREE UTILITIES //
 
@@ -203,14 +218,24 @@ class Source {
 
 
 
-  filter(f) {
-    return this.children.filter(f);
-  }
+  // filter(f) {
+  //   return this.children.filter(f);
+  // }
 
   get(...path) {
+    if(this.root.id !== 'root') throw new Error(`Attach ${this.root.id} to the tree first.`)
+    if(this.root.allocationTable.keys().length == 0) throw new Error(`Allocation Table Is Empty (attempting to get "${id}")`);
     if (this.children.length === 0) throw new Error("Location is empty");
+
     const [currentId, ...remainingPath] = path;
-    const node = this.children.find((child) => child.id === currentId);
+
+    // const node = this.children.find((child) => child.id === currentId);
+    console.log('GET PATH ZZZ', path, this.root.allocationTable.keys())
+    console.log('GET PATH ZZZ ID', this.id, this.root.id, this.root.allocationTable.keys())
+    console.log('GET PATH ZZZ currentId', currentId, this.children.has(currentId))
+
+    const node = this.children.get(currentId);
+
     if (!node) throw new Error("Failed to locate " + currentId);
     if (remainingPath.length === 0) return node;
     return node.get(...remainingPath);
@@ -426,14 +451,13 @@ class Source {
 */
 export class Application extends Source {
 
-  allocationTable;
 
   commander;
   activeLocation = new Signal("main");
 
+
   constructor(...a) {
     super(...a);
-    this.allocationTable = new AllocationTable();
     this.commander = new Commander(this);
   }
 
@@ -508,8 +532,14 @@ export class Location extends Source {
 
 
   createModule(id, modulePath, settings) {
+    if(this.root.id !== 'root') throw new Error(`Attach ${this.root.id} to the tree first.`)
+    console.info('createModule', id, modulePath)
     const path = ["modules", ...modulePath.split("/")];
+    console.log('PATH', ...path)
+
     const module = this.root.get(...path);
+    console.log(this.root.get('modules').children.keys())
+
     const Component = module.content.value;
     // Initialize important objects
     const component = new Component(id);
@@ -551,7 +581,37 @@ export class Location extends Source {
   }
 }
 
+export class Stage extends Location {
 
+  constructor(...a){
+    super(...a);
+
+    this.children.subscribe((newValue, oldValue)=>{
+      const isInitialization = !oldValue;
+      if(isInitialization) return;
+
+      const local = new Set(oldValue.split(/\s+/));
+      const remote = new Set(newValue.split(/\s+/));
+      const removed = local.difference(remote);
+      const created = remote.difference(local);
+      // console.log(`Children changed in ${this.id}: [${[...local]}] -> [${[...remote]}]`);
+      console.log('TODO: Children changed removed', ...removed)
+      console.log('TODO: Children changed created', ...created)
+
+      for (const removedChildId of removed){
+        // this.propagate("create",  this.children.get(removedChildId));
+      }
+
+      for (const createdChildId of created){
+        // this.propagate("delete",  this.children.get(createdChildId));
+      }
+
+
+
+    })
+  }
+
+}
 
 export class AwaitingComponent extends Source {
 
@@ -621,13 +681,13 @@ export class Component extends AwaitingComponent {
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT
 
   inputPipes() {
-    return this.parent.filter( (o) => o.type === "pipe" && o.settings.get('to', 'value').startsWith(this.id + ':')) ;
+    return this.parent.children.filter( (o) => o.type === "pipe" && o.settings.get('to', 'value').startsWith(this.id + ':')) ;
   }
   inputPipe(name) {
     return this.inputPipes().find(o=>o.settings.get('to', 'value').endsWith(':'+name));
   }
   outputPipe(name) {
-    return this.parent.filter( (o) => o.type === "pipe" && o.settings.get('from', 'value').startsWith(this.id + ':')).find(o=>o.settings.get('from', 'value').endsWith(':'+name));
+    return this.parent.children.filter( (o) => o.type === "pipe" && o.settings.get('from', 'value').startsWith(this.id + ':')).find(o=>o.settings.get('from', 'value').endsWith(':'+name));
   }
 
   connectable(request){

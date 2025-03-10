@@ -89,6 +89,8 @@ export default class StateMachine {
     if (this.name.value === "initialized" || this.name.value === "paused") {
       this.actionMap.start();
       this.changeState("started");
+      if('monitoring' in this.context) this.context.monitoring();
+
     }else{
       throw new Error('Will not change state to started as conditions are unmet')
     }

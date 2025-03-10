@@ -36,7 +36,7 @@ export default class Focusable {
 
     // Selecting Elements: It retrieves the selected element and all relevant children, filtering them based on their tag name.
     const selected = this.system.searchShadow('.perspective').pop();
-    const children = Array.from(this.system.getStage().children).filter(o=>o.tagName.toLowerCase() == `${VPL_ELEMENT_PREFIX}-super`).map(o=>o.instance.searchShadow('.perspective').pop()).filter(e => e)
+    const children = this.system.getStage().children.values().filter(o=>o.tagName.toLowerCase() == `${VPL_ELEMENT_PREFIX}-super`).map(o=>o.instance.searchShadow('.perspective').pop()).filter(e => e)
 
 
     // Normalizing z-index: It ensures that any elements without a defined z-index are assigned one based on their order.

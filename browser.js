@@ -9,7 +9,9 @@ import {
   Application,
   Project,
 
+  Stage,
   Modules,
+
   Library,
 
   Location,
@@ -18,6 +20,8 @@ import {
 } from "library";
 
 // Boot
+
+
 const application = new Application('root');
 
 const expectedSession = guid();
@@ -40,19 +44,20 @@ baseInstaller(modules, application);
 // modules.create(browserInstaller(application));
 toneInstaller(modules, application);
 
+
 // Project Registration
 const project = new Project("main-project");
 application.create(project);
 
-const mainLocation = new Location("main");
+const mainLocation = new Stage("main");
 mainLocation.settings.set('title', 'value', 'Main');
 project.create(mainLocation);
 
-const teeLocation = new Location("tee");
+const teeLocation = new Stage("tee");
 teeLocation.settings.set('title', 'value', 'Text Transformation');
 project.create(teeLocation);
 
-const musicLocation = new Location("music");
+const musicLocation = new Stage("music");
 musicLocation.settings.set('title', 'value', 'Music Example');
 project.create(musicLocation);
 
