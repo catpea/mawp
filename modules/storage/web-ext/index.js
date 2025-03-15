@@ -61,6 +61,9 @@ class ExtensionStorage {
   clear(){
     browser.storage[this.#area].clear();
   }
+  sync(f){
+    f(browser.storage[this.#area].get());
+  }
   subscribe(key, reply){
     const listener = changes => key in changes ? reply(changes[key].newValue, changes[key].oldValue):0;
     browser.storage[this.#area].onChanged.addListener(listener);
@@ -87,6 +90,10 @@ class BrowserStorage {
   }
   clear(){
     localStorage.clear()
+  }
+
+  sync(f){
+    f(localStorage);
   }
 
   subscribe(key, reply){
@@ -129,7 +136,11 @@ class StorageBridge {
 
 
 class Table {
+  #separator;
+
   constructor(columns) {
+    this.#separator = ":";
+
     this.columns = [...new Set(columns)].filter(o=>o); // Ensure unique column names
     this.data = new Map(); // Use Map for efficient access
   }
@@ -208,6 +219,8 @@ class Table {
     }
   }
 
+  get separator(){ return this.#separator;}
+
 }
 
 class SignalTable extends Table {
@@ -216,13 +229,27 @@ class SignalTable extends Table {
   #disposables;
 
   constructor(columns, db) {
+
     columns = [...new Set(['signal', 'status',  ].concat(columns))]; // Ensure unique column names
     super(columns);
     this.#db = db;
     this.#disposables = [];
-    console.warn('I need a stop() to cleanup disposables!')
+    console.warn('TODO: I need a stop() to cleanup disposables!')
+    if(this.#db) this.#db.storage.sync(o=>this.sync(o))
   }
-
+    keyOf(objectId, rowId, columnId){
+    const pathKey = [objectId, rowId, columnId].join(this.separator);
+    return pathKey;
+  }
+  sync(o){
+    for (const [pathKey, value] of Object.entries(o) ){
+      const [objectId, rowId, columnId] = pathKey.split(this.separator);
+      if(objectId && rowId && columnId) {
+        // console.log({objectId, rowId, columnId, value});
+         this.setSignal(pathKey, JSON.parse(value));
+      }
+    }
+  }
   setSignal(pathKey, value){
 
 

@@ -9,118 +9,12 @@ import State from 'state';
 import guid from 'guid';
 
 import CONFIGURATION from 'configuration';
+
+// Local Dependencies
 import {allocationTable} from './AllocationTable.js';
 
-// Storage of Source instances
-
-
-class Children {
-
-  #allocationTable; // reverence to the central place that holds object instances
-  #signal; // the children signal of the current node
-
-  constructor(allocationTable, signal){
-    if(!allocationTable) throw new Error('Allocation table is required')
-    this.#allocationTable = allocationTable;
-    this.#signal = signal;
-  }
-
-  subscribe(f){
-    return this.#signal.subscribe(f);
-  }
-
-  append(id){
-    console.log('ID', id)
-    if(typeof id !== 'string') throw new TypeError('You must specify a string id');
-    // NOTE: we are performing an asignment to the signal
-    // NOTE: we must not prefix by space an empty value
-    this.#signal.value = this.#signal.value?this.#signal.value + ' ' + id:id;
-  }
-
-  remove(id){
-    if(typeof id !== 'string') throw new TypeError('You must specify a string id');
-    // NOTE: we are performing an asignment to the signal
-    this.#signal.value = this.keys().filter(o=>o!==id).join(' ');
-    // NOTE: less robust but faster method:
-    // it expects well formed strings, with one space as separator.
-    // this.#signal.value = (this.#signal.value + ' ').replaceAll(id + ' ', '').trimEnd();
-  }
-
-  keys(){
-    console.log('KEYS', this.#signal.value, this.#signal.value.split(/\s+/))
-    return this.#signal.value.split(/\s+/);
-  }
-
-  values(){
-    return this.keys().map(id => this.#allocationTable.get(id));
-  }
-
-  [Symbol.iterator]() {
-    return this.values()[Symbol.iterator]()
-  }
-
-  get length(){ return this.keys().length }
-
-
-  has(id){
-    if(typeof id !== 'string') throw new TypeError('You must specify a string id');
-    return this.keys().includes(id);
-  }
-
-  get(id){
-    if(!this.has(id)) throw new TypeError(`Not Found: ${id}`);
-    if(this.#allocationTable.keys().length == 0) throw new Error(`Allocation Table Is Empty (attempting to load "${id}")`);
-    console.log('HAS', id, this.has(id), this.keys().includes(id), this.keys(), this.#allocationTable.keys())
-    return this.#allocationTable.get(id);
-  }
-
-  filter(...a){ return this.values().filter(...a) }
-
-  // map(...a){ return this.#signal.value.split(/\s+/).map(...a) }
-  // reduce(...a){ return this.#signal.value.split(/\s+/).reduce(...a) }
-
-  // sort(...a){ return this.#signal.value.split(/\s+/).sort(...a) }
-  // find(...a){ return this.#signal.value.split(/\s+/).find(...a) }
-
-
-}
-
-export class DataRequest {
-  pipe = {id:null}
-  from = { id: null, port: null };
-  to = { id: null, port: null };
-  source = null;
-  destination = null;
-  constructor(context) {
-    this.pipe.id = context.id;
-
-    if( (!context.settings.get('from', 'value'))||(!context.settings.get('to', 'value')) ) throw new Error(`Data request from ${context.id} is invalid as from||to is empty`);
-
-    // TODO: unknown.. cache and make reactive...
-    Object.assign( this.from, Object.fromEntries( [context.settings.get('from', 'value').split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
-    Object.assign( this.to, Object.fromEntries( [context.settings.get('to', 'value').split(":")] .map(([id, port]) => [ ["id", id], ["port", port], ]) .flat(), ), );
-
-    this.source = context.parent.get(this.from.id);
-    this.destination = context.parent.get(this.to.id);
-  }
-}
-
-export class ConnectionRequest extends DataRequest {
-
-}
-
-export class TransportationRequest extends DataRequest {
-
-  data = null;
-  options = null;
-  constructor(context, data, options) {
-    super(context);
-    this.data = data;
-    this.options = options;
-  }
-
-}
-
+import Children from './Children.js';
+import {ConnectionRequest, TransportationRequest} from './Request.js';
 
 class Source {
 
@@ -224,10 +118,14 @@ class Source {
 
   get(...path) {
     if(this.root.id !== 'root') throw new Error(`Attach ${this.root.id} to the tree first.`)
-    if(this.root.allocationTable.keys().length == 0) throw new Error(`Allocation Table Is Empty (attempting to get "${id}")`);
-    if (this.children.length === 0) throw new Error("Location is empty");
-
     const [currentId, ...remainingPath] = path;
+    if (this.children.length === 0) throw new Error(`Location ${this.id} does not have "${currentId}" becasue it is empty. Does your database contain "${this.id}.children" information, or is it empty?`);
+    if (!this.children.has(currentId)) throw new Error("Not Found");
+
+    if( !this.root.allocationTable.has(currentId) ){
+      console.log( this.root )
+    }
+    if( !this.root.allocationTable.has(currentId) ) this.root.allocationTable.set(currentId, this.root.loadModule(currentId));
 
     // const node = this.children.find((child) => child.id === currentId);
     console.log('GET PATH ZZZ', path, this.root.allocationTable.keys())
@@ -447,38 +345,9 @@ class Source {
 
 
 /**
-  This is the root.
+  Application... This is the root.
 */
-export class Application extends Source {
 
-
-  commander;
-  activeLocation = new Signal("main");
-
-
-  constructor(...a) {
-    super(...a);
-    this.commander = new Commander(this);
-  }
-
-  start() {
-    //console.info('Application Start')
-    this.all .filter((o) => o !== this) .map((node) => (node.state.initialize()));
-    this.all .filter((o) => o !== this) .map((node) => (node.state.start()));
-  }
-
-  stop() {
-    this.all .filter((o) => o !== this) .map((node) => (node.state.stop()));
-    this.all .filter((o) => o !== this) .map((node) => (node.state.dispose()));
-    this.collectGarbage();
-  }
-
-  initialize() {}
-  pause() {}
-  resume() {}
-  dispose() {}
-
-}
 
 export class Project extends Source {
   // LIFECYCLE SYSTEM
@@ -530,34 +399,26 @@ export class Location extends Source {
 
   // 'distortion1', 'tone-js/distortion',         {left: 100, top: 100}, {distortion: 0.4}
 
+  loadModule(objectId){
+    if(this.root.id !== 'root') throw new Error(`Attach ${this.root.id} to the tree first.`)
+    const modulePath = memory.get(objectId, 'module', 'value');
+    console.log({modulePath})
+  }
 
   createModule(id, modulePath, settings) {
     if(this.root.id !== 'root') throw new Error(`Attach ${this.root.id} to the tree first.`)
-    console.info('createModule', id, modulePath)
-    const path = ["modules", ...modulePath.split("/")];
-    console.log('PATH', ...path)
-
-    const module = this.root.get(...path);
-    console.log(this.root.get('modules').children.keys())
-
-    const Component = module.content.value;
-    // Initialize important objects
+    const moduleNode = this.root.get(...modulePath.split("/"));
+    const Component = moduleNode.content.value;
     const component = new Component(id);
     component.type = "window";
-
-    const setup = { ...Component.defaults, ...settings,  };
-
+    const setup = { ...Component.defaults, ...settings, ...{module: modulePath} };
     for (const [key, value] of Object.entries(setup).filter(([key, value])=>value===Object(value))) {
       if(!('kind' in value)) throw new Error('Setting rows must specify a kind.');
     }
-
     component.settings.assignValues(setup);
-
     // Add to stage
     this.create(component);
     // do not autostart, you are just creating, not starting - start is a different process, it can be triggered by commands or load scripts
-    // this.root.allocationTable.set(component.id, component); // register self in allocation table;
-
     return component;
   }
 
@@ -581,35 +442,98 @@ export class Location extends Source {
   }
 }
 
+export class Application extends Location {
+
+
+  commander;
+  activeLocation = new Signal("main");
+
+
+  constructor(...a) {
+    super(...a);
+    this.commander = new Commander(this);
+  }
+
+  start() {
+    //console.info('Application Start')
+    this.all .filter((o) => o !== this) .map((node) => (node.state.initialize()));
+    this.all .filter((o) => o !== this) .map((node) => (node.state.start()));
+  }
+
+  stop() {
+    this.all .filter((o) => o !== this) .map((node) => (node.state.stop()));
+    this.all .filter((o) => o !== this) .map((node) => (node.state.dispose()));
+    this.collectGarbage();
+  }
+
+  initialize() {}
+  pause() {}
+  resume() {}
+  dispose() {}
+
+}
+
+
+
+
 export class Stage extends Location {
 
-  constructor(...a){
+    constructor(...a){
     super(...a);
 
-    this.children.subscribe((newValue, oldValue)=>{
-      const isInitialization = !oldValue;
-      if(isInitialization) return;
+    // this.children.subscribe((newValue, oldValue)=>{
+    //   const isInitialization = !oldValue;
+    //   if(isInitialization) return;
 
-      const local = new Set(oldValue.split(/\s+/));
-      const remote = new Set(newValue.split(/\s+/));
-      const removed = local.difference(remote);
-      const created = remote.difference(local);
-      // console.log(`Children changed in ${this.id}: [${[...local]}] -> [${[...remote]}]`);
-      console.log('TODO: Children changed removed', ...removed)
-      console.log('TODO: Children changed created', ...created)
+    //   const local = new Set(oldValue.split(/\s+/));
+    //   const remote = new Set(newValue.split(/\s+/));
+    //   const removed = local.difference(remote);
+    //   const created = remote.difference(local);
+    //   // console.log(`Children changed in ${this.id}: [${[...local]}] -> [${[...remote]}]`);
+    //   if(removed.size) console.log('TODO: Children changed removed', ...removed)
+    //   if(created.size) console.log('TODO: Children changed created', ...created)
 
-      for (const removedChildId of removed){
-        // this.propagate("create",  this.children.get(removedChildId));
-      }
+    //   for (const removedChildId of removed){
+    //     // this.propagate("create",  this.children.get(removedChildId));
+    //   }
 
-      for (const createdChildId of created){
-        // this.propagate("delete",  this.children.get(createdChildId));
-      }
+    //   for (const createdChildId of created){
+    //     // this.propagate("delete",  this.children.get(createdChildId));
+    //   }
 
 
 
-    })
-  }
+    // })
+
+  } // constructor
+
+  // constructor(...a){
+  //   super(...a);
+
+  //   this.children.subscribe((newValue, oldValue)=>{
+  //     const isInitialization = !oldValue;
+  //     if(isInitialization) return;
+
+  //     const local = new Set(oldValue.split(/\s+/));
+  //     const remote = new Set(newValue.split(/\s+/));
+  //     const removed = local.difference(remote);
+  //     const created = remote.difference(local);
+  //     // console.log(`Children changed in ${this.id}: [${[...local]}] -> [${[...remote]}]`);
+  //     if(removed.size) console.log('TODO: Children changed removed', ...removed)
+  //     if(created.size) console.log('TODO: Children changed created', ...created)
+
+  //     for (const removedChildId of removed){
+  //       // this.propagate("create",  this.children.get(removedChildId));
+  //     }
+
+  //     for (const createdChildId of created){
+  //       // this.propagate("delete",  this.children.get(createdChildId));
+  //     }
+
+
+
+  //   })
+  // }
 
 }
 

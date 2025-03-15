@@ -22,6 +22,9 @@ class AllocationTable {
     if(!this.#instances.has(id)) throw new Error(`Unable to delete, Source instance with id ${id} is not in AllocationTable.`)
     return this.#instances.delete(id);
   }
+  has(id){
+    return this.#instances.has(id);
+  }
   get(id){
     if(!this.#instances.has(id)){
      throw new Error(`Source instance with id ${id} is not in AllocationTable: (${this.values().map(o=>o.id).join(', ')}).`)

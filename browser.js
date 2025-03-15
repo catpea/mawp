@@ -29,10 +29,13 @@ application.settings.set('session', 'value', expectedSession);
 const actualSession = application.settings.get('session', 'value');
 console.assert(expectedSession, actualSession);
 
-let passed = (expectedSession == actualSession);
+const modules = application.get('modules');
+console.log(modules);
 
+// baseInstaller(modules, application);
+// toneInstaller(modules, application);
 
-if(passed){
+if(0){
 
 
 
@@ -66,7 +69,7 @@ project.load();
 const ALL = 1;
 if (ALL == 0) {
 
-  mainLocation.createModule("note0", "system-tools/note", {
+  mainLocation.createModule('note0', 'modules/system-tools/note', {
     left: 66,
     top: 111,
     width: 333,
@@ -83,7 +86,7 @@ if (ALL == 0) {
   // mainLocation.createModule('beacon0',    'system-tools/beacon',  {left: 444, top: 111});
 }
 if (ALL) {
-  mainLocation.createModule("note0", "system-tools/note", {
+  mainLocation.createModule("note0", "modules/system-tools/note", {
     left: 66,
     top: 111,
     width: 333,
@@ -96,15 +99,15 @@ if (ALL) {
       subtext: "Practical applications: this is the techonogy behing smart applicaions, this is what makes the brain operate in correct sequence.",
     },
   });
-  mainLocation.createModule("beacon0", "system-tools/beacon", {
+  mainLocation.createModule("beacon0", "modules/system-tools/beacon", {
     left: 444,
     top: 111,
   });
-  mainLocation.createModule("text0", "system-tools/text", {
+  mainLocation.createModule("text0", "modules/system-tools/text", {
     left: 444,
     top: 444,
   });
-  mainLocation.createModule("display0", "system-tools/display", {
+  mainLocation.createModule("display0", "modules/system-tools/display", {
     left: 888,
     top: 333,
   });
@@ -113,7 +116,7 @@ if (ALL) {
   mainLocation.createConnection("text0:out", "display0:in");
 
   // mainLocation.createModule('code1', 'system-tools/code', {title:'Code', left: 444, top: 555, width: 200} );
-  mainLocation.createModule("note1", "system-tools/note", {
+  mainLocation.createModule("note1", "modules/system-tools/note", {
     title: "My Todo List",
     left: 66,
     top: 1111,
@@ -128,19 +131,19 @@ if (ALL) {
         "Later: Add more form controls, insert node by dropping it on line, magnetic connection by positioning connection near a port, and minimap.",
     },
   });
-  mainLocation.createModule("text1", "system-tools/text", {
+  mainLocation.createModule("text1", "modules/system-tools/text", {
     title: "Text",
     left: 444,
     top: 1111,
     width: 200,
   });
-  mainLocation.createModule("procedure1", "system-tools/procedure", {
+  mainLocation.createModule("procedure1", "modules/system-tools/procedure", {
     title: "Procedure",
     left: 777,
     top: 1111,
     width: 200,
   });
-  mainLocation.createModule("display1", "system-tools/display", {
+  mainLocation.createModule("display1", "modules/system-tools/display", {
     title: "Display",
     left: 1111,
     top: 1111,
@@ -149,25 +152,25 @@ if (ALL) {
   mainLocation.createConnection("text1:out", "procedure1:in");
   mainLocation.createConnection("procedure1:out", "display1:in");
 
-  mainLocation.createModule("fetch1", "system-tools/fetch", {
+  mainLocation.createModule("fetch1", "modules/system-tools/fetch", {
     title: "JSON Fetch",
     left: 66,
     top: 1555,
   });
-  mainLocation.createModule("queue1", "system-tools/queue", {
+  mainLocation.createModule("queue1", "modules/system-tools/queue", {
     title: "Data Queue",
     left: 444,
     top: 1555,
     width: 200,
   });
-  mainLocation.createModule("manager1", "system-tools/manager", {
+  mainLocation.createModule("manager1", "modules/system-tools/manager", {
     title: "Work Manager",
     left: 772,
     top: 1555,
     width: 200,
   });
 
-  mainLocation.createModule("files1", "system-tools/files", {
+  mainLocation.createModule("files1", "modules/system-tools/files", {
     title: "Virtual File System",
     left: 1120,
     top: 1555,
@@ -179,7 +182,7 @@ if (ALL) {
 }
 
 if (ALL) {
-  musicLocation.createModule("pattern1", "tone-js/pattern", {
+  musicLocation.createModule("pattern1", "modules/tone-js/pattern", {
     title: "pattern1",
     left: 66,
     top: 222,
@@ -207,12 +210,12 @@ if (ALL) {
       data: "upDown",
     },
   });
-  musicLocation.createModule("synth1", "tone-js/synth", {
+  musicLocation.createModule("synth1", "modules/tone-js/synth", {
     title: "synth1",
     left: 555,
     top: 222,
   });
-  musicLocation.createModule("distortion1", "tone-js/distortion", {
+  musicLocation.createModule("distortion1", "modules/tone-js/distortion", {
     title: "distortion1",
     left: 1111,
     top: 666,
@@ -226,7 +229,7 @@ if (ALL) {
       step: 0.01,
     },
   });
-  musicLocation.createModule("feedbackdelay1", "tone-js/feedbackdelay", {
+  musicLocation.createModule("feedbackdelay1", "modules/tone-js/feedbackdelay", {
     title: "feedbackdelay1",
     left: 555,
     top: 444,
@@ -243,12 +246,12 @@ if (ALL) {
       readonly: true,
     },
   });
-  musicLocation.createModule("destination1", "tone-js/destination", {
+  musicLocation.createModule("destination1", "modules/tone-js/destination", {
     title: "destination1",
     left: 1111,
     top: 77,
   });
-  musicLocation.createModule("player1", "tone-js/player", {
+  musicLocation.createModule("player1", "modules/tone-js/player", {
     title: "player1",
     left: 222,
     top: 555,
@@ -269,17 +272,17 @@ if (ALL) {
   musicLocation.createConnection("feedbackdelay1:out", "destination1:in");
 }
 if (ALL) {
-  teeLocation.createModule("input1", "system-tools/input", {
+  teeLocation.createModule("input1", "modules/system-tools/input", {
     title: "Input",
     left: 66,
     top: 444,
   });
-  teeLocation.createModule("output1", "system-tools/output", {
+  teeLocation.createModule("output1", "modules/system-tools/output", {
     title: "Output",
     left: 777,
     top: 444,
   });
-  teeLocation.createModule("code1", "system-tools/code", {
+  teeLocation.createModule("code1", "modules/system-tools/code", {
     title: "Code",
     left: 444,
     top: 444,
