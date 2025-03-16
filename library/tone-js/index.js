@@ -11,6 +11,9 @@ class ToneComponent extends Component {
     const keyValues =  rawObject
       .map(([key,data])=>[key, data.data]);
     const justValueObject = Object.fromEntries(keyValues);
+
+    console.log(justValueObject)
+
     return justValueObject
   }
 

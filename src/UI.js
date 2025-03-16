@@ -74,7 +74,7 @@ export default class UI {
   }
 
   addWebComponent(source){
-    const tagName = `x-${source.type}`;
+    const tagName = `x-${source.settings.get('type', 'value')}`;
     const component = document.createElement(tagName);
     component.id = source.id;
     component.source = source;

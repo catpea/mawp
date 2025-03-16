@@ -6,6 +6,8 @@ import baseInstaller from "./library/base/index.js";
 import browserInstaller from "./library/browser/index.js";
 import toneInstaller from "./library/tone-js/index.js";
 import {
+  loadModule,
+
   Application,
   Project,
 
@@ -19,29 +21,45 @@ import {
     Connector,
 } from "library";
 
+
 // Boot
 
+// Object.prototype.toString = function () {
+//     return JSON.stringify(this);
+// };
+
+
+const MANGELED_RUN = 1;
+
+if(!MANGELED_RUN){
+
+    const application = loadModule('root');
+
+    const modules = application.get('modules');
+    console.assert(application == modules.parent)
+
+    baseInstaller(modules, application);
+    toneInstaller(modules, application);
+
+    console.log( 'Module children: ', [...modules.children])
+
+
+
+    console.log('BBB2: ', application.memory.get('root', 'children', 'value').value, application.memory)
+    console.log( 'Application children: ', [...application.children])
+
+}else{
 
 const application = new Application('root');
-
 const expectedSession = guid();
 application.settings.set('session', 'value', expectedSession);
 const actualSession = application.settings.get('session', 'value');
-console.assert(expectedSession, actualSession);
-
-const modules = application.get('modules');
-console.log(modules);
-
-// baseInstaller(modules, application);
-// toneInstaller(modules, application);
-
-if(0){
-
-
+console.assert(expectedSession == actualSession);
 
 // Module Registration
 const modules = new Modules("modules");
 application.create(modules);
+console.log('BBB: ', application.memory.get('root', 'children', 'value').value, application.memory)
 
 baseInstaller(modules, application);
 // modules.create(browserInstaller(application));

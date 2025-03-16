@@ -12,14 +12,24 @@ import CONFIGURATION from 'configuration';
 
 // Local Dependencies
 import {allocationTable} from './AllocationTable.js';
-
 import Children from './Children.js';
 import {ConnectionRequest, TransportationRequest} from './Request.js';
+
+
+const loadables = new Map();
+
+export function loadModule(objectId, parent = null){
+  const modulePath = memory.get(objectId, 'type', 'value').value;
+  if(!loadables[modulePath]) throw new Error(`loadModule: module "${modulePath}" for "${objectId}" not in loadables`)
+  console.log(`CCC: Instantiating "${modulePath}" for "${objectId}"`, loadables[modulePath])
+  const response = new loadables[modulePath](objectId);
+  response.parent = parent;
+  return response
+}
 
 class Source {
 
   id; // this is where id is kept, it is not changable
-  type; // evey node has a type
   parent; // we keep track of parents
 
   children; // the tree nature
@@ -29,20 +39,22 @@ class Source {
   settings; // where all settings are stored
 
   constructor(id, type) {
+    console.log('BBB', this.constructor.name, this.constructor)
+    if(!loadables[this.constructor.name]) loadables[this.constructor.name] = this.constructor;
+
     this.allocationTable = allocationTable;
     this.id = id || guid(); // guid is the prefered method, hard coded id is for conventional components, like applicaion, scenes, modules
 
     // TODO: freeze what needs to be forzen:
-    // this.final('id', id||guid());
+    //       this.final('id', id||guid());
 
-    this.type = type || "node";
 
     this.content = new Signal();
 
-
     this.settings = new Settings(this.id, memory);
-    this.children = new Children(this.allocationTable, this.settings.signal('children', 'value'));
+    this.settings.set('type', 'value', type || this.constructor.name);
 
+    this.children = new Children(this, this.allocationTable, this.settings.signal('children', 'value'));
 
 
     this.state = new State(this, {
@@ -72,6 +84,8 @@ class Source {
     console.log('CREATE', node.id)
     this.root.allocationTable.set(node.id, node); // register cached instance in allocation table;
     this.children.append(node.id); // WARN: add node it to the allocation table first!
+    console.log(`Added ${node.id} to ${this.id}`, this.children.keys());
+
     this.propagate("create", node);
   }
 
@@ -125,7 +139,7 @@ class Source {
     if( !this.root.allocationTable.has(currentId) ){
       console.log( this.root )
     }
-    if( !this.root.allocationTable.has(currentId) ) this.root.allocationTable.set(currentId, this.root.loadModule(currentId));
+    if( !this.root.allocationTable.has(currentId) ) this.root.allocationTable.set(currentId, this.root.loadModule(currentId, this));
 
     // const node = this.children.find((child) => child.id === currentId);
     console.log('GET PATH ZZZ', path, this.root.allocationTable.keys())
@@ -348,7 +362,6 @@ class Source {
   Application... This is the root.
 */
 
-
 export class Project extends Source {
   // LIFECYCLE SYSTEM
 
@@ -378,6 +391,7 @@ export class Project extends Source {
       this.collectGarbage();
   }
 }
+Object.assign(loadables, {Project})
 
 export class Location extends Source {
 
@@ -386,23 +400,22 @@ export class Location extends Source {
   pause() {}
   resume() {}
   stop() {
-      this.collectGarbage();
+    this.collectGarbage();
   }
   dispose() {}
 
   getRelated(id) {
     // return items related to id in a scene, usualy for removal.
-    const from = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.get('from', 'value') !== undefined) .filter((child) => child.settings.get('from', 'value').startsWith(id + ":"));
-    const to = this.children .filter((child) => child.type === "pipe") .filter((child) => child.settings.get('to', 'value') !== undefined) .filter((child) => child.settings.get('to', 'value').startsWith(id + ":"));
+    const from = this.children .filter((child) => child.settings.get('type', 'value') === "pipe") .filter((child) => child.settings.get('from', 'value') !== undefined) .filter((child) => child.settings.get('from', 'value').startsWith(id + ":"));
+    const to = this.children .filter((child) => child.settings.get('type', 'value') === "pipe") .filter((child) => child.settings.get('to', 'value') !== undefined) .filter((child) => child.settings.get('to', 'value').startsWith(id + ":"));
     return [...from, ...to];
   }
 
   // 'distortion1', 'tone-js/distortion',         {left: 100, top: 100}, {distortion: 0.4}
 
-  loadModule(objectId){
+  loadModule(objectId, parent){
     if(this.root.id !== 'root') throw new Error(`Attach ${this.root.id} to the tree first.`)
-    const modulePath = memory.get(objectId, 'module', 'value');
-    console.log({modulePath})
+    return loadModule(objectId, parent);
   }
 
   createModule(id, modulePath, settings) {
@@ -410,7 +423,9 @@ export class Location extends Source {
     const moduleNode = this.root.get(...modulePath.split("/"));
     const Component = moduleNode.content.value;
     const component = new Component(id);
-    component.type = "window";
+
+    component.settings.set('type', 'value', 'window');
+
     const setup = { ...Component.defaults, ...settings, ...{module: modulePath} };
     for (const [key, value] of Object.entries(setup).filter(([key, value])=>value===Object(value))) {
       if(!('kind' in value)) throw new Error('Setting rows must specify a kind.');
@@ -441,21 +456,20 @@ export class Location extends Source {
     return connector;
   }
 }
+Object.assign(loadables, {Location})
 
 export class Application extends Location {
-
-
   commander;
   activeLocation = new Signal("main");
-
-
   constructor(...a) {
     super(...a);
+    this.memory = memory;
     this.commander = new Commander(this);
   }
 
   start() {
-    //console.info('Application Start')
+
+
     this.all .filter((o) => o !== this) .map((node) => (node.state.initialize()));
     this.all .filter((o) => o !== this) .map((node) => (node.state.start()));
   }
@@ -472,9 +486,7 @@ export class Application extends Location {
   dispose() {}
 
 }
-
-
-
+Object.assign(loadables, {Application})
 
 export class Stage extends Location {
 
@@ -536,6 +548,8 @@ export class Stage extends Location {
   // }
 
 }
+Object.assign(loadables, {Stage})
+
 
 export class AwaitingComponent extends Source {
 
@@ -565,10 +579,8 @@ export class AwaitingComponent extends Source {
     const {source, pipe, to:{port}, data, options} = dataRequest;
     this.receivedPipes.add(pipe.id);
     this.values[pipe.id] = data; // capture latest frame of data
-
     const execute = this.determination();
     if(execute) this.execute(dataRequest);
-
   }
 
 }
@@ -605,13 +617,13 @@ export class Component extends AwaitingComponent {
   // UTILITY FUNCTIONS SPECIFIC TO COMPONENT
 
   inputPipes() {
-    return this.parent.children.filter( (o) => o.type === "pipe" && o.settings.get('to', 'value').startsWith(this.id + ':')) ;
+    return this.parent.children.filter( (o) => o.settings.get('type', 'value') === "pipe" && o.settings.get('to', 'value').startsWith(this.id + ':')) ;
   }
   inputPipe(name) {
     return this.inputPipes().find(o=>o.settings.get('to', 'value').endsWith(':'+name));
   }
   outputPipe(name) {
-    return this.parent.children.filter( (o) => o.type === "pipe" && o.settings.get('from', 'value').startsWith(this.id + ':')).find(o=>o.settings.get('from', 'value').endsWith(':'+name));
+    return this.parent.children.filter( (o) => o.settings.get('type', 'value') === "pipe" && o.settings.get('from', 'value').startsWith(this.id + ':')).find(o=>o.settings.get('from', 'value').endsWith(':'+name));
   }
 
   connectable(request){
@@ -656,6 +668,7 @@ export class Component extends AwaitingComponent {
   // }
 
 }
+Object.assign(loadables, {Component})
 
 
 export class Connector extends Source {
@@ -748,6 +761,7 @@ export class Connector extends Source {
   dispose() {}
 
 }
+Object.assign(loadables, {Connector})
 
 export class Modules extends Source {
   initialize() {}
@@ -759,6 +773,7 @@ export class Modules extends Source {
   }
   dispose() {}
 }
+Object.assign(loadables, {Modules})
 
 export class Tool extends Source {
   initialize() {}
@@ -770,6 +785,7 @@ export class Tool extends Source {
   }
   dispose() {}
 }
+Object.assign(loadables, {Tool})
 
 export class Library extends Source {
   initialize() {}
@@ -788,8 +804,12 @@ export class Library extends Source {
     this.create(tool);
   }
 }
+Object.assign(loadables, {Library})
+
 
 export default {
+  loadModule,
+
   Application,
   Project,
   Location,

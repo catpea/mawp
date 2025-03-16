@@ -93,7 +93,7 @@ class BrowserStorage {
   }
 
   sync(f){
-    f(localStorage);
+    //f(localStorage);
   }
 
   subscribe(key, reply){

@@ -3,7 +3,8 @@ export default class Children {
   #allocationTable; // reverence to the central place that holds object instances
   #signal; // the children signal of the current node
 
-  constructor(allocationTable, signal){
+  constructor(node, allocationTable, signal){
+    this.node = node;
     if(!allocationTable) throw new Error('Allocation table is required')
     this.#allocationTable = allocationTable;
     this.#signal = signal;
@@ -36,6 +37,14 @@ export default class Children {
   }
 
   values(){
+
+    // this.keys().map(id => console.log('CCC', id));
+    // this.keys().map(id => this.node.root.loadModule(id, this));
+    // this.keys().map(id => this.node.root.allocationTable.set(id, this.node.root.loadModule(id, this) ) );
+    // this.keys().map(id => console.log('CCC', id, this.#allocationTable.get(id)));
+
+
+
     return this.keys().map(id => this.#allocationTable.get(id));
   }
 
